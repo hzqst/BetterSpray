@@ -28,15 +28,10 @@ MetaHookSV: https://github.com/hzqst/MetaHookSv
 ## 📥 Installation
 
 Simply download it from the Releases section and place it in your main Sven Co-op folder.
-Or follow these steps manually:
-
-Copy BetterSpray.dll to:
-Sven Co-op/svencoop/metahook/plugins/
-
 Copy and replace SDL2.dll, SDL3.dll, and svencoop.exe in:
 Steam/steamapps/common/Sven Co-op
 (Make a backup of your svencoop.exe first)
-OR:
+Or follow these steps manually:
 
 1. Copy `BetterSpray.dll` to:  
    `Sven Co-op/svencoop/metahook/plugins/`
