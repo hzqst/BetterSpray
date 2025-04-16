@@ -27,7 +27,7 @@ MetaHookSV: https://github.com/hzqst/MetaHookSv
 
 ## 📥 Installation
 
-** [DOWNLOAD:BetterSpray](https://github.com/KazamiiSC/BetterSpray-Sven-Coop/releases/download/BetterSpray/BetterSpray.Plugin.rar) **
+[**DOWNLOAD:BetterSpray**](https://github.com/KazamiiSC/BetterSpray-Sven-Coop/releases/download/BetterSpray/BetterSpray.Plugin.rar)
 
 Simply download it from the Releases section and place it in your main Sven Co-op folder.
 Copy and replace SDL2.dll, SDL3.dll, and svencoop.exe in:
