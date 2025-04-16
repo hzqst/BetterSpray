@@ -79,8 +79,6 @@ spraybrightness 1.2
 
 ## 🚀 Roadmap
 
-- Support for true aspect ratios  
-- Dynamic spray reloading  
 - Favorites system  
 - Multiplayer support  
 - Special effects (glow, borders)
