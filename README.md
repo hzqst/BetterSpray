@@ -1,6 +1,7 @@
 # BetterSpray
 
 **BetterSpray** is a plugin for MetaHookSV that enhances Sven Co-op’s spray system with support for multiple images, true aspect ratios, and dynamic reloading.
+MetaHookSV: https://github.com/hzqst/MetaHookSv
 
 ![BetterSpray Preview](https://raw.githubusercontent.com/KazamiiSC/BetterSpray---Sven-Co-op/refs/heads/main/preview/20250416020128_1.jpg)
 
