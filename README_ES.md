@@ -91,5 +91,5 @@ R: Usa el comando sprayreload después de agregar nuevas imágenes.
 P: ¿Cuál es el tamaño máximo de imagen permitido?
 R: El límite es de 1024x1024 píxeles.
 
-🛠 Versión actual: 3.1
+🛠 Versión actual: 1.4
 ❤️ Creado por: KZ-Sheez
