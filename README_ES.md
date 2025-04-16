@@ -76,14 +76,9 @@ sprayscale 35
 spraybrightness 1.2
 
 🚀 Hoja de ruta (Roadmap)
-Soporte para proporciones reales
-
-Recarga dinámica de sprays
 
 Sistema de favoritos
-
 Soporte multijugador
-
 Efectos especiales (brillo, bordes, etc.)
 
 ❓ Preguntas frecuentes
