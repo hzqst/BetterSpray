@@ -1,92 +1,91 @@
-# BetterSpray 
+BetterSpray
+BetterSpray is a plugin for MetaHookSV that enhances Sven Co-op's spray system with support for multiple images, true aspect ratios, and dynamic reloading.
 
-**BetterSpray** is a MetaHookSV plugin that enhances spray functionality in Sven Co-op with multi-spray support, customization options, and improved visual effects.
+🌟 Main Features
+🖼️ Spray Management
+✅ Supports multiple sprays (PNG/JPG)
 
-## 🌟 Features
+✅ Automatically detects images in custom_sprays
 
-### 🖼️ Spray Management
-- Multiple spray support (PNG/JPG)
-- Automatic loading from `custom_sprays` folder
-- `spraylist` command to view available sprays
-- `spraynext` to cycle through sprays (or specify by name)
+✅ Dynamic reload without restarting (sprayreload)
 
-### 🎨 Customization
-- Adjustable size (`sprayscale 5-200`)
-- Rotation control (`sprayrotate 0-360`)
-- Brightness control (`spraybrightness 0.1-2.0`)
-- 60-second duration with 5-second fadeout animation
+✅ Organized listing (spraylist)
 
-### 🎮 Game Integration
-- Classic `impulse 201` support
-- Console command `spray`
-- Surface projection with normal alignment
-- Proper depth testing and blending
+🎨 Advanced Customization
+🔧 Size adjustment (sprayscale 5-60)
 
-## 📥 Installation
+🔄 Free rotation (sprayrotate 0-360)
 
-1. **Install the plugin**:
-   - Copy `BetterSpray.dll` to:
-     ```
-     Sven Co-op/svencoop/metahook/plugins/
-     ```
+💡 Brightness control (spraybrightness 0.1-2.0)
 
-2. **Prepare your sprays**:
-   - Create folder:
-     ```
-     Sven Co-op/custom_sprays/
-     ```
-   - Add spray files with naming pattern:
-     ```
-     spray*.png (or .jpg)
-     ```
-     Example names:
-     ```
-     spray1.png
-     spray_awesome.jpg
-     ```
+⏳ Duration: 60s + 2s fade out
 
-3. **Launch the game**
+📐 Maintains original aspect ratio (720x420, etc.)
 
-## 🕹️ Usage
+🚀 Performance & Quality
+🖌️ OpenGL rendering
 
-### Basic Commands
-| Command | Description |
-|---------|-------------|
-| `spray` | Places current spray |
-| `spraynext` | Cycles to next spray |
-| `spraynext name` | Loads specific spray |
-| `spraylist` | Shows available sprays |
+🔍 Textures up to 1024x1024
 
-### Customization Commands
-| Command | Example | Description |
-|---------|---------|-------------|
-| `sprayscale` | `sprayscale 60` | Set spray size (5-200) |
-| `sprayrotate` | `sprayrotate 45` | Set rotation in degrees |
-| `spraybrightness` | `spraybrightness 1.5` | Adjust brightness (0.1-2.0) |
+💾 Memory optimization
 
----
-⚙️ Technical Details
-Max Resolution: 512x512 (recommended)
-Formats: PNG (with alpha), JPG
-Memory: Auto-cleanup on map change
-Performance: Single draw call per spray
+📥 Installation
+Copy BetterSpray.dll to: Sven Co-op/svencoop/metahook/plugins/
+
+Create folder: Sven Co-op/custom_sprays/
+
+Add images (PNG/JPG): spray1.png
+my_logo.jpg
+any_name.jpeg
+
+🕹️ Play & Enjoy
+
+Command	Description	Example
+spray	Places the current spray	-
+spraynext	Switches to the next spray	-
+spraynext name	Uses a specific spray	spraynext logo.png
+spraylist	Shows all available sprays	-
+sprayreload	Reloads the spray folder	-
+⚙️ Visual Settings
+
+Command	Range	Description	Example
+sprayscale	5.0 - 60.0	Vertical size	sprayscale 50
+sprayrotate	0 - 360	Rotation in degrees	sprayrotate 45
+spraybrightness	0.1 - 2.0	Spray intensity	spraybrightness 1.5
+📌 Important Notes
+✨ New: Images now preserve their original aspect ratio!
+
+📏 Max size: 1024x1024 pixels
+
+🔄 Use sprayreload after adding new sprays
+
+🎨 Supported formats: PNG, JPG, JPEG
+
+// Recommended settings
+sprayscale 35
+spraybrightness 1.2
 
 🚀 Roadmap
-Spray favorites system
-Animated sprays (GIF/APNG)
-Multiplayer synchronization
-3D projection effects
-Steam Workshop integration
 
-❓ FAQ
-Q: Why can't others see my sprays?
-A: This is currently client-side only. Multiplayer sync is planned for v2.0.
+Support for true aspect ratios
 
-Q: Can I use transparent sprays?
-A: Yes! PNGs with alpha transparency work perfectly.
+Dynamic spray reloading
 
-Q: How many sprays can I have?
-A: Unlimited! The plugin loads them dynamically.
+Favorites system
 
+Multiplayer support
 
-Created with ❤️ by KZ-Sheez (KazamiiSC)❤️
+Special effects (glow, borders)
+
+❓ Frequently Asked Questions
+Q: Why does my image look stretched?
+A: It shouldn’t anymore! The plugin now maintains original aspect ratios.
+
+Q: How do I update the spray list?
+A: Use the sprayreload command after adding new images.
+
+Q: What’s the maximum image size allowed?
+A: The limit is 1024x1024 pixels.
+
+🛠 Current version: 1.0
+❤️ Created by: KZ-Sheez
