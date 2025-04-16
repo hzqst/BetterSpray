@@ -1,0 +1,8 @@
+﻿  pch.cpp
+  BetterSpray.cpp
+  dllmain.cpp
+  interface.cpp
+  stb_wrapper.cpp
+C:\Proyects\MetaHookSv-main\Plugins\BetterSpray\BetterSpray.cpp(358,1): error C1010: final de archivo inesperado al buscar la directiva de encabezado precompilado. Compruebe si olvidó agregar '#include "pch.h"' al código fuente?
+C:\Proyects\MetaHookSv-main\Plugins\BetterSpray\interface.cpp(39,1): error C1010: final de archivo inesperado al buscar la directiva de encabezado precompilado. Compruebe si olvidó agregar '#include "pch.h"' al código fuente?
+C:\Proyects\MetaHookSv-main\Plugins\BetterSpray\src\stb_wrapper.cpp(3,1): error C1010: final de archivo inesperado al buscar la directiva de encabezado precompilado. Compruebe si olvidó agregar '#include "pch.h"' al código fuente?
