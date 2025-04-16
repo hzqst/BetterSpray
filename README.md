@@ -37,6 +37,7 @@ spray1.png
 my_logo.jpg
 any_name.jpeg
 
+
 ## 🕹️ Play & Enjoy
 
 | Command              | Description                          | Example               |
