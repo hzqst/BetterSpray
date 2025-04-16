@@ -63,6 +63,7 @@ any_name.jpeg
 - 🔄 Use `sprayreload` after adding new sprays
 - 🎨 Supported formats: PNG, JPG, JPEG
 
+```plaintext
 ### 🎯 Recommended Settings
 sprayscale 35
 spraybrightness 1.2
