@@ -37,10 +37,6 @@ spray1.png
 my_logo.jpg
 any_name.jpeg
 
-markdown
-Copiar
-Editar
-
 ## 🕹️ Play & Enjoy
 
 | Command              | Description                          | Example               |
@@ -69,10 +65,6 @@ Editar
 ### 🎯 Recommended Settings
 sprayscale 35
 spraybrightness 1.2
-
-markdown
-Copiar
-Editar
 
 ## 🚀 Roadmap
 
