@@ -74,6 +74,7 @@ O sigue estos pasos manualmente:
 ```plaintext
 sprayscale 35
 spraybrightness 1.2
+
 🚀 Hoja de ruta (Roadmap)
 Soporte para proporciones reales
 
