@@ -96,5 +96,5 @@ spraybrightness 1.2
 
 ---
 
-🛠 Current Version: **3.1**  
+🛠 Current Version: **1.4**  
 ❤️ Created by: **KZ-Sheez** Thanks to: Hzqst, Supah-R7 🕹️
