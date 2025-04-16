@@ -96,4 +96,4 @@ Editar
 ---
 
 🛠 Current Version: **3.1**  
-❤️ Created by: **KZ-Sheez**
+❤️ Created by: **KZ-Sheez** Thanks to: Hzqst, Supah-R7 🕹️
