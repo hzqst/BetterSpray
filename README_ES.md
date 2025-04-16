@@ -1,4 +1,4 @@
-# BetterSpray
+# BetterSpray -
 
 **BetterSpray** es un plugin para MetaHookSV que mejora el sistema de sprays de Sven Co-op con soporte para múltiples imágenes, proporciones reales y recarga dinámica.
 
