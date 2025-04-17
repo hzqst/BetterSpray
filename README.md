@@ -1,6 +1,7 @@
 # BetterSpray
 
-**BetterSpray** is a plugin for MetaHookSV that enhances Sven Co-op’s spray system with support for multiple images, true aspect ratios, and dynamic reloading.
+**BetterSpray** is a plugin for MetaHookSV that enhances Sven Co-op’s spray system with support
+for multiple images, true aspect ratios, and dynamic reloading.
 MetaHookSV: https://github.com/hzqst/MetaHookSv
 
 ![BetterSpray Preview](https://raw.githubusercontent.com/KazamiiSC/BetterSpray---Sven-Co-op/refs/heads/main/preview/20250416020128_1.jpg)
@@ -95,12 +96,15 @@ spraybrightness 1.2
 **A:** The limit is 1024x1024 pixels.
 
  Note on Antivirus False Positives
-Some antivirus software like Avast may flag this plugin (or the game executable) as "Win32:MalwareX-gen [Misc]". This is a false positive caused by the plugin modifying and extending the game's behavior using techniques like hooking or custom rendering (just like any advanced mod).
+Some antivirus software like Avast may flag this plugin (or the game executable) as "Win32:MalwareX-gen [Misc]". 
+This is a false positive caused by the plugin modifying and extending the game's behavior 
+using techniques like hooking or custom rendering (just like any advanced mod).
 
 👉 The plugin does NOT contain any viruses or malicious software.
 If you'd like to verify, you can upload the file to VirusTotal to confirm it's a heuristic detection, not a real threat.
 
-If your antivirus blocks it, we recommend adding the game folder to the exceptions list or temporarily disabling the scan while you play.
+If your antivirus blocks it, we recommend adding the game folder to 
+the exceptions list or temporarily disabling the scan while you play.
 
 Thanks for playing and supporting Sven Co-op modding!
 
