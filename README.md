@@ -94,6 +94,16 @@ spraybrightness 1.2
 **Q:** What is the maximum image size allowed?  
 **A:** The limit is 1024x1024 pixels.
 
+ Note on Antivirus False Positives
+Some antivirus software like Avast may flag this plugin (or the game executable) as "Win32:MalwareX-gen [Misc]". This is a false positive caused by the plugin modifying and extending the game's behavior using techniques like hooking or custom rendering (just like any advanced mod).
+
+👉 The plugin does NOT contain any viruses or malicious software.
+If you'd like to verify, you can upload the file to VirusTotal to confirm it's a heuristic detection, not a real threat.
+
+If your antivirus blocks it, we recommend adding the game folder to the exceptions list or temporarily disabling the scan while you play.
+
+Thanks for playing and supporting Sven Co-op modding!
+
 ---
 
 🛠 Current Version: **1.4**  
