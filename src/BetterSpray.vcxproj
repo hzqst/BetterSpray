@@ -76,8 +76,8 @@
       </Command>
     </CustomBuildStep>
     <PreBuildEvent>
-      <Command>$(CapstoneCheckRequirements)
-$(FreeImageCheckRequirements)</Command>
+      <Command>$(FreeImageCheckRequirements)
+$(CapstoneCheckRequirements)</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -98,8 +98,8 @@ $(FreeImageCheckRequirements)</Command>
       <AdditionalDependencies>$(FreeImageLibraryFiles);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
-      <Command>$(CapstoneCheckRequirements)
-$(FreeImageCheckRequirements)</Command>
+      <Command>$(FreeImageCheckRequirements)
+$(CapstoneCheckRequirements)</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
