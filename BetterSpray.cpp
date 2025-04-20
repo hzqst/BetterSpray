@@ -49,12 +49,12 @@ float g_fSprayFadeDuration = 2.0f;
 float g_fSprayScale = 45.0f;
 float g_fSprayRotation = 0.0f;
 
-// Declaración adelantada de funciones
+// Declaraciï¿½n adelantada de funciones
 bool LoadSprayTexture(const char* filepath);
 void LoadSprayList();
 void SprayReloadCommand();
 
-// Implementación de LoadSprayTexture primero
+// Implementaciï¿½n de LoadSprayTexture primero
 bool LoadSprayTexture(const char* filepath) {
     int width, height, channels;
     unsigned char* imageData = stbi_load(filepath, &width, &height, &channels, STBI_rgb_alpha);
