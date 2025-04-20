@@ -11,6 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\HLSDK\common\interface.cpp" />
     <ClCompile Include="exportfuncs.cpp" />
     <ClCompile Include="plugins.cpp" />
     <ClCompile Include="privatehook.cpp" />
@@ -79,6 +80,9 @@
       <Command>$(FreeImageCheckRequirements)
 $(CapstoneCheckRequirements)</Command>
     </PreBuildEvent>
+    <PostBuildEvent>
+      <Command>$(PluginPostBuildCommand2)</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -101,6 +105,9 @@ $(CapstoneCheckRequirements)</Command>
       <Command>$(FreeImageCheckRequirements)
 $(CapstoneCheckRequirements)</Command>
     </PreBuildEvent>
+    <PostBuildEvent>
+      <Command>$(PluginPostBuildCommand2)</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -49,6 +49,9 @@ void IPluginsV4::LoadEngine(cl_enginefunc_t* pEngfuncs)
 	}
 
 	memcpy(&gEngfuncs, pEngfuncs, sizeof(gEngfuncs));
+
+	Engine_FillAddress(g_MirrorEngineDLLInfo.ImageBase ? g_MirrorEngineDLLInfo : g_EngineDLLInfo, g_EngineDLLInfo);
+	Engine_InstallHooks();
 }
 
 void IPluginsV4::LoadClient(cl_exportfuncs_t* pExportFunc)
@@ -83,8 +86,7 @@ void IPluginsV4::ExitGame(int iResult)
 
 const char* IPluginsV4::GetVersion()
 {
-	return "1.0.0";
+	return "1.0.1";
 }
-
 
 EXPOSE_SINGLE_INTERFACE(IPluginsV4, IPluginsV4, METAHOOK_PLUGIN_API_VERSION_V4);

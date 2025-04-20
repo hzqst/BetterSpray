@@ -96,7 +96,7 @@ void Engine_FillAddress_Draw_DecalTexture(const mh_dll_info_t& DllInfo, const mh
 
 void Engine_FillAddress(const mh_dll_info_t& DllInfo, const mh_dll_info_t& RealDllInfo)
 {
-	
+	Engine_FillAddress_Draw_DecalTexture(DllInfo, RealDllInfo);
 }
 
 void Engine_InstallHooks()

@@ -9,6 +9,9 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
+    <Filter Include="HLSDK">
+      <UniqueIdentifier>{856a6acf-908f-4ed1-bce0-f86aeaf64fec}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="exportfuncs.cpp">
@@ -19,6 +22,9 @@
     </ClCompile>
     <ClCompile Include="privatehook.cpp">
       <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\HLSDK\common\interface.cpp">
+      <Filter>HLSDK</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

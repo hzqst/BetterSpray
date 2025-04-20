@@ -29,4 +29,6 @@ void Client_FillAddress(const mh_dll_info_t& DllInfo, const mh_dll_info_t& RealD
 void Client_InstallHooks();
 void Client_UninstallHooks();
 
+PVOID ConvertDllInfoSpace(PVOID addr, const mh_dll_info_t& SrcDllInfo, const mh_dll_info_t& TargetDllInfo);
+
 texture_t* Draw_DecalTexture(int index);
