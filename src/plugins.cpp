@@ -2,6 +2,9 @@
 #include "exportfuncs.h"
 #include "privatehook.h"
 
+#include "VGUI2ExtensionImport.h"
+#include "UtilHTTPClient.h"
+
 cl_exportfuncs_t gExportfuncs = { 0 };
 mh_interface_t* g_pInterface = NULL;
 metahook_api_t* g_pMetaHookAPI = NULL;
@@ -52,6 +55,8 @@ void IPluginsV4::LoadEngine(cl_enginefunc_t* pEngfuncs)
 
 	Engine_FillAddress(g_MirrorEngineDLLInfo.ImageBase ? g_MirrorEngineDLLInfo : g_EngineDLLInfo, g_EngineDLLInfo);
 	Engine_InstallHooks();
+
+	VGUI2Extension_Init();
 }
 
 void IPluginsV4::LoadClient(cl_exportfuncs_t* pExportFunc)
@@ -74,10 +79,15 @@ void IPluginsV4::LoadClient(cl_exportfuncs_t* pExportFunc)
 		g_MirrorClientDLLInfo.RdataBase = g_pMetaHookAPI->GetSectionByName(g_MirrorClientDLLInfo.ImageBase, ".rdata\0\0", &g_MirrorClientDLLInfo.RdataSize);
 	}
 
+	pExportFunc->HUD_Frame = HUD_Frame;
+	pExportFunc->HUD_Init = HUD_Init;
+	pExportFunc->HUD_Shutdown = HUD_Shutdown;
 	pExportFunc->HUD_GetStudioModelInterface = HUD_GetStudioModelInterface;
 
 	Client_FillAddress(g_MirrorClientDLLInfo.ImageBase ? g_MirrorClientDLLInfo : g_ClientDLLInfo, g_ClientDLLInfo);
 	Client_InstallHooks();
+
+	UtilHTTPClient_Init();
 }
 
 void IPluginsV4::ExitGame(int iResult)

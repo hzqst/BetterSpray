@@ -12,15 +12,285 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\thirdparty\MetaHookSv\include\HLSDK\common\interface.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\SourceSDK\Bitmap.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\SourceSDK\Border.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\SourceSDK\filesystem.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\SourceSDK\filesystem_helpers.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\SourceSDK\mathlib\3dnow.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\SourceSDK\mathlib\mathlib_base.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\SourceSDK\mathlib\sse.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier0\assert_dialog.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier0\cpu.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier0\dbg.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier0\fasttimer.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier0\mem.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier0\memdbg.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier0\memstd.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier0\mem_helpers.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier0\minidump.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier0\platform.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier0\threadtools.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier0\vcrmode.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier1\characterset.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier1\generichash.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier1\KeyValues.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier1\mempool.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier1\memstack.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier1\stringpool.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier1\strtools.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier1\utlbuffer.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier1\utlstring.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier1\utlsymbol.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\SourceSDK\vstdlib\KeyValuesSystem.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\SourceSDK\vstdlib\random.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\AnalogBar.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\AnimatingImagePanel.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\AnimationController.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\BitmapImagePanel.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\BuildFactoryHelper.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\BuildGroup.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\BuildModeDialog.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\Button.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\CheckButton.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\CheckButtonList.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\CircularProgressBar.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\ComboBox.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\consoledialog.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\ControllerMap.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\Controls.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\CvarSlider.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\CvarTextEntry.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\CvarToggleCheckButton.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\DirectorySelectDialog.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\Divider.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\EditablePanel.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\ExpandButton.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\FileOpenDialog.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\FocusNavGroup.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\Frame.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\GraphPanel.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\HTML.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\Image.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\ImageList.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\ImagePanel.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\InputDialog.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\KeyBindingHelpDialog.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\KeyBoardEditorDialog.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\KeyRepeat.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\Label.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\ListPanel.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\ListViewPanel.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\MemoryBitmap.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\Menu.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\MenuBar.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\MenuButton.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\MenuItem.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\MessageBox.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\MessageDialog.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\Panel.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\PanelListPanel.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\ProgressBar.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\ProgressBox.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\PropertyDialog.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\PropertyPage.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\PropertySheet.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\QueryBox.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\RadioButton.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\RichText.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\RotatingProgressBar.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\savedocumentquery.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\ScrollableEditablePanel.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\ScrollBar.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\ScrollBarSlider.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\SectionedListPanel.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\Slider.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\Splitter.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\subrectimage.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\TextEntry.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\TextImage.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\ToggleButton.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\Tooltip.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\ToolWindow.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\TreeView.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\TreeViewListControl.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\URLLabel.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\vgui_controls.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\WizardPanel.cpp" />
+    <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\WizardSubPanel.cpp" />
+    <ClCompile Include="..\thirdparty\tinyxml2\tinyxml2.cpp" />
     <ClCompile Include="exportfuncs.cpp" />
     <ClCompile Include="plugins.cpp" />
     <ClCompile Include="privatehook.cpp" />
+    <ClCompile Include="SparyDatabase.cpp" />
+    <ClCompile Include="UtilHTTPClient.cpp" />
+    <ClCompile Include="VGUI2ExtensionImport.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\Bitmap.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\Border.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\Color.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\datamap.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\filesystem.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\filesystem_helpers.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\mathlib\3dnow.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\mathlib\amd3dx.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\mathlib\mathlib.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\mathlib\math_pfns.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\mathlib\sse.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\mathlib\ssemath.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\mathlib\ssequaternion.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\mathlib\vector.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\mathlib\vector2d.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier0\basetypes.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier0\commonmacros.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier0\dbg.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier0\dbgflag.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier0\fasttimer.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier0\l2cache.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier0\mem.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier0\memalloc.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier0\memdbgoff.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier0\memdbgon.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier0\memstd.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier0\mem_helpers.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier0\minidump.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier0\pch_tier0.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier0\platform.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier0\protected_things.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier0\resource.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier0\threadtools.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier0\tslist.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier0\validator.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier0\valobject.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier0\valve_off.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier0\valve_on.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier0\vcrmode.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier0\vcr_shared.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier0\vprof.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier0\wchartypes.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier0\xbox_codeline_defines.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier1\byteswap.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier1\characterset.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier1\convar.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier1\generichash.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier1\iconvar.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier1\interface.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier1\KeyValues.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier1\mempool.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier1\memstack.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier1\stringpool.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier1\strtools.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier1\tier1.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier1\utlblockmemory.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier1\utlbuffer.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier1\utldict.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier1\utlfixedmemory.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier1\utlflags.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier1\utlhandletable.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier1\utllinkedlist.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier1\utlmap.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier1\utlmemory.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier1\utlqueue.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier1\utlrbtree.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier1\utlstring.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier1\UtlStringMap.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier1\utlsymbol.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier1\utlvector.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\vstdlib\IKeyValuesSystem.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\vstdlib\random.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\vstdlib\vstdlib.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\AnalogBar.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\AnimatingImagePanel.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\AnimationController.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\BitmapImagePanel.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\BuildGroup.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\BuildModeDialog.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\Button.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\CheckButton.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\CheckButtonList.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\CircularProgressBar.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\ComboBox.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\consoledialog.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\ControllerMap.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\Controls.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\CvarSlider.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\CvarTextEntry.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\CvarToggleCheckButton.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\DialogManager.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\DirectorySelectDialog.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\Divider.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\EditablePanel.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\ExpandButton.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\FileOpenDialog.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\FocusNavGroup.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\Frame.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\GraphPanel.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\HTML.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\Image.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\ImageList.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\ImagePanel.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\InputDialog.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\KeyBindingHelpDialog.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\KeyBindingMap.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\KeyBoardEditorDialog.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\KeyRepeat.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\Label.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\ListPanel.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\ListViewPanel.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\MemoryBitmap.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\Menu.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\MenuBar.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\MenuButton.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\MenuItem.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\MessageBox.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\MessageDialog.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\MessageMap.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\Panel.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\PanelAnimationVar.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\PanelListPanel.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\pch_vgui_controls.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\PHandle.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\ProgressBar.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\ProgressBox.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\PropertyDialog.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\PropertyPage.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\PropertySheet.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\QueryBox.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\RadioButton.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\RichText.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\RotatingProgressBar.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\savedocumentquery.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\ScrollableEditablePanel.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\ScrollBar.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\ScrollBarSlider.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\SectionedListPanel.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\Slider.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\Splitter.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\subrectimage.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\TextEntry.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\TextImage.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\ToggleButton.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\Tooltip.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\ToolWindow.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\TreeView.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\TreeViewListControl.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\URLLabel.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\WizardPanel.h" />
+    <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\WizardSubPanel.h" />
+    <ClInclude Include="..\thirdparty\tinyxml2\tinyxml2.h" />
     <ClInclude Include="enginedef.h" />
     <ClInclude Include="exportfuncs.h" />
     <ClInclude Include="plugins.h" />
     <ClInclude Include="privatehook.h" />
+    <ClInclude Include="SparyDatabase.h" />
+    <ClInclude Include="UtilHTTPClient.h" />
+    <ClInclude Include="VGUI2ExtensionImport.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier0\assert_dialog.aps" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier0\assert_dialog.rc" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
@@ -34,14 +304,14 @@
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -59,7 +329,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>GLEW_STATIC;WIN32;_DEBUG;BETTERSPRAY_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>GLEW_STATIC;WIN32;_DEBUG;BETTERSPRAY_EXPORTS;_WINDOWS;_USRDLL;$(VGUI2ExtensionDefines);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(MetaHookBaseDir)include;$(MetaHookBaseDir)include\HLSDK\cl_dll;$(MetaHookBaseDir)include\HLSDK\common;$(MetaHookBaseDir)include\HLSDK\engine;$(MetaHookBaseDir)include\HLSDK\pm_shared;$(MetaHookBaseDir)include\HLSDK\public;$(MetaHookBaseDir)include\Interface;$(MetaHookBaseDir)include\Interface\VGUI;$(MetaHookBaseDir)include\VGUI;$(MetaHookBaseDir)include\SteamSDK;$(MetaHookBaseDir)include\vgui_controls;$(MetaHookBaseDir)include\SourceSDK;$(MetaHookBaseDir)include\SourceSDK\tier0;$(MetaHookBaseDir)include\SourceSDK\tier1;$(CapstoneIncludeDirectory);$(FreeImageIncludeDirectory);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
@@ -90,10 +360,11 @@ $(CapstoneCheckRequirements)</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;NDEBUG;BETTERSPRAY_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;BETTERSPRAY_EXPORTS;_WINDOWS;_USRDLL;$(VGUI2ExtensionDefines);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(MetaHookBaseDir)include;$(MetaHookBaseDir)include\HLSDK\cl_dll;$(MetaHookBaseDir)include\HLSDK\common;$(MetaHookBaseDir)include\HLSDK\engine;$(MetaHookBaseDir)include\HLSDK\pm_shared;$(MetaHookBaseDir)include\HLSDK\public;$(MetaHookBaseDir)include\Interface;$(MetaHookBaseDir)include\Interface\VGUI;$(MetaHookBaseDir)include\VGUI;$(MetaHookBaseDir)include\SteamSDK;$(MetaHookBaseDir)include\vgui_controls;$(MetaHookBaseDir)include\SourceSDK;$(MetaHookBaseDir)include\SourceSDK\tier0;$(MetaHookBaseDir)include\SourceSDK\tier1;$(CapstoneIncludeDirectory);$(FreeImageIncludeDirectory);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
