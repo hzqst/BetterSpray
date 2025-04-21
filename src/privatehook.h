@@ -20,7 +20,7 @@ typedef struct
 	texture_t* (*Draw_DecalTexture)(int index);
 	//int(*GL_LoadTexture)(char* identifier, int textureType, int width, int height, byte* data, qboolean mipmap, int iPalTextureType, byte* pPal);
 	int(*GL_LoadTexture2)(char* identifier, int textureType, int width, int height, byte* data, qboolean mipmap, int iPalTextureType, byte* pPal, int filter);
-	void (*GL_UnloadTexture)(const char* identifier);
+	//void (*GL_UnloadTexture)(const char* identifier);
 }private_funcs_t;
 
 extern private_funcs_t gPrivateFuncs;

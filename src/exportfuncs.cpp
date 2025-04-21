@@ -61,7 +61,7 @@ static int FindPlayerIndexByUserId(const char* userId)
 	return -1;
 }
 
-int Draw_UploadSprayTextureBGRA8(int playerindex, FIBITMAP* fiB)
+int Draw_UploadSparyTextureBGRA8(int playerindex, FIBITMAP* fiB)
 {
 	size_t pos = 0;
 	size_t w = FreeImage_GetWidth(fiB);
@@ -93,24 +93,12 @@ int Draw_UploadSprayTextureBGRA8(int playerindex, FIBITMAP* fiB)
 		//tex->width = w;
 		//tex->height = h;
 
-		//gPrivateFuncs.GL_UnloadTexture(tex->name);
-
-		//TODO: check if its from tempdecal.wad
-
-		//always replace?
 #ifndef GL_LINEAR_MIPMAP_LINEAR
-#define GL_LINEAR_MIPMAP_LINEAR			0x2703
+#define GL_LINEAR_MIPMAP_LINEAR 0x2703
 #endif
+		tex->name[0] = '?';
 
-		char decalTextureName[32] = { 0 };
-		snprintf(decalTextureName, sizeof(decalTextureName), "%03i%02i", playerindex, 0);
-
-		decalTextureName[0] = '?';
-
-		strncpy_s(tex->name, decalTextureName, sizeof(tex->name) - 1);
-		tex->name[sizeof(tex->name) - 1] = 0;
-
-		tex->gl_texturenum = gPrivateFuncs.GL_LoadTexture2(decalTextureName, GLT_DECAL, w, h, imageData, true, (g_iEngineType == ENGINE_SVENGINE) ? TEX_TYPE_RGBA_SVENGINE : TEX_TYPE_RGBA, nullptr, GL_LINEAR_MIPMAP_LINEAR);
+		tex->gl_texturenum = gPrivateFuncs.GL_LoadTexture2(tex->name, GLT_DECAL, w, h, imageData, true, (g_iEngineType == ENGINE_SVENGINE) ? TEX_TYPE_RGBA_SVENGINE : TEX_TYPE_RGBA, nullptr, GL_LINEAR_MIPMAP_LINEAR);
 
 		return 0;
 	}
@@ -118,7 +106,7 @@ int Draw_UploadSprayTextureBGRA8(int playerindex, FIBITMAP* fiB)
 	return -6;
 }
 
-int Draw_UploadSprayTexture(int playerindex, const char* userId, const char* fileName, const char* pathId)
+int Draw_UploadSparyTexture(int playerindex, const char* userId, const char* fileName, const char* pathId)
 {
 	if (playerindex < 0)
 	{
@@ -133,7 +121,7 @@ int Draw_UploadSprayTexture(int playerindex, const char* userId, const char* fil
 
 		if (!fileHandle)
 		{
-			gEngfuncs.Con_DPrintf("Draw_UploadSprayTexture: Could not open \"%s\" for reading.\n", filePath.c_str());
+			gEngfuncs.Con_DPrintf("Draw_UploadSparyTexture: Could not open \"%s\" for reading.\n", filePath.c_str());
 			return -1;
 		}
 
@@ -154,13 +142,13 @@ int Draw_UploadSprayTexture(int playerindex, const char* userId, const char* fil
 
 		if (fiFormat == FIF_UNKNOWN)
 		{
-			gEngfuncs.Con_Printf("Draw_UploadSprayTexture: Could not load \"%s\", Unknown format.\n", filePath.c_str());
+			gEngfuncs.Con_Printf("Draw_UploadSparyTexture: Could not load \"%s\", Unknown format.\n", filePath.c_str());
 			return -2;
 		}
 
 		if (!FreeImage_FIFSupportsReading(fiFormat))
 		{
-			gEngfuncs.Con_Printf("Draw_UploadSprayTexture: Could not load \"%s\", Unsupported format.\n", filePath.c_str());
+			gEngfuncs.Con_Printf("Draw_UploadSparyTexture: Could not load \"%s\", Unsupported format.\n", filePath.c_str());
 			return -3;
 		}
 
@@ -168,7 +156,7 @@ int Draw_UploadSprayTexture(int playerindex, const char* userId, const char* fil
 
 		if (!fiB)
 		{
-			gEngfuncs.Con_Printf("Draw_UploadSprayTexture: Could not load \"%s\", FreeImage_LoadFromHandle failed.\n", filePath.c_str());
+			gEngfuncs.Con_Printf("Draw_UploadSparyTexture: Could not load \"%s\", FreeImage_LoadFromHandle failed.\n", filePath.c_str());
 			return -4;
 		}
 
@@ -178,17 +166,17 @@ int Draw_UploadSprayTexture(int playerindex, const char* userId, const char* fil
 
 		if (!fiBGRA8)
 		{
-			gEngfuncs.Con_Printf("Draw_UploadSprayTexture: Could not load \"%s\", FreeImage_ConvertTo32Bits failed.\n", filePath.c_str());
+			gEngfuncs.Con_Printf("Draw_UploadSparyTexture: Could not load \"%s\", FreeImage_ConvertTo32Bits failed.\n", filePath.c_str());
 			return -5;
 		}
 
 		SCOPE_EXIT{ FreeImage_Unload(fiBGRA8); };
 
-		return Draw_UploadSprayTextureBGRA8(playerindex, fiBGRA8);
+		return Draw_UploadSparyTextureBGRA8(playerindex, fiBGRA8);
 	}
 	else
 	{
-		gEngfuncs.Con_DPrintf("Draw_UploadSprayTexture: invalid player index.\n");
+		gEngfuncs.Con_DPrintf("Draw_UploadSparyTexture: invalid player index.\n");
 	}
 
 	return -7;
@@ -211,16 +199,38 @@ texture_t* Draw_DecalTexture(int index)
 			{
 				if (playerInfo && playerInfo->m_nSteamID != 0)
 				{
-					auto steamId = std::format("{0}", playerInfo->m_nSteamID);
-					auto fileName = std::format("{0}.jpg", steamId);
+					auto userId = std::format("{0}", playerInfo->m_nSteamID);
 
-					auto err = Draw_UploadSprayTexture(playerindex, steamId.c_str(), fileName.c_str(), "GAMEDOWNLOAD");
+					auto queryStatus = SparyDatabase()->GetPlayerSparyQueryStatus(userId.c_str());
 
-					//file not found ?
-					if (err == -1)
+					if (queryStatus == SparyQueryState_Unknown)
 					{
-						SparyDatabase()->QueryPlayerSpary(playerindex, steamId.c_str());
+						auto fileName = std::format("{0}.jpg", userId);
+
+						auto err = Draw_UploadSparyTexture(playerindex, userId.c_str(), fileName.c_str(), "GAMEDOWNLOAD");
+
+						if (err == 0)
+						{
+							SparyDatabase()->UpdatePlayerSparyQueryStatus(userId.c_str(), SparyQueryState_Finished);
+						}
+						else if (err == -1)
+						{
+							//file not found ?
+							SparyDatabase()->QueryPlayerSpary(playerindex, userId.c_str());
+						}
+						else
+						{
+							//could be invalid file or what
+							SparyDatabase()->UpdatePlayerSparyQueryStatus(userId.c_str(), SparyQueryState_Failed);
+						}
 					}
+					else if (queryStatus == SparyQueryState_Finished)
+					{
+						auto fileName = std::format("{0}.jpg", userId);
+
+						Draw_UploadSparyTexture(playerindex, userId.c_str(), fileName.c_str(), "GAMEDOWNLOAD");
+					}
+					
 				}
 			}
 		}

@@ -6,7 +6,8 @@
 
 enum SparyQueryState
 {
-	SparyQueryState_Querying = 0,
+	SparyQueryState_Unknown = 0,
+	SparyQueryState_Querying,
 	SparyQueryState_Failed,
 	SparyQueryState_Finished,
 };
@@ -48,6 +49,8 @@ public:
 	virtual void Init() = 0;
 	virtual void Shutdown() = 0;
 	virtual void RunFrame() = 0;
+	virtual void UpdatePlayerSparyQueryStatus(const char* userId, SparyQueryState newQueryStatus) = 0;
+	virtual SparyQueryState GetPlayerSparyQueryStatus(const char* userId) const = 0;
 	virtual void QueryPlayerSpary(int playerindex, const char* userId) = 0;
 	virtual void EnumQueries(IEnumSparyQueryHandler *handler) = 0;
 	virtual void RegisterQueryStateChangeCallback(ISparyQueryStateChangeHandler* handler) = 0;
