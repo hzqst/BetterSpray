@@ -1,3 +1,9 @@
 [submodule "thirdparty/MetaHookSv"]
 	path = thirdparty/MetaHookSv
 	url = https://github.com/hzqst/MetaHookSv
+[submodule "thirdparty/libiconv-win-build"]
+	path = thirdparty/libiconv-win-build
+	url = https://github.com/hzqst/libiconv-win-build.git
+[submodule "thirdparty/zlib-win-build"]
+	path = thirdparty/zlib-win-build
+	url = https://github.com/hzqst/zlib-win-build.git
