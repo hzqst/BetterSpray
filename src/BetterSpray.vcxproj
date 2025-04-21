@@ -117,7 +117,6 @@
     <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\vgui_controls.cpp" />
     <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\WizardPanel.cpp" />
     <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\WizardSubPanel.cpp" />
-    <ClCompile Include="..\thirdparty\tinyxml2\tinyxml2.cpp" />
     <ClCompile Include="exportfuncs.cpp" />
     <ClCompile Include="plugins.cpp" />
     <ClCompile Include="privatehook.cpp" />
@@ -329,17 +328,17 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>GLEW_STATIC;WIN32;_DEBUG;BETTERSPRAY_EXPORTS;_WINDOWS;_USRDLL;$(VGUI2ExtensionDefines);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;BETTERSPRAY_EXPORTS;_WINDOWS;_USRDLL;$(VGUI2ExtensionDefines);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(MetaHookBaseDir)include;$(MetaHookBaseDir)include\HLSDK\cl_dll;$(MetaHookBaseDir)include\HLSDK\common;$(MetaHookBaseDir)include\HLSDK\engine;$(MetaHookBaseDir)include\HLSDK\pm_shared;$(MetaHookBaseDir)include\HLSDK\public;$(MetaHookBaseDir)include\Interface;$(MetaHookBaseDir)include\Interface\VGUI;$(MetaHookBaseDir)include\VGUI;$(MetaHookBaseDir)include\SteamSDK;$(MetaHookBaseDir)include\vgui_controls;$(MetaHookBaseDir)include\SourceSDK;$(MetaHookBaseDir)include\SourceSDK\tier0;$(MetaHookBaseDir)include\SourceSDK\tier1;$(CapstoneIncludeDirectory);$(FreeImageIncludeDirectory);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(MetaHookBaseDir)include;$(MetaHookBaseDir)include\HLSDK\cl_dll;$(MetaHookBaseDir)include\HLSDK\common;$(MetaHookBaseDir)include\HLSDK\engine;$(MetaHookBaseDir)include\HLSDK\pm_shared;$(MetaHookBaseDir)include\HLSDK\public;$(MetaHookBaseDir)include\Interface;$(MetaHookBaseDir)include\Interface\VGUI;$(MetaHookBaseDir)include\VGUI;$(MetaHookBaseDir)include\SteamSDK;$(MetaHookBaseDir)include\vgui_controls;$(MetaHookBaseDir)include\SourceSDK;$(MetaHookBaseDir)include\SourceSDK\tier0;$(MetaHookBaseDir)include\SourceSDK\tier1;$(CapstoneIncludeDirectory);$(FreeImageIncludeDirectory);$(LibXML2ncludeDirectory);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <CompileAs>Default</CompileAs>
       <PreprocessToFile>false</PreprocessToFile>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(FreeImageLibrariesDirectory);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>$(FreeImageLibraryFiles);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(FreeImageLibrariesDirectory);$(LibXML2LibrariesDirectory);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>$(FreeImageLibraryFiles);$(LibXML2Libraries);%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/NODEFAULTLIB:MSVCRT %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <CustomBuildStep>
@@ -348,7 +347,8 @@
     </CustomBuildStep>
     <PreBuildEvent>
       <Command>$(FreeImageCheckRequirements)
-$(CapstoneCheckRequirements)</Command>
+$(CapstoneCheckRequirements)
+$(LibXML2CheckRequirements)</Command>
     </PreBuildEvent>
     <PostBuildEvent>
       <Command>$(PluginPostBuildCommand2)</Command>
@@ -362,19 +362,20 @@ $(CapstoneCheckRequirements)</Command>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;BETTERSPRAY_EXPORTS;_WINDOWS;_USRDLL;$(VGUI2ExtensionDefines);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(MetaHookBaseDir)include;$(MetaHookBaseDir)include\HLSDK\cl_dll;$(MetaHookBaseDir)include\HLSDK\common;$(MetaHookBaseDir)include\HLSDK\engine;$(MetaHookBaseDir)include\HLSDK\pm_shared;$(MetaHookBaseDir)include\HLSDK\public;$(MetaHookBaseDir)include\Interface;$(MetaHookBaseDir)include\Interface\VGUI;$(MetaHookBaseDir)include\VGUI;$(MetaHookBaseDir)include\SteamSDK;$(MetaHookBaseDir)include\vgui_controls;$(MetaHookBaseDir)include\SourceSDK;$(MetaHookBaseDir)include\SourceSDK\tier0;$(MetaHookBaseDir)include\SourceSDK\tier1;$(CapstoneIncludeDirectory);$(FreeImageIncludeDirectory);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(MetaHookBaseDir)include;$(MetaHookBaseDir)include\HLSDK\cl_dll;$(MetaHookBaseDir)include\HLSDK\common;$(MetaHookBaseDir)include\HLSDK\engine;$(MetaHookBaseDir)include\HLSDK\pm_shared;$(MetaHookBaseDir)include\HLSDK\public;$(MetaHookBaseDir)include\Interface;$(MetaHookBaseDir)include\Interface\VGUI;$(MetaHookBaseDir)include\VGUI;$(MetaHookBaseDir)include\SteamSDK;$(MetaHookBaseDir)include\vgui_controls;$(MetaHookBaseDir)include\SourceSDK;$(MetaHookBaseDir)include\SourceSDK\tier0;$(MetaHookBaseDir)include\SourceSDK\tier1;$(CapstoneIncludeDirectory);$(FreeImageIncludeDirectory);$(LibXML2ncludeDirectory);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(FreeImageLibrariesDirectory);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>$(FreeImageLibraryFiles);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(FreeImageLibrariesDirectory);$(LibXML2LibrariesDirectory);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>$(FreeImageLibraryFiles);$(LibXML2Libraries);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
       <Command>$(FreeImageCheckRequirements)
-$(CapstoneCheckRequirements)</Command>
+$(CapstoneCheckRequirements)
+$(LibXML2CheckRequirements)</Command>
     </PreBuildEvent>
     <PostBuildEvent>
       <Command>$(PluginPostBuildCommand2)</Command>

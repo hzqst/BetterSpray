@@ -7,3 +7,9 @@
 [submodule "thirdparty/zlib-win-build"]
 	path = thirdparty/zlib-win-build
 	url = https://github.com/hzqst/zlib-win-build.git
+[submodule "thirdparty/xz-win-build"]
+	path = thirdparty/xz-win-build
+	url = https://github.com/hzqst/xz-win-build.git
+[submodule "thirdparty/libxml2-win-build"]
+	path = thirdparty/libxml2-win-build
+	url = https://github.com/hzqst/libxml2-win-build

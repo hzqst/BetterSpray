@@ -20,4 +20,41 @@
     <Import Project="$(MetaHookBaseDir)tools\global_template.props" Condition="!exists('$(MetaHookBaseDir)tools\global.props') and exists('$(MetaHookBaseDir)tools\global_template.props')" />
     <Import Project="$(MetaHookBaseDir)tools\global_common.props" />
   </ImportGroup>
+
+  <PropertyGroup>
+
+    <ZLibIncludeDirectory>$(SolutionDir)thirdparty\zlib-win-build</ZLibIncludeDirectory>
+    <ZLibLibrariesDirectory>$(SolutionDir)thirdparty\zlib-win-build\build-VS2022-MT\$(Configuration)</ZLibLibrariesDirectory>
+    <ZLibLibraries>libz-static.lib</ZLibLibraries>
+    <ZLibCheckRequirements>if not exist "$(ZLibLibrariesDirectory)" call "$(SolutionDir)scripts\build-zlib-$(PlatformTarget)-$(Configuration).bat"</ZLibCheckRequirements>
+
+    <LibIconvIncludeDirectory>$(SolutionDir)thirdparty\libiconv-win-build\include</LibIconvIncludeDirectory>
+    <LibIconvLibrariesDirectory>$(SolutionDir)thirdparty\libiconv-win-build\build-VS2022-MT\$(Configuration)</LibIconvLibrariesDirectory>
+    <LibIconvLibraries>libiconv-static.lib</LibIconvLibraries>
+    <LibIconvCheckRequirements>if not exist "$(LibIconvLibrariesDirectory)" call "$(SolutionDir)scripts\build-libiconv-$(PlatformTarget)-$(Configuration).bat"</LibIconvCheckRequirements>
+
+    <LibLZMAIncludeDirectory>$(SolutionDir)thirdparty\xz-win-build</LibLZMAIncludeDirectory>
+    <LibLZMALibrariesDirectory>$(SolutionDir)thirdparty\xz-win-build\src\liblzma\api</LibLZMALibrariesDirectory>
+    <LibLZMALibraries>liblzma-static.lib</LibLZMALibraries>
+    <LibLZMACheckRequirements>if not exist "$(LibLZMALibrariesDirectory)" call "$(SolutionDir)scripts\build-liblzma-$(PlatformTarget)-$(Configuration).bat"</LibLZMACheckRequirements>
+
+    <LibXML2ncludeDirectory>$(SolutionDir)thirdparty\libxml2-win-build\include;$(SolutionDir)thirdparty\libxml2-win-build\include\libxml</LibXML2ncludeDirectory>
+    <LibXML2BinaryDirectory>$(SolutionDir)thirdparty\libxml2-win-build\build-VS2022-MT\$(Configuration)</LibXML2BinaryDirectory>
+    <LibXML2LibrariesDirectory>$(SolutionDir)thirdparty\libxml2-win-build\build-VS2022-MT\$(Configuration)</LibXML2LibrariesDirectory>
+    <LibXML2Libraries>libxml2.lib</LibXML2Libraries>
+    <LibXML2CheckRequirements>
+    $(ZLibCheckRequirements)
+    $(LibIconvCheckRequirements)
+    $(LibLZMACheckRequirements)
+    if not exist "$(LibXML2LibrariesDirectory)" call "$(SolutionDir)scripts\build-libxml2-$(PlatformTarget)-$(Configuration).bat"
+    </LibXML2CheckRequirements>
+
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+
+  
+  </PropertyGroup>
+
+
 </Project>

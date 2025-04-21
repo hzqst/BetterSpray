@@ -9,15 +9,11 @@
 #include <algorithm>
 #include <format>
 
-#include "../thirdparty/tinyxml2/tinyxml2.h"
-
-class CSteamScreenshotFloatHelpInfo
-{
-public:
-	std::string fileId;          // 从data-publishedfileid获取
-	std::string imageUrl;        // 从background-image获取
-	std::string description;     // 从q.ellipsis获取的文本
-};
+#include <libxml/parser.h>
+#include <libxml/tree.h>
+#include <libxml/xpath.h>
+#include <libxml/xpathInternals.h>
+#include <libxml/HTMLparser.h>
 
 static unsigned int g_uiAllocatedTaskId = 0;
 
@@ -348,111 +344,107 @@ public:
 
 	bool OnProcessPayload(const char* data, size_t size) override
 	{
+		class CSteamScreenshotFloatHelpInfo
+		{
+		public:
+			std::string fileId;          // 从data-publishedfileid获取
+			std::string imageUrl;        // 从background-image获取
+			std::string description;     // 从q.ellipsis获取的文本
+		};
+
 		// 创建存储结果的vector
 		std::vector<std::shared_ptr<CSteamScreenshotFloatHelpInfo>> floatHelpList;
 
-		// 创建XML文档对象
-		tinyxml2::XMLDocument doc;
-
-		// 提取<body>和</body>之间的内容
-		std::string htmlContent(data, size);
-		std::string bodyContent;
-		
-		size_t bodyStart = htmlContent.find("<body");
-		size_t bodyEnd = htmlContent.find("</body>");
-		
-		if (bodyStart != std::string::npos && bodyEnd != std::string::npos) {
-			// 找到<body>标签的结束位置
-			size_t bodyTagEnd = htmlContent.find(">", bodyStart);
-			if (bodyTagEnd != std::string::npos) {
-				// 提取<body>和</body>之间的内容
-				bodyContent = htmlContent.substr(bodyTagEnd + 1, bodyEnd - bodyTagEnd - 1);
-			}
-		} else {
-			// 如果找不到body标签，使用原始内容
-			bodyContent = htmlContent;
-		}
-
-		// 包装HTML内容以便解析
-		std::string wrappedHtml = "<root>";
-		wrappedHtml.append(bodyContent);
-		wrappedHtml += "</root>";
-
-		// 解析HTML
-		if (doc.Parse(wrappedHtml.c_str(), wrappedHtml.length()) != tinyxml2::XML_SUCCESS) {
-
-			gEngfuncs.Con_DPrintf("[BetterSpary] HTML parse error: %s\n", doc.ErrorStr());
+		// 解析HTML文档
+		htmlDocPtr doc = htmlReadMemory(data, size, nullptr, "UTF-8", HTML_PARSE_NOERROR | HTML_PARSE_NOWARNING);
+		if (!doc) {
+			gEngfuncs.Con_DPrintf("[BetterSpary] Failed to parse HTML dom.\n");
 			return false;
 		}
 
-		// 获取根节点
-		tinyxml2::XMLElement* root = doc.RootElement();
-		if (!root) {
+		// 创建XPath上下文
+		xmlXPathContextPtr xpathCtx = xmlXPathNewContext(doc);
+		if (!xpathCtx) {
+			xmlFreeDoc(doc);
+			gEngfuncs.Con_DPrintf("[BetterSpary] Failed to create XPath context.\n");
 			return false;
 		}
 
-		// 遍历所有div元素
-		for (tinyxml2::XMLElement* divElement = root->FirstChildElement("div");
-			divElement;
-			divElement = divElement->NextSiblingElement("div"))
-		{
-			// 检查class是否为floatHelp
-			const char* classAttr = divElement->Attribute("class");
-			if (!classAttr || strcmp(classAttr, "floatHelp") != 0) {
-				continue;
-			}
+		// 注册命名空间（如果需要的话）
+		// xmlXPathRegisterNs(xpathCtx, BAD_CAST "ns", BAD_CAST "namespace-uri");
 
-			auto info = std::make_shared<CSteamScreenshotFloatHelpInfo>();
+		// 查找所有class为floatHelp的div元素
+		const xmlChar* xpathExpr = BAD_CAST "//div[@class='floatHelp']";
+		xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression(xpathExpr, xpathCtx);
 
-			// 获取a标签
-			if (tinyxml2::XMLElement* aElement = divElement->FirstChildElement("a")) {
-				// 获取fileId
-				const char* publishedId = aElement->Attribute("data-publishedfileid");
-				if (publishedId) {
-					info->fileId = publishedId;
-				}
+		if (xpathObj && xpathObj->nodesetval) {
+			xmlNodeSetPtr nodes = xpathObj->nodesetval;
+			int size = (nodes) ? nodes->nodeNr : 0;
 
-				// 获取图片div
-				if (tinyxml2::XMLElement* imgDiv = aElement->FirstChildElement("div")) {
-					const char* style = imgDiv->Attribute("style");
-					if (style) {
-						// 从style属性中提取图片URL
-						std::string styleStr(style);
-						size_t start = styleStr.find("url('") + 5;
-						size_t end = styleStr.find("')", start);
-						if (start != std::string::npos && end != std::string::npos) {
-							info->imageUrl = styleStr.substr(start, end - start);
-						}
+			// 遍历所有找到的div元素
+			for (int i = 0; i < size; ++i) {
+				auto info = std::make_shared<CSteamScreenshotFloatHelpInfo>();
+				xmlNodePtr divNode = nodes->nodeTab[i];
+
+				// 查找a标签
+				xmlNodePtr aNode = xmlFirstElementChild(divNode);
+				if (aNode) {
+					// 获取fileId
+					xmlChar* fileId = xmlGetProp(aNode, BAD_CAST "data-publishedfileid");
+					if (fileId) {
+						info->fileId = (const char*)fileId;
+						xmlFree(fileId);
 					}
 
-					// 查找description文本
-					tinyxml2::XMLElement* descDiv = imgDiv->FirstChildElement("div");
-					while (descDiv) {
-						if (tinyxml2::XMLElement* hoverDiv = descDiv->FirstChildElement("div")) {
-							if (tinyxml2::XMLElement* descriptionDiv = hoverDiv->FirstChildElement("div")) {
-								if (tinyxml2::XMLElement* qElement = descriptionDiv->FirstChildElement("q")) {
-									const char* text = qElement->GetText();
-									if (text) {
-										info->description = text;
-									}
-								}
+					// 查找图片div
+					xmlNodePtr imgDiv = xmlFirstElementChild(aNode);
+					if (imgDiv) {
+						// 获取style属性
+						xmlChar* style = xmlGetProp(imgDiv, BAD_CAST "style");
+						if (style) {
+							std::string styleStr((const char*)style);
+							size_t start = styleStr.find("url('") + 5;
+							size_t end = styleStr.find("')", start);
+							if (start != std::string::npos && end != std::string::npos) {
+								info->imageUrl = styleStr.substr(start, end - start);
+							}
+							xmlFree(style);
+						}
+
+						// 查找description文本
+						// 使用XPath查找q标签
+						xmlXPathContextPtr descCtx = xmlXPathNewContext(doc);
+						descCtx->node = imgDiv;
+						xmlXPathObjectPtr qObj = xmlXPathEvalExpression(BAD_CAST ".//q", descCtx);
+						if (qObj && qObj->nodesetval && qObj->nodesetval->nodeNr > 0) {
+							xmlNodePtr qNode = qObj->nodesetval->nodeTab[0];
+							xmlChar* content = xmlNodeGetContent(qNode);
+							if (content) {
+								info->description = (const char*)content;
+								xmlFree(content);
 							}
 						}
-						descDiv = descDiv->NextSiblingElement("div");
+						xmlXPathFreeObject(qObj);
+						xmlXPathFreeContext(descCtx);
 					}
 				}
-			}
 
-			// 如果至少有fileId，则添加到列表中
-			if (!info->fileId.empty()) {
-				floatHelpList.push_back(info);
+				// 如果至少有fileId，则添加到列表中
+				if (!info->fileId.empty()) {
+					floatHelpList.push_back(info);
 
-				// 调试输出
-				gEngfuncs.Con_DPrintf("[BetterSpary] Found screenshot: id=%s, desc=%s\n",
-					info->fileId.c_str(),
-					info->description.c_str());
+					// 调试输出
+					gEngfuncs.Con_DPrintf("[BetterSpary] 找到截图: id=%s, desc=%s\n",
+						info->fileId.c_str(),
+						info->description.c_str());
+				}
 			}
 		}
+
+		// 清理资源
+		if (xpathObj) xmlXPathFreeObject(xpathObj);
+		xmlXPathFreeContext(xpathCtx);
+		xmlFreeDoc(doc);
 
 		return true;
 	}
@@ -516,13 +508,16 @@ public:
 
 	void Init() override
 	{
-		//do nothing
+		//libxml2
+		xmlInitParser();
 	}
 
 	void Shutdown() override
 	{
 		m_QueryTaskList.clear();
 		m_StateChangeCallbacks.clear();
+
+		xmlCleanupParser();
 	}
 
 	void RunFrame() override
