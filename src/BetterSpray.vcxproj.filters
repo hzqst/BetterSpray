@@ -394,9 +394,6 @@
     <ClInclude Include="VGUI2ExtensionImport.h">
       <Filter>Headers</Filter>
     </ClInclude>
-    <ClInclude Include="..\thirdparty\tinyxml2\tinyxml2.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
     <ClInclude Include="..\thirdparty\MetaHookSv\include\SourceSDK\Bitmap.h">
       <Filter>SourceSDK</Filter>
     </ClInclude>

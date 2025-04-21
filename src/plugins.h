@@ -4,6 +4,7 @@
 
 class IFileSystem;
 extern IFileSystem* g_pFileSystem;
+extern IFileSystem_HL25* g_pFileSystem_HL25;
 
 extern int g_iEngineType;
 extern PVOID g_dwEngineBase;

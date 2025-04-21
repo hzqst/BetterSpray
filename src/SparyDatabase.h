@@ -2,6 +2,8 @@
 
 #include <interface.h>
 
+#define CUSTOM_SPRAY_DIRECTORY "custom_sprays"
+
 enum SparyQueryState
 {
 	SparyQueryState_Querying = 0,
@@ -9,7 +11,7 @@ enum SparyQueryState
 	SparyQueryState_Finished,
 };
 
-class ISparyQuery : public IBaseInterface
+class IBaseSparyQuery : public IBaseInterface
 {
 public:
 	virtual const char* GetName() const = 0;
@@ -31,13 +33,13 @@ public:
 class IEnumSparyQueryHandler : public IBaseInterface
 {
 public:
-	virtual void OnEnumQuery(ISparyQuery* pQuery) = 0;
+	virtual void OnEnumQuery(IBaseSparyQuery* pQuery) = 0;
 };
 
 class ISparyQueryStateChangeHandler : public IBaseInterface
 {
 public:
-	virtual void OnQueryStateChanged(ISparyQuery* pQuery, SparyQueryState newState) = 0;
+	virtual void OnQueryStateChanged(IBaseSparyQuery* pQuery, SparyQueryState newState) = 0;
 };
 
 class ISparyDatabase : public IBaseInterface
@@ -46,12 +48,11 @@ public:
 	virtual void Init() = 0;
 	virtual void Shutdown() = 0;
 	virtual void RunFrame() = 0;
-	virtual int FindSparyTextureId(int playerindex, const char* userId) = 0;
 	virtual void QueryPlayerSpary(int playerindex, const char* userId) = 0;
 	virtual void EnumQueries(IEnumSparyQueryHandler *handler) = 0;
 	virtual void RegisterQueryStateChangeCallback(ISparyQueryStateChangeHandler* handler) = 0;
 	virtual void UnregisterQueryStateChangeCallback(ISparyQueryStateChangeHandler* handler) = 0;
-	virtual void DispatchQueryStateChangeCallback(ISparyQuery* pQuery, SparyQueryState newState) = 0;
+	virtual void DispatchQueryStateChangeCallback(IBaseSparyQuery* pQuery, SparyQueryState newState) = 0;
 };
 
 ISparyDatabase* SparyDatabase();

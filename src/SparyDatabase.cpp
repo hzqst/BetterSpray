@@ -5,6 +5,7 @@
 #include "SparyDatabase.h"
 
 #include <string>
+#include <unordered_set>
 #include <unordered_map>
 #include <algorithm>
 #include <format>
@@ -15,7 +16,19 @@
 #include <libxml/xpathInternals.h>
 #include <libxml/HTMLparser.h>
 
+#include <ScopeExit/ScopeExit.h>
+
 static unsigned int g_uiAllocatedTaskId = 0;
+
+int Draw_UploadSprayTexture(int playerindex, const char* userId, const char* fileName, const char* pathId);
+
+class ISparyQuery : public IBaseSparyQuery
+{
+public:
+	virtual void OnImageFileAcquired(const std::string& fileName) {}
+	virtual void BuildQueryImageLink(const std::string& fileId) {}
+	virtual void BuildQueryImageFile(const std::string& fileName, const std::string& actualMediaUrl) {}
+};
 
 class CUtilHTTPCallbacks : public IUtilHTTPCallbacks
 {
@@ -166,18 +179,92 @@ public:
 	}
 };
 
-class CSparyQueryTaskList;
+class CSparyQueryImageFileTask : public CSparyQueryBase
+{
+public:
+	std::string m_fileName;
+	std::string m_actualMediaUrl;
+	ISparyQuery* m_pQueryTaskList{};
+
+public:
+	CSparyQueryImageFileTask(ISparyQuery* parent, const std::string& fileName, const std::string& actualMediaUrl) :
+		CSparyQueryBase(),
+		m_pQueryTaskList(parent),
+		m_fileName(fileName),
+		m_actualMediaUrl(actualMediaUrl)
+	{
+
+	}
+
+	void StartQuery() override
+	{
+		CSparyQueryBase::StartQuery();
+
+		m_Url = m_actualMediaUrl;
+
+		auto pRequestInstance = UtilHTTPClient()->CreateAsyncRequest(m_Url.c_str(), UtilHTTPMethod::Get, new CUtilHTTPCallbacks(this));
+
+		if (!pRequestInstance)
+		{
+			CSparyQueryBase::OnFailure();
+			return;
+		}
+
+		UtilHTTPClient()->AddToRequestPool(pRequestInstance);
+
+		m_RequestId = pRequestInstance->GetRequestId();
+
+		pRequestInstance->Send();
+	}
+
+	bool OnProcessPayload(const char* data, size_t size) override
+	{
+		FILESYSTEM_ANY_CREATEDIR(CUSTOM_SPRAY_DIRECTORY, "GAMEDOWNLOAD");
+
+		std::string filePath = std::format("{0}/{1}", CUSTOM_SPRAY_DIRECTORY, m_fileName);
+
+		auto FileHandle = FILESYSTEM_ANY_OPEN(filePath.c_str(), "wb", "GAMEDOWNLOAD");
+
+		if (FileHandle)
+		{
+			FILESYSTEM_ANY_WRITE(data, size, FileHandle);
+			FILESYSTEM_ANY_CLOSE(FileHandle);
+
+			gEngfuncs.Con_DPrintf("[BetterSpary] File \"%s\" acquired!\n", m_fileName.c_str());
+
+			m_pQueryTaskList->OnImageFileAcquired(m_fileName);
+		}
+		else
+		{
+			gEngfuncs.Con_DPrintf("[BetterSpary] Could not open \"%s\" for write!\n", m_fileName.c_str());
+		}
+
+		return true;
+	}
+
+	const char* GetName() const override
+	{
+		return "QueryImageFile";
+	}
+
+	const char* GetIdentifier() const override
+	{
+		return m_fileName.c_str();
+	}
+};
 
 class CSparyQueryImageLinkTask : public CSparyQueryBase
 {
 public:
+	std::string m_userId;
 	std::string m_fileId;
-	CSparyQueryTaskList* m_pQueryTaskList;
+	ISparyQuery* m_pQueryTaskList{};
 
 public:
-	CSparyQueryImageLinkTask(CSparyQueryTaskList* parent, const std::string& fileId) :
+	CSparyQueryImageLinkTask(ISparyQuery* parent, const std::string& userId, const std::string& fileId) :
 		CSparyQueryBase(),
 		m_pQueryTaskList(parent),
+		m_userId(userId),
 		m_fileId(fileId)
 	{
 
@@ -206,7 +293,60 @@ public:
 
 	bool OnProcessPayload(const char* data, size_t size) override
 	{
+		// 使用libxml解析HTML
+		htmlDocPtr doc = htmlReadMemory(data, size, nullptr, nullptr, HTML_PARSE_NOWARNING | HTML_PARSE_NOERROR);
+		if (!doc) {
+			gEngfuncs.Con_DPrintf("[BetterSpary] Failed to parse HTML\n");
+			return false;
+		}
 
+		SCOPE_EXIT() { xmlFreeDoc(doc); };
+
+		// 使用XPath查找ActualMedia图片元素
+		xmlXPathContextPtr context = xmlXPathNewContext(doc);
+		if (!context) {
+			gEngfuncs.Con_DPrintf("[BetterSpary] Failed to create XPath context\n");
+			return false;
+		}
+
+		SCOPE_EXIT() { xmlXPathFreeContext(context); };
+
+		// 查找id为ActualMedia的img元素
+		xmlXPathObjectPtr result = xmlXPathEvalExpression(BAD_CAST "//img[@id='ActualMedia']", context);
+		if (!result) {
+			gEngfuncs.Con_DPrintf("[BetterSpary] XPath evaluation failed\n");
+			return false;
+		}
+
+		SCOPE_EXIT() { xmlXPathFreeObject(result); };
+
+		if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+			gEngfuncs.Con_DPrintf("[BetterSpary] No ActualMedia image found\n");
+			return false;
+		}
+
+		// 获取第一个匹配节点
+		xmlNodePtr node = result->nodesetval->nodeTab[0];
+
+		// 获取src属性
+		xmlChar* src = xmlGetProp(node, BAD_CAST "src");
+		if (!src) {
+			gEngfuncs.Con_DPrintf("[BetterSpary] No src attribute found\n");
+			return false;
+		}
+
+		SCOPE_EXIT() { xmlFree(src); };
+
+		// 保存图片URL
+		std::string actualMediaUrl = (const char*)src;
+
+		gEngfuncs.Con_DPrintf("[BetterSpary] Found image URL: %s\n", actualMediaUrl.c_str());
+
+		std::string localFileName = std::format("{0}.jpg", m_userId);
+
+		m_pQueryTaskList->BuildQueryImageFile(localFileName, actualMediaUrl);
+
+		return true;
 	}
 
 	const char* GetName() const override
@@ -220,44 +360,11 @@ public:
 	}
 };
 
-class CSparyQueryImageFileTask : public CSparyQueryBase
-{
-public:
-	std::string m_localFileName;
-	std::string m_networkFileName;
-	CSparyQueryTaskList* m_pQueryTaskList;
-
-public:
-	CSparyQueryImageFileTask(CSparyQueryTaskList* parent, const std::string& localFileName, const std::string& networkFileName) :
-		CSparyQueryBase(),
-		m_pQueryTaskList(parent),
-		m_localFileName(localFileName),
-		m_networkFileName(networkFileName)
-	{
-
-	}
-
-	void StartQuery() override;
-
-	bool OnProcessPayload(const char* data, size_t size) override;
-
-	const char* GetName() const override
-	{
-		return "QueryImageFileTask";
-	}
-
-	const char* GetIdentifier() const override
-	{
-		return m_localFileName.c_str();
-	}
-};
-
 class CSparyQueryTaskList : public CSparyQueryBase
 {
 public:
 	int m_playerIndex{};
 	std::string m_userId;
-	bool m_bReloaded{};
 
 	std::vector<std::shared_ptr<ISparyQuery>> m_SubQueryList;
 
@@ -275,7 +382,7 @@ public:
 		if (!CSparyQueryBase::IsFinished())
 			return false;
 
-		for (auto &itor : m_SubQueryList)
+		for (auto& itor : m_SubQueryList)
 		{
 			if (!itor->IsFinished())
 				return false;
@@ -287,24 +394,11 @@ public:
 	void StartQuery() override
 	{
 		CSparyQueryBase::StartQuery();
-
-		//https://steamcommunity.com/profiles/76561197985557911/screenshots/?appid=0&sort=newestfirst&browsefilter=myfiles&view=grid
-
-
-		//https://steamcommunity.com/sharedfiles/filedetails/?id=3150988426&insideModal=1
-
-		/*
-
-			<link rel="image_src" href="https://images.steamusercontent.com/ugc/2343629042955038684/25220472841ADF3109D791055CD6131053EDF085/?imw=512&amp;imh=216&amp;ima=fit&amp;impolicy=Letterbox&amp;imcolor=%23000000&amp;letterbox=true">
-		<meta property="og:image" content="https://images.steamusercontent.com/ugc/2343629042955038684/25220472841ADF3109D791055CD6131053EDF085/?imw=512&amp;imh=216&amp;ima=fit&amp;impolicy=Letterbox&amp;imcolor=%23000000&amp;letterbox=true">
-		<meta name="twitter:image" content="https://images.steamusercontent.com/ugc/2343629042955038684/25220472841ADF3109D791055CD6131053EDF085/?imw=512&amp;imh=216&amp;ima=fit&amp;impolicy=Letterbox&amp;imcolor=%23000000&amp;letterbox=true" />
-
-		*/
-
+		
 		m_Url = std::format("https://steamcommunity.com/profiles/{0}/screenshots/?appid=225840&sort=newestfirst&browsefilter=myfiles&view=grid", m_userId);
 
 		auto pRequestInstance = UtilHTTPClient()->CreateAsyncRequest(m_Url.c_str(), UtilHTTPMethod::Get, new CUtilHTTPCallbacks(this));
-		
+
 		pRequestInstance->SetFollowLocation(true);
 
 		if (!pRequestInstance)
@@ -318,28 +412,6 @@ public:
 		m_RequestId = pRequestInstance->GetRequestId();
 
 		pRequestInstance->Send();
-	}
-
-	void BuildQueryInternal(const std::string& fileId)
-	{
-		if (std::find_if(m_SubQueryList.begin(), m_SubQueryList.end(), [&fileId](const std::shared_ptr<ISparyQuery>& p) {
-
-			if (!strcmp(p->GetName(), "QueryImageLink") &&
-				!strcmp(p->GetIdentifier(), fileId.c_str()))
-			{
-				return true;
-			}
-
-			return false;
-
-		}) == m_SubQueryList.end())
-		{
-			auto QueryInstance = std::make_shared<CSparyQueryImageLinkTask>(this, fileId);
-
-			QueryInstance->StartQuery();
-
-			m_SubQueryList.emplace_back(QueryInstance);
-		}
 	}
 
 	bool OnProcessPayload(const char* data, size_t size) override
@@ -361,14 +433,15 @@ public:
 			gEngfuncs.Con_DPrintf("[BetterSpary] Failed to parse HTML dom.\n");
 			return false;
 		}
+		SCOPE_EXIT() { xmlFreeDoc(doc); };
 
 		// 创建XPath上下文
 		xmlXPathContextPtr xpathCtx = xmlXPathNewContext(doc);
 		if (!xpathCtx) {
-			xmlFreeDoc(doc);
 			gEngfuncs.Con_DPrintf("[BetterSpary] Failed to create XPath context.\n");
 			return false;
 		}
+		SCOPE_EXIT() { xmlXPathFreeContext(xpathCtx); };
 
 		// 注册命名空间（如果需要的话）
 		// xmlXPathRegisterNs(xpathCtx, BAD_CAST "ns", BAD_CAST "namespace-uri");
@@ -376,6 +449,9 @@ public:
 		// 查找所有class为floatHelp的div元素
 		const xmlChar* xpathExpr = BAD_CAST "//div[@class='floatHelp']";
 		xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression(xpathExpr, xpathCtx);
+		SCOPE_EXIT() {
+			if (xpathObj) xmlXPathFreeObject(xpathObj);
+		};
 
 		if (xpathObj && xpathObj->nodesetval) {
 			xmlNodeSetPtr nodes = xpathObj->nodesetval;
@@ -414,8 +490,14 @@ public:
 						// 查找description文本
 						// 使用XPath查找q标签
 						xmlXPathContextPtr descCtx = xmlXPathNewContext(doc);
+						SCOPE_EXIT() { xmlXPathFreeContext(descCtx); };
+
 						descCtx->node = imgDiv;
 						xmlXPathObjectPtr qObj = xmlXPathEvalExpression(BAD_CAST ".//q", descCtx);
+						SCOPE_EXIT() {
+							if (qObj) xmlXPathFreeObject(qObj);
+						};
+
 						if (qObj && qObj->nodesetval && qObj->nodesetval->nodeNr > 0) {
 							xmlNodePtr qNode = qObj->nodesetval->nodeTab[0];
 							xmlChar* content = xmlNodeGetContent(qNode);
@@ -424,28 +506,37 @@ public:
 								xmlFree(content);
 							}
 						}
-						xmlXPathFreeObject(qObj);
-						xmlXPathFreeContext(descCtx);
 					}
 				}
 
 				// 如果至少有fileId，则添加到列表中
-				if (!info->fileId.empty() && info->description.starts_with("BetterSpray")) {
+				if (!info->fileId.empty() && info->description.starts_with("!BetterSpray")) {
 
 					floatHelpList.push_back(info);
 
 					// 调试输出
-					gEngfuncs.Con_DPrintf("[BetterSpary] 找到截图: id=%s, desc=%s\n", info->fileId.c_str(), info->description.c_str());
+					gEngfuncs.Con_DPrintf("[BetterSpary] Found spary: fileId=%s, desc=\"%s\".\n", info->fileId.c_str(), info->description.c_str());
 				}
 			}
 		}
 
-		// 清理资源
-		if (xpathObj) xmlXPathFreeObject(xpathObj);
-		xmlXPathFreeContext(xpathCtx);
-		xmlFreeDoc(doc);
+		// 从floatHelpList中随机抽取一个元素并为其调用BuildQueryImageLink
+		if (!floatHelpList.empty()) {
+			// 生成随机索引
+			size_t randomIndex = rand() % floatHelpList.size();
 
+			// 获取随机选择的元素
+			auto selectedItem = floatHelpList[randomIndex];
 
+			// 调用BuildQueryImageLink
+			if (!selectedItem->fileId.empty()) {
+				gEngfuncs.Con_DPrintf("[BetterSpary] Randomly selected spary: fileId=%s\n", selectedItem->fileId.c_str());
+				BuildQueryImageLink(selectedItem->fileId);
+			}
+		}
+		else {
+			gEngfuncs.Con_DPrintf("[BetterSpary] No valid sprays found.\n");
+		}
 
 		return true;
 	}
@@ -459,51 +550,65 @@ public:
 	{
 		return m_userId.c_str();
 	}
-};
 
-void CSparyQueryImageFileTask::StartQuery()
-{
-	
+public:
 
-}
-
-bool CSparyQueryImageFileTask::OnProcessPayload(const char* data, size_t size)
-{
-	gEngfuncs.Con_DPrintf("[BetterSpary] File \"%s\" acquired!\n", m_localFileName.c_str());
-
-#if 0
-
-	FILESYSTEM_ANY_CREATEDIR("custom_sprays", "GAMEDOWNLOAD");
-
-	std::string filePathDir = std::format("custom_sprays/{0}", m_pQueryTaskList->m_localFileNameBase);
-	FILESYSTEM_ANY_CREATEDIR(filePathDir.c_str(), "GAMEDOWNLOAD");
-
-	std::string filePath = std::format("models/player/{0}/{1}", m_pQueryTaskList->m_localFileNameBase, m_localFileName);
-	auto FileHandle = FILESYSTEM_ANY_OPEN(filePath.c_str(), "wb", "GAMEDOWNLOAD");
-
-	if (FileHandle)
+	void BuildQueryImageLink(const std::string& fileId) override
 	{
-		FILESYSTEM_ANY_WRITE(data, size, FileHandle);
-		FILESYSTEM_ANY_CLOSE(FileHandle);
+		if (std::find_if(m_SubQueryList.begin(), m_SubQueryList.end(), [&fileId](const std::shared_ptr<ISparyQuery>& p) {
+
+			if (!strcmp(p->GetName(), "QueryImageLink") &&
+				!strcmp(p->GetIdentifier(), fileId.c_str()))
+			{
+				return true;
+			}
+
+			return false;
+
+			}) == m_SubQueryList.end())
+		{
+			auto QueryInstance = std::make_shared<CSparyQueryImageLinkTask>(this, m_userId, fileId);
+
+			QueryInstance->StartQuery();
+
+			m_SubQueryList.emplace_back(QueryInstance);
+		}
 	}
 
-	m_pQueryTaskList->OnModelFileWriteFinished();
-#endif
-	return true;
-}
+	void BuildQueryImageFile(const std::string& fileName, const std::string& actualMediaUrl) override
+	{
+		if (std::find_if(m_SubQueryList.begin(), m_SubQueryList.end(), [&fileName](const std::shared_ptr<ISparyQuery>& p) {
 
-typedef struct SparyTextureStorage_s
-{
-	int gltexturenum{};
-	char userId[64]{};
-}SparyTextureStorage_t;
+			if (!strcmp(p->GetName(), "QueryImageFile") &&
+				!strcmp(p->GetIdentifier(), fileName.c_str()))
+			{
+				return true;
+			}
+
+			return false;
+
+			}) == m_SubQueryList.end())
+		{
+			auto QueryInstance = std::make_shared<CSparyQueryImageFileTask>(this, fileName, actualMediaUrl);
+
+			QueryInstance->StartQuery();
+
+			m_SubQueryList.emplace_back(QueryInstance);
+		}
+	}
+
+	void OnImageFileAcquired(const std::string &fileName) override
+	{
+		Draw_UploadSprayTexture(-1, m_userId.c_str(), fileName.c_str(), "GAMEDOWNLOAD");
+	}
+};
 
 class CSparyDatabase : public ISparyDatabase
 {
 private:
 	std::vector<std::shared_ptr<ISparyQuery>> m_QueryTaskList;
 	std::vector<ISparyQueryStateChangeHandler*> m_StateChangeCallbacks;
-	SparyTextureStorage_t m_SparyTextures[32]{};
+	std::unordered_set<std::string> m_QueryingUserId{};
 
 public:
 
@@ -542,15 +647,15 @@ public:
 	}
 
 	/*
-		Purpose: Build network query instance
+		Purpose: Build network query instance based on userId (steamId64)
 	*/
 
-	bool BuildQueryListInternal(int playerindex, const std::string& userId)
+	bool BuildQuery(int playerindex, const char* userId)
 	{
 		for (const auto& p : m_QueryTaskList)
 		{
 			if (!strcmp(p->GetName(), "QueryTaskList") &&
-				!strcmp(p->GetIdentifier(), userId.c_str()) )
+				!strcmp(p->GetIdentifier(), userId))
 			{
 				return false;
 			}
@@ -565,28 +670,20 @@ public:
 		return true;
 	}
 
-	/*
-		Purpose: Build network query instance based on userId (steamId64)
-	*/
-
-	bool BuildQueryList(int playerindex, const char* userId)
+	void QueryPlayerSpary(int playerindex, const char* userId)
 	{
-		return BuildQueryListInternal(playerindex, userId);
-	}
+		std::string userIdString = userId;
 
-	int FindSparyTextureId(int playerindex, const char* userId) override
-	{
-		if(!strcmp(m_SparyTextures[playerindex].userId, userId))
-			return m_SparyTextures[playerindex].gltexturenum;
+		auto it = m_QueryingUserId.find(userIdString);
 
-		return 0;
-	}
+		if (it == m_QueryingUserId.end())
+		{
+			gEngfuncs.Con_DPrintf("[BetterSpary] Querying spary for userId \"%s\"...\n", playerindex, userId);
 
-	void QueryPlayerSpary(int playerindex, const char* userId) override
-	{
-		gEngfuncs.Con_DPrintf("[BetterSpary] Downloading spary for userId \"%s\"...\n", playerindex, userId);
+			BuildQuery(playerindex, userId);
 
-		BuildQueryList(playerindex, userId);
+			m_QueryingUserId.insert(userIdString);
+		}
 	}
 
 	void EnumQueries(IEnumSparyQueryHandler* handler) override
@@ -621,7 +718,7 @@ public:
 		}
 	}
 
-	void DispatchQueryStateChangeCallback(ISparyQuery* pQuery, SparyQueryState newState) override
+	void DispatchQueryStateChangeCallback(IBaseSparyQuery* pQuery, SparyQueryState newState) override
 	{
 		for (auto callback : m_StateChangeCallbacks)
 		{
