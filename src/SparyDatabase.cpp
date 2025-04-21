@@ -548,10 +548,8 @@ public:
 			auto selectedItem = floatHelpList[randomIndex];
 
 			// 调用BuildQueryImageLink
-			if (!selectedItem->fileId.empty()) {
-				gEngfuncs.Con_DPrintf("[BetterSpary] Randomly selected spary: fileId=%s\n", selectedItem->fileId.c_str());
-				BuildQueryImageLink(selectedItem->fileId);
-			}
+			gEngfuncs.Con_DPrintf("[BetterSpary] Randomly selected spary: fileId=%s\n", selectedItem->fileId.c_str());
+			BuildQueryImageLink(selectedItem->fileId);
 		}
 		else {
 			gEngfuncs.Con_DPrintf("[BetterSpary] No valid sprays found.\n");
@@ -708,7 +706,7 @@ public:
 
 		if (it == m_UserQueryStatus.end())
 		{
-			gEngfuncs.Con_DPrintf("[BetterSpary] Querying spary for userId \"%s\"...\n", playerindex, userId);
+			gEngfuncs.Con_DPrintf("[BetterSpary] Querying spary for userId \"%s\"...\n", userId);
 
 			UpdatePlayerSparyQueryStatus(userIdString.c_str(), SparyQueryState_Querying);
 
@@ -739,6 +737,10 @@ public:
 		if (it != m_UserQueryStatus.end())
 		{
 			it->second = newQueryStatus;
+		}
+		else
+		{
+			m_UserQueryStatus[userIdString] = newQueryStatus;
 		}
 	}
 
