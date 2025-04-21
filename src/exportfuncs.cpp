@@ -133,7 +133,12 @@ int Draw_UploadSparyTexture(int playerindex, const char* userId, const char* fil
 		fiIO.seek_proc = FI_Seek;
 		fiIO.tell_proc = FI_Tell;
 
-		auto fiFormat = FreeImage_GetFIFFromFilename(fileName);
+		auto fiFormat = FIF_UNKNOWN;
+
+		//if (fiFormat == FIF_UNKNOWN)
+		//{
+		//	fiFormat = FreeImage_GetFIFFromFilename(fileName);
+		//}
 
 		if (fiFormat == FIF_UNKNOWN)
 		{

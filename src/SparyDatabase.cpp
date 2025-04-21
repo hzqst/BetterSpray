@@ -414,7 +414,7 @@ public:
 	{
 		CSparyQueryBase::StartQuery();
 		
-		m_Url = std::format("https://steamcommunity.com/profiles/{0}/screenshots/?appid=225840&sort=newestfirst&browsefilter=myfiles&view=grid", m_userId);
+		m_Url = std::format("https://steamcommunity.com/profiles/{0}/screenshots/?appid={1}&sort=newestfirst&browsefilter=myfiles&view=grid", m_userId, gEngfuncs.pfnGetAppID());
 
 		auto pRequestInstance = UtilHTTPClient()->CreateAsyncRequest(m_Url.c_str(), UtilHTTPMethod::Get, new CUtilHTTPCallbacks(this));
 
