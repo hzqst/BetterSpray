@@ -2,7 +2,7 @@
 #include "plugins.h"
 
 #include "UtilHTTPClient.h"
-#include "SparyDatabase.h"
+#include "SprayDatabase.h"
 
 #include <string>
 #include <unordered_set>
@@ -20,9 +20,9 @@
 
 static unsigned int g_uiAllocatedTaskId = 0;
 
-int Draw_UploadSparyTexture(int playerindex, const char* userId, const char* fileName, const char* pathId);
+int Draw_UploadSprayTexture(int playerindex, const char* userId, const char* fileName, const char* pathId);
 
-class ISparyQuery : public IBaseSparyQuery
+class ISprayQuery : public IBaseSprayQuery
 {
 public:
 	virtual void OnImageFileAcquired(const std::string& fileName) {}
@@ -33,10 +33,10 @@ public:
 class CUtilHTTPCallbacks : public IUtilHTTPCallbacks
 {
 private:
-	ISparyQuery* m_pQueryTask{};
+	ISprayQuery* m_pQueryTask{};
 
 public:
-	CUtilHTTPCallbacks(ISparyQuery* p) : m_pQueryTask(p)
+	CUtilHTTPCallbacks(ISprayQuery* p) : m_pQueryTask(p)
 	{
 
 	}
@@ -83,7 +83,7 @@ public:
 	}
 };
 
-class CSparyQueryBase : public ISparyQuery
+class CSprayQueryBase : public ISprayQuery
 {
 private:
 	bool m_bFinished{};
@@ -96,13 +96,13 @@ protected:
 	UtilHTTPRequestId_t m_RequestId{ UTILHTTP_REQUEST_INVALID_ID };
 
 public:
-	CSparyQueryBase()
+	CSprayQueryBase()
 	{
 		m_uiTaskId = g_uiAllocatedTaskId;
 		g_uiAllocatedTaskId++;
 	}
 
-	~CSparyQueryBase()
+	~CSprayQueryBase()
 	{
 		if (m_RequestId != UTILHTTP_REQUEST_INVALID_ID)
 		{
@@ -126,15 +126,15 @@ public:
 		return m_bFailed;
 	}
 
-	SparyQueryState GetState() const override
+	SprayQueryState GetState() const override
 	{
 		if (m_bFailed)
-			return SparyQueryState_Failed;
+			return SprayQueryState_Failed;
 
 		if (m_bFinished)
-			return SparyQueryState_Finished;
+			return SprayQueryState_Finished;
 
-		return SparyQueryState_Querying;
+		return SprayQueryState_Querying;
 	}
 
 	unsigned int GetTaskId() const override
@@ -147,14 +147,14 @@ public:
 		m_bFailed = true;
 		m_flNextRetryTime = (float)gEngfuncs.GetAbsoluteTime() + 5.0f;
 
-		SparyDatabase()->DispatchQueryStateChangeCallback(this, GetState());
+		SprayDatabase()->DispatchQueryStateChangeCallback(this, GetState());
 	}
 
 	void OnFinish() override
 	{
 		m_bFinished = true;
 
-		SparyDatabase()->DispatchQueryStateChangeCallback(this, GetState());
+		SprayDatabase()->DispatchQueryStateChangeCallback(this, GetState());
 	}
 
 	void RunFrame(float flCurrentAbsTime) override
@@ -175,21 +175,21 @@ public:
 
 		m_bFailed = false;
 		m_bFinished = false;
-		SparyDatabase()->DispatchQueryStateChangeCallback(this, GetState());
+		SprayDatabase()->DispatchQueryStateChangeCallback(this, GetState());
 	}
 };
 
-class CSparyQueryImageFileTask : public CSparyQueryBase
+class CSprayQueryImageFileTask : public CSprayQueryBase
 {
 public:
 	std::string m_userId;
 	std::string m_fileName;
 	std::string m_actualMediaUrl;
-	ISparyQuery* m_pQueryTaskList{};
+	ISprayQuery* m_pQueryTaskList{};
 
 public:
-	CSparyQueryImageFileTask(ISparyQuery* parent, const std::string& userId, const std::string& fileName, const std::string& actualMediaUrl) :
-		CSparyQueryBase(),
+	CSprayQueryImageFileTask(ISprayQuery* parent, const std::string& userId, const std::string& fileName, const std::string& actualMediaUrl) :
+		CSprayQueryBase(),
 		m_pQueryTaskList(parent),
 		m_userId(userId),
 		m_fileName(fileName),
@@ -200,7 +200,7 @@ public:
 
 	void StartQuery() override
 	{
-		CSparyQueryBase::StartQuery();
+		CSprayQueryBase::StartQuery();
 
 		m_Url = m_actualMediaUrl;
 
@@ -208,7 +208,7 @@ public:
 
 		if (!pRequestInstance)
 		{
-			CSparyQueryBase::OnFailure();
+			CSprayQueryBase::OnFailure();
 			return;
 		}
 
@@ -232,15 +232,15 @@ public:
 			FILESYSTEM_ANY_WRITE(data, size, FileHandle);
 			FILESYSTEM_ANY_CLOSE(FileHandle);
 
-			gEngfuncs.Con_DPrintf("[BetterSpary] File \"%s\" acquired!\n", m_fileName.c_str());
+			gEngfuncs.Con_DPrintf("[BetterSpray] File \"%s\" acquired!\n", m_fileName.c_str());
 
 			m_pQueryTaskList->OnImageFileAcquired(m_fileName);
 		}
 		else
 		{
-			SparyDatabase()->UpdatePlayerSparyQueryStatus(m_userId.c_str(), SparyQueryState_Failed);
+			SprayDatabase()->UpdatePlayerSprayQueryStatus(m_userId.c_str(), SprayQueryState_Failed);
 
-			gEngfuncs.Con_DPrintf("[BetterSpary] Could not open \"%s\" for write!\n", m_fileName.c_str());
+			gEngfuncs.Con_DPrintf("[BetterSpray] Could not open \"%s\" for write!\n", m_fileName.c_str());
 		}
 
 		return true;
@@ -257,16 +257,16 @@ public:
 	}
 };
 
-class CSparyQueryImageLinkTask : public CSparyQueryBase
+class CSprayQueryImageLinkTask : public CSprayQueryBase
 {
 public:
 	std::string m_userId;
 	std::string m_fileId;
-	ISparyQuery* m_pQueryTaskList{};
+	ISprayQuery* m_pQueryTaskList{};
 
 public:
-	CSparyQueryImageLinkTask(ISparyQuery* parent, const std::string& userId, const std::string& fileId) :
-		CSparyQueryBase(),
+	CSprayQueryImageLinkTask(ISprayQuery* parent, const std::string& userId, const std::string& fileId) :
+		CSprayQueryBase(),
 		m_pQueryTaskList(parent),
 		m_userId(userId),
 		m_fileId(fileId)
@@ -276,7 +276,7 @@ public:
 
 	void StartQuery() override
 	{
-		CSparyQueryBase::StartQuery();
+		CSprayQueryBase::StartQuery();
 
 		m_Url = std::format("https://steamcommunity.com/sharedfiles/filedetails/?id={0}&insideModal=1", m_fileId);
 
@@ -284,7 +284,7 @@ public:
 
 		if (!pRequestInstance)
 		{
-			CSparyQueryBase::OnFailure();
+			CSprayQueryBase::OnFailure();
 			return;
 		}
 
@@ -300,9 +300,9 @@ public:
 		// 使用libxml解析HTML
 		htmlDocPtr doc = htmlReadMemory(data, size, nullptr, nullptr, HTML_PARSE_NOWARNING | HTML_PARSE_NOERROR);
 		if (!doc) {
-			gEngfuncs.Con_DPrintf("[BetterSpary] Failed to parse HTML\n");
+			gEngfuncs.Con_DPrintf("[BetterSpray] Failed to parse HTML\n");
 
-			SparyDatabase()->UpdatePlayerSparyQueryStatus(m_userId.c_str(), SparyQueryState_Failed);
+			SprayDatabase()->UpdatePlayerSprayQueryStatus(m_userId.c_str(), SprayQueryState_Failed);
 
 			return false;
 		}
@@ -312,9 +312,9 @@ public:
 		// 使用XPath查找ActualMedia图片元素
 		xmlXPathContextPtr context = xmlXPathNewContext(doc);
 		if (!context) {
-			gEngfuncs.Con_DPrintf("[BetterSpary] Failed to create XPath context\n");
+			gEngfuncs.Con_DPrintf("[BetterSpray] Failed to create XPath context\n");
 
-			SparyDatabase()->UpdatePlayerSparyQueryStatus(m_userId.c_str(), SparyQueryState_Failed);
+			SprayDatabase()->UpdatePlayerSprayQueryStatus(m_userId.c_str(), SprayQueryState_Failed);
 
 			return false;
 		}
@@ -324,9 +324,9 @@ public:
 		// 查找id为ActualMedia的img元素
 		xmlXPathObjectPtr result = xmlXPathEvalExpression(BAD_CAST "//img[@id='ActualMedia']", context);
 		if (!result) {
-			gEngfuncs.Con_DPrintf("[BetterSpary] XPath evaluation failed\n");
+			gEngfuncs.Con_DPrintf("[BetterSpray] XPath evaluation failed\n");
 
-			SparyDatabase()->UpdatePlayerSparyQueryStatus(m_userId.c_str(), SparyQueryState_Failed);
+			SprayDatabase()->UpdatePlayerSprayQueryStatus(m_userId.c_str(), SprayQueryState_Failed);
 
 			return false;
 		}
@@ -334,9 +334,9 @@ public:
 		SCOPE_EXIT() { xmlXPathFreeObject(result); };
 
 		if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
-			gEngfuncs.Con_DPrintf("[BetterSpary] No ActualMedia image found\n");
+			gEngfuncs.Con_DPrintf("[BetterSpray] No ActualMedia image found\n");
 
-			SparyDatabase()->UpdatePlayerSparyQueryStatus(m_userId.c_str(), SparyQueryState_Failed);
+			SprayDatabase()->UpdatePlayerSprayQueryStatus(m_userId.c_str(), SprayQueryState_Failed);
 
 			return false;
 		}
@@ -347,9 +347,9 @@ public:
 		// 获取src属性
 		xmlChar* src = xmlGetProp(node, BAD_CAST "src");
 		if (!src) {
-			gEngfuncs.Con_DPrintf("[BetterSpary] No src attribute found\n");
+			gEngfuncs.Con_DPrintf("[BetterSpray] No src attribute found\n");
 
-			SparyDatabase()->UpdatePlayerSparyQueryStatus(m_userId.c_str(), SparyQueryState_Failed);
+			SprayDatabase()->UpdatePlayerSprayQueryStatus(m_userId.c_str(), SprayQueryState_Failed);
 
 			return false;
 		}
@@ -359,7 +359,7 @@ public:
 		// 保存图片URL
 		std::string actualMediaUrl = (const char*)src;
 
-		gEngfuncs.Con_DPrintf("[BetterSpary] Found image URL: %s\n", actualMediaUrl.c_str());
+		gEngfuncs.Con_DPrintf("[BetterSpray] Found image URL: %s\n", actualMediaUrl.c_str());
 
 		std::string localFileName = std::format("{0}.jpg", m_userId);
 
@@ -379,17 +379,17 @@ public:
 	}
 };
 
-class CSparyQueryTaskList : public CSparyQueryBase
+class CSprayQueryTaskList : public CSprayQueryBase
 {
 public:
 	int m_playerIndex{};
 	std::string m_userId;
 
-	std::vector<std::shared_ptr<ISparyQuery>> m_SubQueryList;
+	std::vector<std::shared_ptr<ISprayQuery>> m_SubQueryList;
 
 public:
-	CSparyQueryTaskList(int playerIndex, const std::string& userId) :
-		CSparyQueryBase(),
+	CSprayQueryTaskList(int playerIndex, const std::string& userId) :
+		CSprayQueryBase(),
 		m_playerIndex(playerIndex),
 		m_userId(userId)
 	{
@@ -398,7 +398,7 @@ public:
 
 	bool IsFinished() const override
 	{
-		if (!CSparyQueryBase::IsFinished())
+		if (!CSprayQueryBase::IsFinished())
 			return false;
 
 		for (auto& itor : m_SubQueryList)
@@ -412,7 +412,7 @@ public:
 
 	void StartQuery() override
 	{
-		CSparyQueryBase::StartQuery();
+		CSprayQueryBase::StartQuery();
 		
 		m_Url = std::format("https://steamcommunity.com/profiles/{0}/screenshots/?appid={1}&sort=newestfirst&browsefilter=myfiles&view=grid", m_userId, gEngfuncs.pfnGetAppID());
 
@@ -422,7 +422,7 @@ public:
 
 		if (!pRequestInstance)
 		{
-			CSparyQueryBase::OnFailure();
+			CSprayQueryBase::OnFailure();
 			return;
 		}
 
@@ -449,7 +449,7 @@ public:
 		// 解析HTML文档
 		htmlDocPtr doc = htmlReadMemory(data, size, nullptr, "UTF-8", HTML_PARSE_NOERROR | HTML_PARSE_NOWARNING);
 		if (!doc) {
-			gEngfuncs.Con_DPrintf("[BetterSpary] Failed to parse HTML dom.\n");
+			gEngfuncs.Con_DPrintf("[BetterSpray] Failed to parse HTML dom.\n");
 			return false;
 		}
 		SCOPE_EXIT() { xmlFreeDoc(doc); };
@@ -457,7 +457,7 @@ public:
 		// 创建XPath上下文
 		xmlXPathContextPtr xpathCtx = xmlXPathNewContext(doc);
 		if (!xpathCtx) {
-			gEngfuncs.Con_DPrintf("[BetterSpary] Failed to create XPath context.\n");
+			gEngfuncs.Con_DPrintf("[BetterSpray] Failed to create XPath context.\n");
 			return false;
 		}
 		SCOPE_EXIT() { xmlXPathFreeContext(xpathCtx); };
@@ -529,12 +529,12 @@ public:
 				}
 
 				// 如果至少有fileId，则添加到列表中
-				if (!info->fileId.empty() && info->description.starts_with("!BetterSpary")) {
+				if (!info->fileId.empty() && info->description.starts_with("!BetterSpray")) {
 
 					floatHelpList.push_back(info);
 
 					// 调试输出
-					gEngfuncs.Con_DPrintf("[BetterSpary] Found spary: fileId=%s, desc=\"%s\".\n", info->fileId.c_str(), info->description.c_str());
+					gEngfuncs.Con_DPrintf("[BetterSpray] Found spary: fileId=%s, desc=\"%s\".\n", info->fileId.c_str(), info->description.c_str());
 				}
 			}
 		}
@@ -548,13 +548,13 @@ public:
 			auto selectedItem = floatHelpList[randomIndex];
 
 			// 调用BuildQueryImageLink
-			gEngfuncs.Con_DPrintf("[BetterSpary] Randomly selected spary: fileId=%s\n", selectedItem->fileId.c_str());
+			gEngfuncs.Con_DPrintf("[BetterSpray] Randomly selected spary: fileId=%s\n", selectedItem->fileId.c_str());
 			BuildQueryImageLink(selectedItem->fileId);
 		}
 		else {
-			gEngfuncs.Con_DPrintf("[BetterSpary] No valid sprays found.\n");
+			gEngfuncs.Con_DPrintf("[BetterSpray] No valid sprays found.\n");
 
-			SparyDatabase()->UpdatePlayerSparyQueryStatus(m_userId.c_str(), SparyQueryState_Failed);
+			SprayDatabase()->UpdatePlayerSprayQueryStatus(m_userId.c_str(), SprayQueryState_Failed);
 		}
 
 		return true;
@@ -574,7 +574,7 @@ public:
 
 	void BuildQueryImageLink(const std::string& fileId) override
 	{
-		if (std::find_if(m_SubQueryList.begin(), m_SubQueryList.end(), [&fileId](const std::shared_ptr<ISparyQuery>& p) {
+		if (std::find_if(m_SubQueryList.begin(), m_SubQueryList.end(), [&fileId](const std::shared_ptr<ISprayQuery>& p) {
 
 			if (!strcmp(p->GetName(), "QueryImageLink") &&
 				!strcmp(p->GetIdentifier(), fileId.c_str()))
@@ -586,7 +586,7 @@ public:
 
 			}) == m_SubQueryList.end())
 		{
-			auto QueryInstance = std::make_shared<CSparyQueryImageLinkTask>(this, m_userId, fileId);
+			auto QueryInstance = std::make_shared<CSprayQueryImageLinkTask>(this, m_userId, fileId);
 
 			QueryInstance->StartQuery();
 
@@ -596,7 +596,7 @@ public:
 
 	void BuildQueryImageFile(const std::string& fileName, const std::string& actualMediaUrl) override
 	{
-		if (std::find_if(m_SubQueryList.begin(), m_SubQueryList.end(), [&fileName](const std::shared_ptr<ISparyQuery>& p) {
+		if (std::find_if(m_SubQueryList.begin(), m_SubQueryList.end(), [&fileName](const std::shared_ptr<ISprayQuery>& p) {
 
 			if (!strcmp(p->GetName(), "QueryImageFile") &&
 				!strcmp(p->GetIdentifier(), fileName.c_str()))
@@ -608,7 +608,7 @@ public:
 
 			}) == m_SubQueryList.end())
 		{
-			auto QueryInstance = std::make_shared<CSparyQueryImageFileTask>(this, m_userId, fileName, actualMediaUrl);
+			auto QueryInstance = std::make_shared<CSprayQueryImageFileTask>(this, m_userId, fileName, actualMediaUrl);
 			
 			QueryInstance->StartQuery();
 
@@ -618,25 +618,25 @@ public:
 
 	void OnImageFileAcquired(const std::string &fileName) override
 	{
-		int result = Draw_UploadSparyTexture(-1, m_userId.c_str(), fileName.c_str(), "GAMEDOWNLOAD");
+		int result = Draw_UploadSprayTexture(-1, m_userId.c_str(), fileName.c_str(), "GAMEDOWNLOAD");
 
 		if (result == 0)
 		{
-			SparyDatabase()->UpdatePlayerSparyQueryStatus(m_userId.c_str(), SparyQueryState_Finished);
+			SprayDatabase()->UpdatePlayerSprayQueryStatus(m_userId.c_str(), SprayQueryState_Finished);
 		}
 		else
 		{
-			SparyDatabase()->UpdatePlayerSparyQueryStatus(m_userId.c_str(), SparyQueryState_Failed);
+			SprayDatabase()->UpdatePlayerSprayQueryStatus(m_userId.c_str(), SprayQueryState_Failed);
 		}
 	}
 };
 
-class CSparyDatabase : public ISparyDatabase
+class CSprayDatabase : public ISprayDatabase
 {
 private:
-	std::vector<std::shared_ptr<ISparyQuery>> m_QueryTaskList;
-	std::vector<ISparyQueryStateChangeHandler*> m_StateChangeCallbacks;
-	std::unordered_map<std::string, SparyQueryState> m_UserQueryStatus{};
+	std::vector<std::shared_ptr<ISprayQuery>> m_QueryTaskList;
+	std::vector<ISprayQueryStateChangeHandler*> m_StateChangeCallbacks;
+	std::unordered_map<std::string, SprayQueryState> m_UserQueryStatus{};
 
 public:
 
@@ -689,7 +689,7 @@ public:
 			}
 		}
 
-		auto QueryList = std::make_shared<CSparyQueryTaskList>(playerindex, userId);
+		auto QueryList = std::make_shared<CSprayQueryTaskList>(playerindex, userId);
 
 		m_QueryTaskList.emplace_back(QueryList);
 
@@ -698,7 +698,7 @@ public:
 		return true;
 	}
 
-	void QueryPlayerSpary(int playerindex, const char* userId) override
+	void QueryPlayerSpray(int playerindex, const char* userId) override
 	{
 		std::string userIdString = userId;
 
@@ -706,15 +706,15 @@ public:
 
 		if (it == m_UserQueryStatus.end())
 		{
-			gEngfuncs.Con_DPrintf("[BetterSpary] Querying spary for userId \"%s\"...\n", userId);
+			gEngfuncs.Con_DPrintf("[BetterSpray] Querying spary for userId \"%s\"...\n", userId);
 
-			UpdatePlayerSparyQueryStatus(userIdString.c_str(), SparyQueryState_Querying);
+			UpdatePlayerSprayQueryStatus(userIdString.c_str(), SprayQueryState_Querying);
 
 			BuildQuery(playerindex, userId);
 		}
 	}
 
-	SparyQueryState GetPlayerSparyQueryStatus(const char* userId) const override
+	SprayQueryState GetPlayerSprayQueryStatus(const char* userId) const override
 	{
 		std::string userIdString = userId;
 
@@ -725,10 +725,10 @@ public:
 			return it->second;
 		}
 
-		return SparyQueryState_Unknown;
+		return SprayQueryState_Unknown;
 	}
 
-	void UpdatePlayerSparyQueryStatus(const char *userId, SparyQueryState newQueryStatus) override
+	void UpdatePlayerSprayQueryStatus(const char *userId, SprayQueryState newQueryStatus) override
 	{
 		std::string userIdString = userId;
 
@@ -744,7 +744,7 @@ public:
 		}
 	}
 
-	void EnumQueries(IEnumSparyQueryHandler* handler) override
+	void EnumQueries(IEnumSprayQueryHandler* handler) override
 	{
 		for (const auto& p : m_QueryTaskList)
 		{
@@ -752,9 +752,9 @@ public:
 		}
 	}
 
-	void RegisterQueryStateChangeCallback(ISparyQueryStateChangeHandler* handler) override
+	void RegisterQueryStateChangeCallback(ISprayQueryStateChangeHandler* handler) override
 	{
-		auto itor = std::find_if(m_StateChangeCallbacks.begin(), m_StateChangeCallbacks.end(), [handler](ISparyQueryStateChangeHandler* it) {
+		auto itor = std::find_if(m_StateChangeCallbacks.begin(), m_StateChangeCallbacks.end(), [handler](ISprayQueryStateChangeHandler* it) {
 			return it == handler;
 		});
 
@@ -764,9 +764,9 @@ public:
 		}
 	}
 
-	void UnregisterQueryStateChangeCallback(ISparyQueryStateChangeHandler* handler) override
+	void UnregisterQueryStateChangeCallback(ISprayQueryStateChangeHandler* handler) override
 	{
-		auto itor = std::find_if(m_StateChangeCallbacks.begin(), m_StateChangeCallbacks.end(), [handler](ISparyQueryStateChangeHandler* it) {
+		auto itor = std::find_if(m_StateChangeCallbacks.begin(), m_StateChangeCallbacks.end(), [handler](ISprayQueryStateChangeHandler* it) {
 			return it == handler;
 			});
 
@@ -776,7 +776,7 @@ public:
 		}
 	}
 
-	void DispatchQueryStateChangeCallback(IBaseSparyQuery* pQuery, SparyQueryState newState) override
+	void DispatchQueryStateChangeCallback(IBaseSprayQuery* pQuery, SprayQueryState newState) override
 	{
 		for (auto callback : m_StateChangeCallbacks)
 		{
@@ -785,11 +785,11 @@ public:
 	}
 };
 
-static CSparyDatabase s_SparyDatabase;
+static CSprayDatabase s_SprayDatabase;
 
-ISparyDatabase* SparyDatabase()
+ISprayDatabase* SprayDatabase()
 {
-	return &s_SparyDatabase;
+	return &s_SprayDatabase;
 }
 
-EXPOSE_SINGLE_INTERFACE_GLOBALVAR(CSparyDatabase, ISparyDatabase, SPARY_DATABASE_INTERFACE_VERSION, s_SparyDatabase)
+EXPOSE_SINGLE_INTERFACE_GLOBALVAR(CSprayDatabase, ISprayDatabase, SPARY_DATABASE_INTERFACE_VERSION, s_SprayDatabase)

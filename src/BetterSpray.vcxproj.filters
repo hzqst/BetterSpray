@@ -53,7 +53,7 @@
     <ClCompile Include="VGUI2ExtensionImport.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
-    <ClCompile Include="SparyDatabase.cpp">
+    <ClCompile Include="SprayDatabase.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="..\thirdparty\MetaHookSv\include\SourceSDK\Bitmap.cpp">
@@ -385,7 +385,7 @@
     <ClInclude Include="privatehook.h">
       <Filter>Headers</Filter>
     </ClInclude>
-    <ClInclude Include="SparyDatabase.h">
+    <ClInclude Include="SprayDatabase.h">
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="UtilHTTPClient.h">
