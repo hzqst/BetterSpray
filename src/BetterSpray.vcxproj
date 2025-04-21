@@ -330,11 +330,9 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;BETTERSPRAY_EXPORTS;_WINDOWS;_USRDLL;$(VGUI2ExtensionDefines);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(MetaHookBaseDir)include;$(MetaHookBaseDir)include\HLSDK\cl_dll;$(MetaHookBaseDir)include\HLSDK\common;$(MetaHookBaseDir)include\HLSDK\engine;$(MetaHookBaseDir)include\HLSDK\pm_shared;$(MetaHookBaseDir)include\HLSDK\public;$(MetaHookBaseDir)include\Interface;$(MetaHookBaseDir)include\Interface\VGUI;$(MetaHookBaseDir)include\VGUI;$(MetaHookBaseDir)include\SteamSDK;$(MetaHookBaseDir)include\vgui_controls;$(MetaHookBaseDir)include\SourceSDK;$(MetaHookBaseDir)include\SourceSDK\tier0;$(MetaHookBaseDir)include\SourceSDK\tier1;$(CapstoneIncludeDirectory);$(FreeImageIncludeDirectory);$(LibXML2ncludeDirectory);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(MetaHookBaseDir)include;$(MetaHookBaseDir)include\HLSDK\cl_dll;$(MetaHookBaseDir)include\HLSDK\common;$(MetaHookBaseDir)include\HLSDK\engine;$(MetaHookBaseDir)include\HLSDK\pm_shared;$(MetaHookBaseDir)include\HLSDK\public;$(MetaHookBaseDir)include\Interface;$(MetaHookBaseDir)include\Interface\VGUI;$(MetaHookBaseDir)include\VGUI;$(MetaHookBaseDir)include\SteamSDK;$(MetaHookBaseDir)include\vgui_controls;$(MetaHookBaseDir)include\SourceSDK;$(MetaHookBaseDir)include\SourceSDK\tier0;$(MetaHookBaseDir)include\SourceSDK\tier1;$(CapstoneIncludeDirectory);$(FreeImageIncludeDirectory);$(LibXML2IncludeDirectory);$(ScopeExitIncludeDirectory);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <CompileAs>Default</CompileAs>
-      <PreprocessToFile>false</PreprocessToFile>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(FreeImageLibrariesDirectory);$(LibXML2LibrariesDirectory);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -351,7 +349,8 @@ $(CapstoneCheckRequirements)
 $(LibXML2CheckRequirements)</Command>
     </PreBuildEvent>
     <PostBuildEvent>
-      <Command>$(PluginPostBuildCommand2)</Command>
+      <Command>$(PluginPostBuildCommand3)
+$(LibXML2CopyBinaries)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -362,7 +361,7 @@ $(LibXML2CheckRequirements)</Command>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;BETTERSPRAY_EXPORTS;_WINDOWS;_USRDLL;$(VGUI2ExtensionDefines);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(MetaHookBaseDir)include;$(MetaHookBaseDir)include\HLSDK\cl_dll;$(MetaHookBaseDir)include\HLSDK\common;$(MetaHookBaseDir)include\HLSDK\engine;$(MetaHookBaseDir)include\HLSDK\pm_shared;$(MetaHookBaseDir)include\HLSDK\public;$(MetaHookBaseDir)include\Interface;$(MetaHookBaseDir)include\Interface\VGUI;$(MetaHookBaseDir)include\VGUI;$(MetaHookBaseDir)include\SteamSDK;$(MetaHookBaseDir)include\vgui_controls;$(MetaHookBaseDir)include\SourceSDK;$(MetaHookBaseDir)include\SourceSDK\tier0;$(MetaHookBaseDir)include\SourceSDK\tier1;$(CapstoneIncludeDirectory);$(FreeImageIncludeDirectory);$(LibXML2ncludeDirectory);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(MetaHookBaseDir)include;$(MetaHookBaseDir)include\HLSDK\cl_dll;$(MetaHookBaseDir)include\HLSDK\common;$(MetaHookBaseDir)include\HLSDK\engine;$(MetaHookBaseDir)include\HLSDK\pm_shared;$(MetaHookBaseDir)include\HLSDK\public;$(MetaHookBaseDir)include\Interface;$(MetaHookBaseDir)include\Interface\VGUI;$(MetaHookBaseDir)include\VGUI;$(MetaHookBaseDir)include\SteamSDK;$(MetaHookBaseDir)include\vgui_controls;$(MetaHookBaseDir)include\SourceSDK;$(MetaHookBaseDir)include\SourceSDK\tier0;$(MetaHookBaseDir)include\SourceSDK\tier1;$(CapstoneIncludeDirectory);$(FreeImageIncludeDirectory);$(LibXML2IncludeDirectory);$(ScopeExitIncludeDirectory);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
@@ -378,7 +377,8 @@ $(CapstoneCheckRequirements)
 $(LibXML2CheckRequirements)</Command>
     </PreBuildEvent>
     <PostBuildEvent>
-      <Command>$(PluginPostBuildCommand2)</Command>
+      <Command>$(PluginPostBuildCommand3)
+$(LibXML2CopyBinaries)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

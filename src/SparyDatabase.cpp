@@ -344,7 +344,7 @@ public:
 
 	bool OnProcessPayload(const char* data, size_t size) override
 	{
-		class CSteamScreenshotFloatHelpInfo
+		class CScreenshotFloatHelpInfo
 		{
 		public:
 			std::string fileId;          // 从data-publishedfileid获取
@@ -353,7 +353,7 @@ public:
 		};
 
 		// 创建存储结果的vector
-		std::vector<std::shared_ptr<CSteamScreenshotFloatHelpInfo>> floatHelpList;
+		std::vector<std::shared_ptr<CScreenshotFloatHelpInfo>> floatHelpList;
 
 		// 解析HTML文档
 		htmlDocPtr doc = htmlReadMemory(data, size, nullptr, "UTF-8", HTML_PARSE_NOERROR | HTML_PARSE_NOWARNING);
@@ -383,7 +383,7 @@ public:
 
 			// 遍历所有找到的div元素
 			for (int i = 0; i < size; ++i) {
-				auto info = std::make_shared<CSteamScreenshotFloatHelpInfo>();
+				auto info = std::make_shared<CScreenshotFloatHelpInfo>();
 				xmlNodePtr divNode = nodes->nodeTab[i];
 
 				// 查找a标签
@@ -430,13 +430,12 @@ public:
 				}
 
 				// 如果至少有fileId，则添加到列表中
-				if (!info->fileId.empty()) {
+				if (!info->fileId.empty() && info->description.starts_with("BetterSpray")) {
+
 					floatHelpList.push_back(info);
 
 					// 调试输出
-					gEngfuncs.Con_DPrintf("[BetterSpary] 找到截图: id=%s, desc=%s\n",
-						info->fileId.c_str(),
-						info->description.c_str());
+					gEngfuncs.Con_DPrintf("[BetterSpary] 找到截图: id=%s, desc=%s\n", info->fileId.c_str(), info->description.c_str());
 				}
 			}
 		}
@@ -445,6 +444,8 @@ public:
 		if (xpathObj) xmlXPathFreeObject(xpathObj);
 		xmlXPathFreeContext(xpathCtx);
 		xmlFreeDoc(doc);
+
+
 
 		return true;
 	}
