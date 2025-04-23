@@ -122,6 +122,7 @@
     <ClCompile Include="privatehook.cpp" />
     <ClCompile Include="SprayDatabase.cpp" />
     <ClCompile Include="UtilHTTPClient.cpp" />
+    <ClCompile Include="UtilThreadTask.cpp" />
     <ClCompile Include="VGUI2ExtensionImport.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -282,6 +283,7 @@
     <ClInclude Include="privatehook.h" />
     <ClInclude Include="SprayDatabase.h" />
     <ClInclude Include="UtilHTTPClient.h" />
+    <ClInclude Include="UtilThreadTask.h" />
     <ClInclude Include="VGUI2ExtensionImport.h" />
   </ItemGroup>
   <ItemGroup>

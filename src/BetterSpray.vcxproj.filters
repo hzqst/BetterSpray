@@ -371,6 +371,9 @@
     <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\WizardSubPanel.cpp">
       <Filter>vgui_controls</Filter>
     </ClCompile>
+    <ClCompile Include="UtilThreadTask.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="enginedef.h">
@@ -846,6 +849,9 @@
     </ClInclude>
     <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\WizardSubPanel.h">
       <Filter>vgui_controls</Filter>
+    </ClInclude>
+    <ClInclude Include="UtilThreadTask.h">
+      <Filter>Headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

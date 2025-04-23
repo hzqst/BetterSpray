@@ -4,6 +4,7 @@
 
 #include "VGUI2ExtensionImport.h"
 #include "UtilHTTPClient.h"
+#include "UtilThreadTask.h"
 
 cl_exportfuncs_t gExportfuncs = { 0 };
 mh_interface_t* g_pInterface = NULL;
@@ -93,6 +94,7 @@ void IPluginsV4::LoadClient(cl_exportfuncs_t* pExportFunc)
 	Client_InstallHooks();
 
 	UtilHTTPClient_Init();
+	UtilThreadTask_Init();
 }
 
 void IPluginsV4::ExitGame(int iResult)
