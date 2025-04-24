@@ -1,6 +1,7 @@
 #include <metahook.h>
 #include "exportfuncs.h"
 #include "privatehook.h"
+#include "plugins.h"
 
 #include "VGUI2ExtensionImport.h"
 #include "UtilHTTPClient.h"
@@ -37,6 +38,12 @@ void IPluginsV4::LoadEngine(cl_enginefunc_t* pEngfuncs)
 	g_pFileSystem = g_pInterface->FileSystem;
 	if (!g_pFileSystem)
 		g_pFileSystem_HL25 = g_pInterface->FileSystem_HL25;
+
+	if (g_pInterface->MetaHookAPIVersion < 106)
+	{
+		Sys_Error("MetaHookAPIVersion too low! expect %d, got %d !", 106, g_pInterface->MetaHookAPIVersion);
+		return;
+	}
 
 	g_iEngineType = g_pMetaHookAPI->GetEngineType();
 	g_dwEngineBuildnum = g_pMetaHookAPI->GetEngineBuildnum();
