@@ -8,6 +8,7 @@ enum SprayQueryState
 {
 	SprayQueryState_Unknown = 0,
 	SprayQueryState_Querying,
+	SprayQueryState_Receiving,
 	SprayQueryState_Failed,
 	SprayQueryState_Finished,
 };
@@ -20,6 +21,7 @@ public:
 	virtual const char* GetUrl() const = 0;
 	virtual bool IsFailed() const = 0;
 	virtual bool IsFinished() const = 0;
+	virtual	bool NeedRetry() const = 0;
 	virtual SprayQueryState GetState() const = 0; 
 	virtual unsigned int GetTaskId() const = 0;
 };
@@ -48,7 +50,6 @@ public:
 	virtual void EnumQueries(IEnumSprayQueryHandler *handler) = 0;
 	virtual void RegisterQueryStateChangeCallback(ISprayQueryStateChangeHandler* handler) = 0;
 	virtual void UnregisterQueryStateChangeCallback(ISprayQueryStateChangeHandler* handler) = 0;
-	virtual void DispatchQueryStateChangeCallback(ISprayQuery* pQuery, SprayQueryState newState) = 0;
 };
 
 ISprayDatabase* SprayDatabase();

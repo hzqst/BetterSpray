@@ -25,15 +25,29 @@ int Draw_LoadSprayTexture(int playerindex, const char* userId, const char* fileN
 
 bool Draw_ValidateImageFormatMemoryIO(const void* data, size_t dataSize, const char* identifier);
 
+static int UTIL_GetContentLength(IUtilHTTPResponse* ResponseInstance)
+{
+	char szContentLength[32]{};
+	if (ResponseInstance->GetHeader("Content-Length", szContentLength, sizeof(szContentLength) - 1) && szContentLength[0])
+	{
+		return atoi(szContentLength);
+	}
+
+	return -1;
+}
+
 class ISprayQueryInternal : public ISprayQuery
 {
 public:
 	virtual void AddRef() = 0;
 	virtual void Release() = 0;
 
-	virtual void OnFinish() = 0;
+	virtual void OnResponding(IUtilHTTPRequest* RequestInstance, IUtilHTTPResponse* ResponseInstance) = 0;
+	virtual void OnFinish(IUtilHTTPRequest* RequestInstance, IUtilHTTPResponse* ResponseInstance) = 0;
+	virtual bool OnStreamComplete(IUtilHTTPRequest* RequestInstance, IUtilHTTPResponse* ResponseInstance) = 0;
+	virtual bool OnProcessPayload(IUtilHTTPRequest* RequestInstance, IUtilHTTPResponse* ResponseInstance, const void* data, size_t size) = 0;
+	virtual void OnReceiveChunk(IUtilHTTPRequest* RequestInstance, IUtilHTTPResponse* ResponseInstance, const void* data, size_t size) = 0;
 	virtual void OnFailure() = 0;
-	virtual bool OnProcessPayload(const char* data, size_t size) = 0;
 
 	virtual void RunFrame(float flCurrentAbsTime) = 0;
 	virtual void StartQuery() = 0;
@@ -49,6 +63,8 @@ public:
 	virtual void BuildQueryImageFile(const std::string& userId, const std::string& fileName, const std::string& actualMediaUrl) = 0;
 	virtual void OnImageFileAcquired(const std::string& userId, const std::string& fileName) = 0;
 	virtual void UpdatePlayerSprayQueryStatusInternal(const std::string& userId, SprayQueryState newQueryStatus) = 0;
+	virtual void DispatchQueryStateChangeCallback(ISprayQuery* pQuery, SprayQueryState newState) = 0;
+
 };
 
 ISprayDatabaseInternal* SprayDatabaseInternal();
@@ -220,28 +236,42 @@ public:
 			return;
 		}
 
-		auto pPayload = ResponseInstance->GetPayload();
-
-		if (!m_pQueryTask->OnProcessPayload((const char*)pPayload->GetBytes(), pPayload->GetLength()))
+		if (!RequestInstance->IsStream())
 		{
-			m_pQueryTask->OnFailure();
-			return;
+			auto pPayload = ResponseInstance->GetPayload();
+
+			if (!m_pQueryTask->OnProcessPayload(RequestInstance, ResponseInstance, (const void*)pPayload->GetBytes(), pPayload->GetLength()))
+			{
+				m_pQueryTask->OnFailure();
+				return;
+			}
+		}
+		else
+		{
+			if (!m_pQueryTask->OnStreamComplete(RequestInstance, ResponseInstance))
+			{
+				m_pQueryTask->OnFailure();
+				return;
+			}
 		}
 	}
 
-	void OnUpdateState(UtilHTTPRequestState NewState) override
+	void OnUpdateState(IUtilHTTPRequest* RequestInstance, IUtilHTTPResponse* ResponseInstance, UtilHTTPRequestState NewState) override
 	{
+		if (NewState == UtilHTTPRequestState::Responding)
+		{
+			m_pQueryTask->OnResponding(RequestInstance, ResponseInstance);
+		}
 		if (NewState == UtilHTTPRequestState::Finished)
 		{
-			m_pQueryTask->OnFinish();
+			m_pQueryTask->OnFinish(RequestInstance, ResponseInstance);
 		}
 	}
 
 	void OnReceiveData(IUtilHTTPRequest* RequestInstance, IUtilHTTPResponse* ResponseInstance, const void* pData, size_t cbSize) override
 	{
 		//Only stream request has OnReceiveData
-
-
+		m_pQueryTask->OnReceiveChunk(RequestInstance, ResponseInstance, pData, cbSize);
 	}
 };
 
@@ -249,6 +279,7 @@ class CSprayQueryBase : public ISprayQueryInternal
 {
 private:
 	volatile long m_RefCount{};
+	bool m_bResponding{};
 	bool m_bFinished{};
 	bool m_bFailed{};
 	float m_flNextRetryTime{};
@@ -303,8 +334,16 @@ public:
 		return m_bFailed;
 	}
 
+	bool NeedRetry() const override
+	{
+		return m_flNextRetryTime > 0;
+	}
+
 	SprayQueryState GetState() const override
 	{
+		if (m_bResponding)
+			return SprayQueryState_Receiving;
+
 		if (m_bFailed)
 			return SprayQueryState_Failed;
 
@@ -319,19 +358,49 @@ public:
 		return m_uiTaskId;
 	}
 
+	void OnResponding(IUtilHTTPRequest* RequestInstance, IUtilHTTPResponse* ResponseInstance) override
+	{
+		m_bResponding = true;
+
+		SprayDatabaseInternal()->DispatchQueryStateChangeCallback(this, GetState());
+	}
+
 	void OnFailure() override
 	{
 		m_bFailed = true;
 		m_flNextRetryTime = (float)gEngfuncs.GetAbsoluteTime() + 5.0f;
 
-		SprayDatabase()->DispatchQueryStateChangeCallback(this, GetState());
+		SprayDatabaseInternal()->DispatchQueryStateChangeCallback(this, GetState());
 	}
 
-	void OnFinish() override
+	void OnFinish(IUtilHTTPRequest* RequestInstance, IUtilHTTPResponse* ResponseInstance) override
 	{
 		m_bFinished = true;
 
-		SprayDatabase()->DispatchQueryStateChangeCallback(this, GetState());
+		SprayDatabaseInternal()->DispatchQueryStateChangeCallback(this, GetState());
+	}
+
+	bool OnProcessPayload(IUtilHTTPRequest* RequestInstance, IUtilHTTPResponse* ResponseInstance, const void* data, size_t size) override
+	{
+		auto nContentLength = UTIL_GetContentLength(ResponseInstance);
+
+		if (nContentLength >= 0 && size != nContentLength)
+		{
+			gEngfuncs.Con_Printf("[BetterSpray] Content-Length mismatch for \"%s\": expect %d , got %d !\n", m_Url.c_str(), nContentLength, size);
+			return false;
+		}
+
+		return true;
+	}
+
+	bool OnStreamComplete(IUtilHTTPRequest* RequestInstance, IUtilHTTPResponse* ResponseInstance) override
+	{
+		return true;
+	}
+
+	void OnReceiveChunk(IUtilHTTPRequest* RequestInstance, IUtilHTTPResponse* ResponseInstance, const void* data, size_t size) override
+	{
+		//do nothing
 	}
 
 	void RunFrame(float flCurrentAbsTime) override
@@ -352,7 +421,7 @@ public:
 
 		m_bFailed = false;
 		m_bFinished = false;
-		SprayDatabase()->DispatchQueryStateChangeCallback(this, GetState());
+		SprayDatabaseInternal()->DispatchQueryStateChangeCallback(this, GetState());
 	}
 };
 
@@ -395,8 +464,11 @@ public:
 		pRequestInstance->Send();
 	}
 
-	bool OnProcessPayload(const char* data, size_t size) override
+	bool OnProcessPayload(IUtilHTTPRequest* RequestInstance, IUtilHTTPResponse* ResponseInstance, const void* data, size_t size) override
 	{
+		if (!CSprayQueryBase::OnProcessPayload(RequestInstance, ResponseInstance, data, size))
+			return false;
+
 		if (!Draw_ValidateImageFormatMemoryIO(data, size, m_fileName.c_str()))
 		{
 			gEngfuncs.Con_DPrintf("[BetterSpray] Acquired image file \"%s\" has invalid image format !\n", m_fileName.c_str());
@@ -561,9 +633,12 @@ public:
 		m_bWorkItemCompleted = true;
 	}
 
-	bool OnProcessPayload(const char* data, size_t size) override
+	bool OnProcessPayload(IUtilHTTPRequest* RequestInstance, IUtilHTTPResponse* ResponseInstance, const void* data, size_t size) override
 	{
-		auto ctx = new CSprayQueryImageLinkWorkItemContext(this, data, size);
+		if (!CSprayQueryBase::OnProcessPayload(RequestInstance, ResponseInstance, data, size))
+			return false;
+
+		auto ctx = new CSprayQueryImageLinkWorkItemContext(this, (const char *)data, size);
 
 		auto hWorkItemHandle = g_pMetaHookAPI->CreateWorkItem(g_pMetaHookAPI->GetGlobalThreadPool(), [](void* context) -> bool {
 
@@ -769,9 +844,12 @@ public:
 		m_bWorkItemCompleted = true;
 	}
 
-	bool OnProcessPayload(const char* data, size_t size) override
+	bool OnProcessPayload(IUtilHTTPRequest* RequestInstance, IUtilHTTPResponse* ResponseInstance, const void* data, size_t size) override
 	{
-		auto ctx = new CSprayQueryTaskListWorkItemContext(this, data, size);
+		if (!CSprayQueryBase::OnProcessPayload(RequestInstance, ResponseInstance, data, size))
+			return false;
+
+		auto ctx = new CSprayQueryTaskListWorkItemContext(this, (const char *)data, size);
 
 		auto hWorkItemHandle = g_pMetaHookAPI->CreateWorkItem(g_pMetaHookAPI->GetGlobalThreadPool(), [](void* context) -> bool {
 
@@ -828,9 +906,11 @@ public:
 
 		for (auto itor = m_QueryList.begin(); itor != m_QueryList.end();)
 		{
-			(*itor)->RunFrame(flCurrentAbsTime);
+			const auto& p = (*itor);
 
-			if ((*itor)->IsFinished())
+			p->RunFrame(flCurrentAbsTime);
+
+			if (p->IsFinished() && !p->NeedRetry())
 			{
 				itor = m_QueryList.erase(itor);
 				continue;
