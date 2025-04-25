@@ -13,6 +13,18 @@ if not "%SolutionDir:~-1%"=="\" SET "SolutionDir=%SolutionDir%\"
 
 cd /d "%SolutionDir%"
 
+:: Check if xz-win-build directory has been initialized
+if not exist "%SolutionDir%thirdparty\xz-win-build\.git" (
+    echo Initializing xz-win-build submodule only...
+    :: Initialize only the xz-win-build submodule without recursive initialization
+    call git submodule update --init "%SolutionDir%thirdparty\xz-win-build"
+    if errorlevel 1 (
+        echo Error: git submodule initialization failed!
+        exit /b 1
+    )
+    echo submodule initialization completed.
+)
+
 for /f "usebackq tokens=*" %%i in (`thirdparty\MetaHookSv\tools\vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do (
   set InstallDir=%%i
 )
