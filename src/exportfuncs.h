@@ -27,5 +27,6 @@ int Draw_LoadSprayTexture_AsyncLoadInGame(int playerindex, FIBITMAP* fiB);
 int Draw_LoadSprayTexture(const char* userId, const char* filePath, const char* pathId, const fnDraw_LoadSprayTextureCallback& callback);
 int Draw_LoadSprayTextures(const char* userId, const char* pathId, const fnDraw_LoadSprayTextureCallback &callback);
 void Draw_LoadSprayTexture_BGRA8ToRGBA8(FIBITMAP* fiB);
+void Draw_LoadSprayTexture_ConvertToBGRA32(FIBITMAP** pfiB);
 
-void BS_UploadSprayBitmap(FIBITMAP* fiB, bool bNormalizeToSquare, bool bWithAlphaChannel, bool bAlphaInverted);
+bool BS_UploadSprayBitmap(FIBITMAP* fiB, bool bNormalizeToSquare, bool bWithAlphaChannel, bool bAlphaInverted);

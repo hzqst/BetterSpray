@@ -198,22 +198,22 @@ void Draw_LoadSprayTexture_BGRA8ToRGBA8(FIBITMAP* fiB)
 	}
 }
 
-void Draw_LoadSprayTexture_WorkItem(CLoadSprayTextureWorkItemContext* ctx)
+void Draw_LoadSprayTexture_ConvertToBGRA32(FIBITMAP** pfiB)
 {
-	FIBITMAP *fiB = ctx->m_fiB;
-	
+	FIBITMAP* fiB = (*pfiB);
+
 	// 检查是否为24bpp图像
 	if (FreeImage_GetBPP(fiB) == 24)
 	{
 		unsigned width = FreeImage_GetWidth(fiB);
 		unsigned height = FreeImage_GetHeight(fiB);
-		
+
 		// 检查宽度是否为高度的两倍
 		if (width == height * 2)
 		{
 			// 创建一个新的32bpp图像，宽度为原图的一半
 			auto newBitmap = FreeImage_Allocate(width / 2, height, 32);
-			
+
 			if (newBitmap)
 			{
 				// 检查最右下角像素是否为纯白色
@@ -225,13 +225,13 @@ void Draw_LoadSprayTexture_WorkItem(CLoadSprayTextureWorkItemContext* ctx)
 				{
 					bInvertedAlpha = true;
 				}
-				
+
 				// 处理每一行像素
 				for (unsigned y = 0; y < height; y++)
 				{
 					BYTE* srcBits = FreeImage_GetScanLine(fiB, y);
 					BYTE* dstBits = FreeImage_GetScanLine(newBitmap, y);
-					
+
 					// 处理每一列像素
 					for (unsigned x = 0; x < width / 2; x++)
 					{
@@ -239,11 +239,11 @@ void Draw_LoadSprayTexture_WorkItem(CLoadSprayTextureWorkItemContext* ctx)
 						dstBits[FI_RGBA_BLUE] = srcBits[FI_RGBA_BLUE];
 						dstBits[FI_RGBA_GREEN] = srcBits[FI_RGBA_GREEN];
 						dstBits[FI_RGBA_RED] = srcBits[FI_RGBA_RED];
-						
+
 						// 右半部分计算Alpha值
 						BYTE* alphaSrc = srcBits + (width / 2) * 3; // 指向右半部分对应位置
 						int alphaValue = (alphaSrc[FI_RGBA_RED] + alphaSrc[FI_RGBA_GREEN] + alphaSrc[FI_RGBA_BLUE]) / 3;
-						
+
 						// 根据bInvertedAlpha决定是否反转alpha值
 						if (bInvertedAlpha)
 						{
@@ -253,28 +253,30 @@ void Draw_LoadSprayTexture_WorkItem(CLoadSprayTextureWorkItemContext* ctx)
 						{
 							dstBits[FI_RGBA_ALPHA] = (BYTE)alphaValue;
 						}
-						
+
 						// 移动到下一个像素
 						srcBits += 3;
 						dstBits += 4;
 					}
 				}
 
-				ctx->m_fiB = newBitmap;
+				(*pfiB) = newBitmap;
 
 				FreeImage_Unload(fiB);
 
-				Draw_LoadSprayTexture_BGRA8ToRGBA8(ctx->m_fiB);
-
-				GameThreadTaskScheduler()->QueueTask(ctx);
 				return;
 			}
 		}
 	}
-	
-	ctx->m_fiB = FreeImage_ConvertTo32Bits(fiB);
+
+	(*pfiB) = FreeImage_ConvertTo32Bits(fiB);
 
 	FreeImage_Unload(fiB);
+}
+
+void Draw_LoadSprayTexture_WorkItem(CLoadSprayTextureWorkItemContext* ctx)
+{
+	Draw_LoadSprayTexture_ConvertToBGRA32(&ctx->m_fiB);
 
 	Draw_LoadSprayTexture_BGRA8ToRGBA8(ctx->m_fiB);
 
@@ -918,7 +920,7 @@ FIBITMAP* BS_NormalizeToSquareRGBA24(FIBITMAP* fibSquareRGB, FIBITMAP* fibSquare
 	return newBitmap;
 }
 
-void BS_UploadSprayBitmap(FIBITMAP *fiB, bool bNormalizeToSquare, bool bWithAlphaChannel, bool bAlphaInverted)
+bool BS_UploadSprayBitmap(FIBITMAP *fiB, bool bNormalizeToSquare, bool bWithAlphaChannel, bool bAlphaInverted)
 {
 	FreeImageIO fiIO;
 	fiIO.read_proc = FI_Read;
@@ -944,7 +946,7 @@ void BS_UploadSprayBitmap(FIBITMAP *fiB, bool bNormalizeToSquare, bool bWithAlph
 		if (!hNewFileHandle)
 		{
 			gEngfuncs.Con_Printf("[BetterSpray] Could not open \"%s\" for writing.\n", newFilePath.c_str());
-			return;
+			return false;
 		}
 
 		SCOPE_EXIT{ FILESYSTEM_ANY_CLOSE(hNewFileHandle); };
@@ -1013,7 +1015,7 @@ void BS_UploadSprayBitmap(FIBITMAP *fiB, bool bNormalizeToSquare, bool bWithAlph
 		else
 		{
 			gEngfuncs.Con_Printf("[BetterSpray] Could not save \"%s\", FreeImage_SaveToHandle failed!\n", newFilePath.c_str());
-			return;
+			return false;
 		}
 	}
 	else
@@ -1030,7 +1032,7 @@ void BS_UploadSprayBitmap(FIBITMAP *fiB, bool bNormalizeToSquare, bool bWithAlph
 	if (!pszFullPath)
 	{
 		gEngfuncs.Con_Printf("[BetterSpray] Could not upload \"%s\", GetLocalPath failed.\n", newFilePath.c_str());
-		return;
+		return false;
 	}
 
 	SteamScreenshots()->AddScreenshotToLibrary(pszFullPath, nullptr, width, height);
@@ -1045,9 +1047,10 @@ void BS_UploadSprayBitmap(FIBITMAP *fiB, bool bNormalizeToSquare, bool bWithAlph
 	}
 
 	gEngfuncs.Con_Printf("[BetterSpray] \"%s\" has been uploaded to Steam screenshot library. Please set \"!Spray\" as screenshot description.\n", newFilePath.c_str());
+	return true;
 }
 
-void BS_UploadSprayFile(const char *fileName, bool bNormalizeToSquare, bool bWithAlphaChannel, bool bAlphaInverted)
+bool BS_UploadSprayFile(const char *fileName, bool bNormalizeToSquare, bool bWithAlphaChannel, bool bAlphaInverted)
 {
 	std::string filePath = std::format("{0}/{1}", CUSTOM_SPRAY_DIRECTORY, fileName);
 
@@ -1059,7 +1062,7 @@ void BS_UploadSprayFile(const char *fileName, bool bNormalizeToSquare, bool bWit
 		if (!fileHandle)
 		{
 			gEngfuncs.Con_Printf("[BetterSpray] Could not open \"%s\" for reading.\n", filePath.c_str());
-			return;
+			return false;
 		}
 
 		SCOPE_EXIT{ FILESYSTEM_ANY_CLOSE(fileHandle); };
@@ -1080,20 +1083,20 @@ void BS_UploadSprayFile(const char *fileName, bool bNormalizeToSquare, bool bWit
 		if (fiFormat == FIF_UNKNOWN)
 		{
 			gEngfuncs.Con_Printf("[BetterSpray] Could not upload \"%s\", Unknown format.\n", filePath.c_str());
-			return;
+			return false;
 		}
 
 		if (!FreeImage_FIFSupportsReading(fiFormat))
 		{
 			gEngfuncs.Con_Printf("[BetterSpray] Could not upload \"%s\", Unsupported format.\n", filePath.c_str());
-			return;
+			return false;
 		}
 
 #if 0
 		if (fiFormat != FIF_JPEG && fiFormat != FIF_PNG && fiFormat != FIF_TARGA)
 		{
 			gEngfuncs.Con_Printf("[BetterSpray] Could not upload \"%s\", Only JPEG / PNG / TGA supported.\n", filePath.c_str());
-			return;
+			return false;
 		}
 #endif
 
@@ -1102,15 +1105,17 @@ void BS_UploadSprayFile(const char *fileName, bool bNormalizeToSquare, bool bWit
 		if (!fiB)
 		{
 			gEngfuncs.Con_Printf("[BetterSpray] Could not upload \"%s\", FreeImage_LoadFromHandle failed.\n", filePath.c_str());
-			return;
+			return false;
 		}
 	}
 
+	bool success = false;
 	if (fiB)
 	{
-		BS_UploadSprayBitmap(fiB, bNormalizeToSquare, bWithAlphaChannel, bAlphaInverted);
+		success = BS_UploadSprayBitmap(fiB, bNormalizeToSquare, bWithAlphaChannel, bAlphaInverted);
 		FreeImage_Unload(fiB);
 	}	
+	return success;
 }
 
 void BS_Upload_f()
