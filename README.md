@@ -2,6 +2,7 @@
 
 **BetterSpray** is a plugin for MetaHookSV that enhances Sven Co-op’s spray system with support
 for multiple images, true aspect ratios, and dynamic reloading.
+
 MetaHookSV: https://github.com/hzqst/MetaHookSv
 
 ![BetterSpray Preview](https://raw.githubusercontent.com/KazamiiSC/BetterSpray-Sven-Coop/refs/heads/main/preview/render3.png)
@@ -9,22 +10,14 @@ MetaHookSV: https://github.com/hzqst/MetaHookSv
 ## 🌟 Main Features
 
 ### 🖼️ Spray Management
-- ✅ Supports multiple sprays (PNG/JPG)
-- ✅ Auto-detects images in `custom_sprays`
-- ✅ Dynamic reload without restarting (`sprayreload`)
-- ✅ Organized list display (`spraylist`)
-
-### 🎨 Advanced Customization
-- 🔧 Size adjustment (`sprayscale 5-60`)
-- 🔄 Free rotation (`sprayrotate 0-360`)
-- 💡 Brightness control (`spraybrightness 0.1-2.0`)
-- ⏳ Duration: 60s + 2s fade out
-- 📐 **Preserves original aspect ratio** (720x420, etc.)
+- ✅ Supports loading JPG/PNG/BMP/TGA/WEBP as spray texture, with alpha channel.
+- ✅ Auto-convert your image into .jpg in `/Sven Co-op/svencoop_downloads/custom_sprays/`, and upload to Steam profile. 
+- ✅ You may need to fill the screenshot description with "!Spray" and click the "Share" by yourself. In this case other guys with `BetterSprays.dll` installed will automatically download your sprays from Steam profile.
+- ✅ Auto-convert your image into `tempdecal.wad` in `/Sven Co-op/svencoop/` as a fallback for non-MetaHookSv users. (A game restart is required to refresh the cache of loaded `tempdecal.wad` if you has already been connected to a server)
 
 ### 🚀 Performance & Quality
-- 🖌️ OpenGL rendering
-- 🔍 Supports textures up to 1024x1024
-- 💾 Memory optimization
+- 🖌️ Vanilla decal rendering by engine itself.
+- 🔍 Has no limitation on texture size.
 
 ## 📥 Installation
 
@@ -36,64 +29,13 @@ Steam/steamapps/common/Sven Co-op
 (Make a backup of your svencoop.exe first)
 Or follow these steps manually:
 
-1. Copy `BetterSpray.dll` to:  
-   `Sven Co-op/svencoop/metahook/plugins/`
+1. Copy `BetterSpray.dll` to `/Sven Co-op/svencoop/metahook/plugins/`
 
-2. Create folder:  
-   `Sven Co-op/custom_sprays/`
+2. Add `BetterSpray.dll` in `/Sven Co-op/svencoop/metahook/configs/plugins.lst`
 
-3. Add images (PNG/JPG):  
-spray1.png
-my_logo.jpg
-any_name.jpeg
+3. Run game, click "Better Sprays" in the main menu.
 
-
-## 🕹️ Play & Enjoy
-
-| Command              | Description                          | Example               |
-|----------------------|--------------------------------------|-----------------------|
-| `spray`              | Places the current spray             | -                     |
-| `spraynext`          | Switches to the next spray           | -                     |
-| `spraynext name`     | Uses a specific spray                | `spraynext logo.png`  |
-| `spraylist`          | Lists all available sprays           | -                     |
-| `sprayreload`        | Reloads the spray folder             | -                     |
-
-## ⚙️ Visual Settings
-
-| Command              | Range       | Description               | Example              |
-|----------------------|-------------|---------------------------|----------------------|
-| `sprayscale`         | 5.0 - 60.0  | Vertical size             | `sprayscale 50`      |
-| `sprayrotate`        | 0 - 360     | Rotation in degrees       | `sprayrotate 45`     |
-| `spraybrightness`    | 0.1 - 2.0   | Spray brightness/intensity| `spraybrightness 1.5`|
-
-## 📌 Important Notes
-
-- ✨ **New**: Images now preserve their original aspect ratio!
-- 📏 Max size: 1024x1024 pixels
-- 🔄 Use `sprayreload` after adding new sprays
-- 🎨 Supported formats: PNG, JPG, JPEG
-
-```plaintext
-### 🎯 Recommended Settings
-sprayscale 35
-spraybrightness 1.2
-
-## 🚀 Roadmap
-
-- Favorites system  
-- Multiplayer support  
-- Special effects (glow, borders)
-
-## ❓ FAQ
-
-**Q:** Why does my image look stretched?  
-**A:** It shouldn’t anymore! The plugin now preserves original aspect ratios.
-
-**Q:** How do I update the spray list?  
-**A:** Use the `sprayreload` command after adding new images.
-
-**Q:** What is the maximum image size allowed?  
-**A:** The limit is 1024x1024 pixels.
+4. Click "Load" button and load whatever you want.
 
  Note on Antivirus False Positives
 Some antivirus software like Avast may flag this plugin (or the game executable) as "Win32:MalwareX-gen [Misc]". 
