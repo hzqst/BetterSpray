@@ -374,6 +374,12 @@
     <ClCompile Include="UtilThreadTask.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
+    <ClCompile Include="BaseUI.cpp">
+      <Filter>VGUI2</Filter>
+    </ClCompile>
+    <ClCompile Include="GameUI.cpp">
+      <Filter>VGUI2</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="enginedef.h">

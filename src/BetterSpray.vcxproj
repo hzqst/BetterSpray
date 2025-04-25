@@ -117,7 +117,9 @@
     <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\vgui_controls.cpp" />
     <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\WizardPanel.cpp" />
     <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\WizardSubPanel.cpp" />
+    <ClCompile Include="BaseUI.cpp" />
     <ClCompile Include="exportfuncs.cpp" />
+    <ClCompile Include="GameUI.cpp" />
     <ClCompile Include="plugins.cpp" />
     <ClCompile Include="privatehook.cpp" />
     <ClCompile Include="SprayDatabase.cpp" />
@@ -331,7 +333,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;BETTERSPRAY_EXPORTS;_WINDOWS;_USRDLL;_CRT_SECURE_NO_WARNINGS;$(VGUI2ExtensionDefines);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(MetaHookBaseDir)include;$(MetaHookBaseDir)include\HLSDK\cl_dll;$(MetaHookBaseDir)include\HLSDK\common;$(MetaHookBaseDir)include\HLSDK\engine;$(MetaHookBaseDir)include\HLSDK\pm_shared;$(MetaHookBaseDir)include\HLSDK\public;$(MetaHookBaseDir)include\Interface;$(MetaHookBaseDir)include\Interface\VGUI;$(MetaHookBaseDir)include\VGUI;$(MetaHookBaseDir)include\SteamSDK;$(MetaHookBaseDir)include\vgui_controls;$(MetaHookBaseDir)include\SourceSDK;$(MetaHookBaseDir)include\SourceSDK\tier0;$(MetaHookBaseDir)include\SourceSDK\tier1;$(CapstoneIncludeDirectory);$(FreeImageIncludeDirectory);$(LibXML2IncludeDirectory);$(ScopeExitIncludeDirectory);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(MetaHookBaseDir)include;$(MetaHookBaseDir)include\HLSDK\cl_dll;$(MetaHookBaseDir)include\HLSDK\common;$(MetaHookBaseDir)include\HLSDK\engine;$(MetaHookBaseDir)include\HLSDK\pm_shared;$(MetaHookBaseDir)include\HLSDK\public;$(MetaHookBaseDir)include\Interface;$(MetaHookBaseDir)include\Interface\VGUI;$(MetaHookBaseDir)include\VGUI;$(MetaHookBaseDir)include\SteamSDK;$(MetaHookBaseDir)include\vgui_controls;$(MetaHookBaseDir)include\SourceSDK;$(MetaHookBaseDir)include\SourceSDK\vstdlib;$(MetaHookBaseDir)include\SourceSDK\tier0;$(MetaHookBaseDir)include\SourceSDK\tier1;$(CapstoneIncludeDirectory);$(FreeImageIncludeDirectory);$(LibXML2IncludeDirectory);$(ScopeExitIncludeDirectory);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
@@ -362,7 +364,7 @@ $(LibXML2CopyBinaries)</Command>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;BETTERSPRAY_EXPORTS;_WINDOWS;_USRDLL;_CRT_SECURE_NO_WARNINGS;$(VGUI2ExtensionDefines);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(MetaHookBaseDir)include;$(MetaHookBaseDir)include\HLSDK\cl_dll;$(MetaHookBaseDir)include\HLSDK\common;$(MetaHookBaseDir)include\HLSDK\engine;$(MetaHookBaseDir)include\HLSDK\pm_shared;$(MetaHookBaseDir)include\HLSDK\public;$(MetaHookBaseDir)include\Interface;$(MetaHookBaseDir)include\Interface\VGUI;$(MetaHookBaseDir)include\VGUI;$(MetaHookBaseDir)include\SteamSDK;$(MetaHookBaseDir)include\vgui_controls;$(MetaHookBaseDir)include\SourceSDK;$(MetaHookBaseDir)include\SourceSDK\tier0;$(MetaHookBaseDir)include\SourceSDK\tier1;$(CapstoneIncludeDirectory);$(FreeImageIncludeDirectory);$(LibXML2IncludeDirectory);$(ScopeExitIncludeDirectory);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(MetaHookBaseDir)include;$(MetaHookBaseDir)include\HLSDK\cl_dll;$(MetaHookBaseDir)include\HLSDK\common;$(MetaHookBaseDir)include\HLSDK\engine;$(MetaHookBaseDir)include\HLSDK\pm_shared;$(MetaHookBaseDir)include\HLSDK\public;$(MetaHookBaseDir)include\Interface;$(MetaHookBaseDir)include\Interface\VGUI;$(MetaHookBaseDir)include\VGUI;$(MetaHookBaseDir)include\SteamSDK;$(MetaHookBaseDir)include\vgui_controls;$(MetaHookBaseDir)include\SourceSDK;$(MetaHookBaseDir)include\SourceSDK\vstdlib;$(MetaHookBaseDir)include\SourceSDK\tier0;$(MetaHookBaseDir)include\SourceSDK\tier1;$(CapstoneIncludeDirectory);$(FreeImageIncludeDirectory);$(LibXML2IncludeDirectory);$(ScopeExitIncludeDirectory);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>

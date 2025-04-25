@@ -21,7 +21,7 @@
 
 static unsigned int g_uiAllocatedTaskId = 0;
 
-int Draw_LoadSprayTexture(int playerindex, const char* userId, const char* fileName, const char* pathId);
+int Draw_LoadSprayTexture(int playerindex, const char* userId, const char* filePath, const char* pathId);
 
 bool Draw_ValidateImageFormatMemoryIO(const void* data, size_t dataSize, const char* identifier);
 
@@ -61,7 +61,7 @@ class ISprayDatabaseInternal : public ISprayDatabase
 public:
 	virtual void BuildQueryImageLink(const std::string& userId, const std::string& fileId) = 0;
 	virtual void BuildQueryImageFile(const std::string& userId, const std::string& fileName, const std::string& actualMediaUrl) = 0;
-	virtual void OnImageFileAcquired(const std::string& userId, const std::string& fileName) = 0;
+	virtual void OnImageFileAcquired(const std::string& userId, const std::string& filePath) = 0;
 	virtual void UpdatePlayerSprayQueryStatusInternal(const std::string& userId, SprayQueryState newQueryStatus) = 0;
 	virtual void DispatchQueryStateChangeCallback(ISprayQuery* pQuery, SprayQueryState newState) = 0;
 
@@ -488,7 +488,7 @@ public:
 
 			gEngfuncs.Con_DPrintf("[BetterSpray] File \"%s\" acquired!\n", filePath.c_str());
 
-			SprayDatabaseInternal()->OnImageFileAcquired(m_userId, m_fileName);
+			SprayDatabaseInternal()->OnImageFileAcquired(m_userId, filePath);
 		}
 		else
 		{
@@ -803,7 +803,8 @@ public:
 				}
 
 				// 如果至少有fileId，则添加到列表中
-				if (!info->fileId.empty() && info->description.starts_with("!Spray")) {
+				if (!info->fileId.empty() &&
+					(info->description.starts_with("!Spray") || info->description.starts_with("!BetterSpray"))) {
 
 					ctx->floatHelpList.push_back(info);
 				}
@@ -818,14 +819,17 @@ public:
 		// 从floatHelpList中随机抽取一个元素并为其调用BuildQueryImageLink
 		if (ctx->floatHelpList.size() > 0)
 		{
+#if 0
 			// 生成随机索引
 			size_t randomIndex = rand() % ctx->floatHelpList.size();
-
+#else
+			size_t randomIndex = 0;
+#endif
 			// 获取随机选择的元素
 			auto selectedItem = ctx->floatHelpList[randomIndex];
 
 			// 调用BuildQueryImageLink
-			gEngfuncs.Con_DPrintf("[BetterSpray] Random spary selected: fileId=%s\n", selectedItem->fileId.c_str());
+			gEngfuncs.Con_DPrintf("[BetterSpray] Spary selected: fileId=%s\n", selectedItem->fileId.c_str());
 
 			SprayDatabaseInternal()->BuildQueryImageLink(m_userId, selectedItem->fileId);
 		}
@@ -898,6 +902,12 @@ public:
 		m_QueryList.clear();
 		m_StateChangeCallbacks.clear();
 		xmlCleanupParser();
+	}
+
+	void OnConnectToServer() override
+	{
+		m_UserQueryStatus.clear();
+		m_QueryList.clear();
 	}
 
 	void RunFrame() override
@@ -985,9 +995,9 @@ public:
 		QueryInstance->Release();
 	}
 
-	void OnImageFileAcquired(const std::string& userId, const std::string& fileName) override
+	void OnImageFileAcquired(const std::string& userId, const std::string& filePath) override
 	{
-		int result = Draw_LoadSprayTexture(-1, userId.c_str(), fileName.c_str(), "GAMEDOWNLOAD");
+		int result = Draw_LoadSprayTexture(-1, userId.c_str(), filePath.c_str(), "GAMEDOWNLOAD");
 
 		if (result == 0)
 		{

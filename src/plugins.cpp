@@ -70,6 +70,8 @@ void IPluginsV4::LoadEngine(cl_enginefunc_t* pEngfuncs)
 	Engine_InstallHooks();
 
 	VGUI2Extension_Init();
+	BaseUI_InstallHooks();
+	GameUI_InstallHooks();
 }
 
 void IPluginsV4::LoadClient(cl_exportfuncs_t* pExportFunc)

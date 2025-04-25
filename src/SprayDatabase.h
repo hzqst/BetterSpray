@@ -44,6 +44,7 @@ public:
 	virtual void Init() = 0;
 	virtual void Shutdown() = 0;
 	virtual void RunFrame() = 0;
+	virtual void OnConnectToServer() = 0;
 	virtual void UpdatePlayerSprayQueryStatus(const char* userId, SprayQueryState newQueryStatus) = 0;
 	virtual SprayQueryState GetPlayerSprayQueryStatus(const char* userId) const = 0;
 	virtual void QueryPlayerSpray(int playerindex, const char* userId) = 0;

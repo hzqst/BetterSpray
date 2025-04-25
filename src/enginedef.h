@@ -26,3 +26,26 @@ typedef enum
 
 #define TEX_TYPE_ALPHA_GRADIENT_SVENGINE 2
 #define TEX_TYPE_RGBA_SVENGINE	3
+
+typedef struct WAD3Header_s {
+    char signature[4];
+    unsigned int lumpsCount;
+    unsigned int lumpsOffset;
+} WAD3Header_t;
+
+typedef struct WAD3Lump_s {
+    int offset;
+    int sizeOnDisk;
+    int size;
+    char type;
+    bool compression;
+    short dummy;
+    char name[16];
+} WAD3Lump_t;
+
+typedef struct BSPMipTexHeader_s {
+    char name[16];
+    unsigned int width;
+    unsigned int height;
+    unsigned int offsets[4];
+} BSPMipTexHeader_t;
