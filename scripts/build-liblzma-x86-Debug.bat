@@ -1,5 +1,7 @@
 @echo off
 
+setlocal
+
 :: Check if SolutionDir is already set and non-empty
 if not defined SolutionDir (
     :: Only set SolutionDir if it's not already set
@@ -23,3 +25,5 @@ if exist "%InstallDir%\Common7\Tools\vsdevcmd.bat" (
 
     MSBuild.exe xz.sln "/target:liblzma-static" /p:Configuration="Debug" /p:Platform="Win32"
 )
+
+endlocal
