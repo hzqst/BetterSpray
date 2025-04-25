@@ -17,11 +17,11 @@ for /f "usebackq tokens=*" %%i in (`thirdparty\MetaHookSv\tools\vswhere -latest 
   set InstallDir=%%i
 )
 
-cd /d "%SolutionDir%thirdparty\xz-win-build\build-VS2022-MT"
-
 if exist "%InstallDir%\Common7\Tools\vsdevcmd.bat" (
 
     "%InstallDir%\Common7\Tools\vsdevcmd.bat"
+
+    cd /d "%SolutionDir%thirdparty\xz-win-build\build-VS2022-MT"
 
     MSBuild.exe xz.sln "/target:liblzma-static" /p:Configuration="Debug" /p:Platform="Win32"
 )
