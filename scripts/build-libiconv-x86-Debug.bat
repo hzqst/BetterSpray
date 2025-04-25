@@ -15,10 +15,12 @@ for /f "usebackq tokens=*" %%i in (`thirdparty\MetaHookSv\tools\vswhere -latest 
   set InstallDir=%%i
 )
 
+cd /d "%SolutionDir%thirdparty\libiconv-win-build\build-VS2022-MT"
+
 if exist "%InstallDir%\Common7\Tools\vsdevcmd.bat" (
 
     "%InstallDir%\Common7\Tools\vsdevcmd.bat"
 
-    MSBuild.exe thirdparty\libiconv-win-build\build-VS2022-MT\libiconv.sln "/target:static\libiconv-static" /p:Configuration="Debug" /p:Platform="Win32" 
+    MSBuild.exe libiconv.sln "/target:static\libiconv-static" /p:Configuration="Debug" /p:Platform="Win32" 
 
 )
