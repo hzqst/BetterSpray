@@ -210,16 +210,27 @@ void CBetterSpraySettingsPage::OnFileSelected(const char* fullpath)
 	{
 		auto bInvertedAlpha = m_pInvertAlpha->IsSelected() ? true : false;
 
-		BS_UploadSprayBitmap(fiB, true, true, bInvertedAlpha);
+		bool bSuccess = BS_UploadSprayBitmap(fiB, true, true, bInvertedAlpha);
 		FreeImage_Unload(fiB);
 
 		OnResetData();
 
-		auto box = new vgui::MessageBox("#GameUI_BetterSpray_Title", "#GameUI_BetterSpray_SprayUploaded", this);
-		box->SetOKButtonText("#GameUI_OK");
-		box->SetCancelCommand(new KeyValues("Command", "command", "ReleaseModalWindow"));
-		box->AddActionSignalTarget(this);
-		box->DoModal();
+		if (bSuccess)
+		{
+			auto box = new vgui::MessageBox("#GameUI_BetterSpray_Title", "#GameUI_BetterSpray_SprayUploaded", this);
+			box->SetOKButtonText("#GameUI_OK");
+			box->SetCancelCommand(new KeyValues("Command", "command", "ReleaseModalWindow"));
+			box->AddActionSignalTarget(this);
+			box->DoModal();
+		}
+		else
+		{
+			auto box = new vgui::MessageBox("#GameUI_BetterSpray_Title", "#GameUI_BetterSpray_FailedToSaveImageFile", this);
+			box->SetOKButtonText("#GameUI_OK");
+			box->SetCancelCommand(new KeyValues("Command", "command", "ReleaseModalWindow"));
+			box->AddActionSignalTarget(this);
+			box->DoModal();
+		}
 	}
 	else
 	{
