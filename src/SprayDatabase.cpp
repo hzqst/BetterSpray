@@ -4,6 +4,7 @@
 #include "UtilHTTPClient.h"
 #include "UtilThreadTask.h"
 #include "SprayDatabase.h"
+#include "exportfuncs.h"
 
 #include <string>
 #include <unordered_set>
@@ -20,8 +21,6 @@
 #include <ScopeExit/ScopeExit.h>
 
 static unsigned int g_uiAllocatedTaskId = 0;
-
-int Draw_LoadSprayTexture(int playerindex, const char* userId, const char* filePath, const char* pathId);
 
 bool Draw_ValidateImageFormatMemoryIO(const void* data, size_t dataSize, const char* identifier);
 
@@ -997,15 +996,22 @@ public:
 
 	void OnImageFileAcquired(const std::string& userId, const std::string& filePath) override
 	{
-		int result = Draw_LoadSprayTexture(-1, userId.c_str(), filePath.c_str(), "GAMEDOWNLOAD");
+		if (EngineIsInLevel())
+		{
+			int playerindex = EngineFindPlayerIndexByUserId(userId.c_str());
 
-		if (result == 0)
-		{
-			UpdatePlayerSprayQueryStatusInternal(userId, SprayQueryState_Finished);
-		}
-		else
-		{
-			UpdatePlayerSprayQueryStatusInternal(userId, SprayQueryState_Failed);
+			int result = Draw_LoadSprayTexture(userId.c_str(), filePath.c_str(), "GAMEDOWNLOAD", [playerindex](const char* userId, FIBITMAP* fiB)->int {
+				return Draw_LoadSprayTexture_AsyncLoadInGame(playerindex, fiB);
+			});
+
+			if (result == 0)
+			{
+				UpdatePlayerSprayQueryStatusInternal(userId, SprayQueryState_Finished);
+			}
+			else
+			{
+				UpdatePlayerSprayQueryStatusInternal(userId, SprayQueryState_Failed);
+			}
 		}
 	}
 

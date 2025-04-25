@@ -380,6 +380,18 @@
     <ClCompile Include="GameUI.cpp">
       <Filter>VGUI2</Filter>
     </ClCompile>
+    <ClCompile Include="BetterSprayDialog.cpp">
+      <Filter>VGUI2</Filter>
+    </ClCompile>
+    <ClCompile Include="BetterSpraySettingsPage.cpp">
+      <Filter>VGUI2</Filter>
+    </ClCompile>
+    <ClCompile Include="TaskListPage.cpp">
+      <Filter>VGUI2</Filter>
+    </ClCompile>
+    <ClCompile Include="TaskListPanel.cpp">
+      <Filter>VGUI2</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="enginedef.h">
@@ -857,6 +869,21 @@
       <Filter>vgui_controls</Filter>
     </ClInclude>
     <ClInclude Include="UtilThreadTask.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="BetterSprayDialog.h">
+      <Filter>VGUI2</Filter>
+    </ClInclude>
+    <ClInclude Include="BetterSpraySettingsPage.h">
+      <Filter>VGUI2</Filter>
+    </ClInclude>
+    <ClInclude Include="TaskListPage.h">
+      <Filter>VGUI2</Filter>
+    </ClInclude>
+    <ClInclude Include="TaskListPanel.h">
+      <Filter>VGUI2</Filter>
+    </ClInclude>
+    <ClInclude Include="wad3.hpp">
       <Filter>Headers</Filter>
     </ClInclude>
   </ItemGroup>

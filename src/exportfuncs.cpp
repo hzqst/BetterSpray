@@ -1,9 +1,12 @@
 #include <metahook.h>
 #include <cmath>
 #include <format>
-#include "cvardef.h"
+#include <cvardef.h>
+
 #include "plugins.h"
 #include "privatehook.h"
+#include "exportfuncs.h"
+
 #include "SprayDatabase.h"
 #include "UtilHTTPClient.h"
 #include "UtilThreadTask.h"
@@ -45,7 +48,16 @@ long WINAPI FI_Tell(fi_handle handle)
 	return FILESYSTEM_ANY_TELL(handle);
 }
 
-static bool Draw_HasCustomDecal(int playerindex)
+bool EngineIsInLevel()
+{
+	auto levelName = gEngfuncs.pfnGetLevelName();
+	if (levelName && levelName[0])
+		return true;
+
+	return false;
+}
+
+bool Draw_HasCustomDecal(int playerindex)
 {
 	if (playerindex >= 0 && playerindex < MAX_CLIENTS)
 	{
@@ -75,7 +87,7 @@ static bool Draw_HasCustomDecal(int playerindex)
 
 void Draw_UploadSprayTextureRGBA8(int playerindex, FIBITMAP* fiB)
 {
-	if (Draw_HasCustomDecal(playerindex))
+	if (EngineIsInLevel() && Draw_HasCustomDecal(playerindex))
 	{
 		texture_t* tex = gPrivateFuncs.Draw_DecalTexture(~playerindex);
 
@@ -101,7 +113,7 @@ void Draw_UploadSprayTextureRGBA8(int playerindex, FIBITMAP* fiB)
 	}
 }
 
-static int Draw_FindPlayerIndexByUserId(const char* userId)
+int EngineFindPlayerIndexByUserId(const char* userId)
 {
 	for (int i = 0; i < gEngfuncs.GetMaxClients(); ++i)
 	{
@@ -126,12 +138,12 @@ static int Draw_FindPlayerIndexByUserId(const char* userId)
 class CLoadSprayTextureWorkItemContext : public IThreadedTask
 {
 public:
-	CLoadSprayTextureWorkItemContext(int playerindex, const char* userId, FIBITMAP* fiB) :
+	CLoadSprayTextureWorkItemContext(int playerindex, FIBITMAP* fiB) :
 		m_playerindex(playerindex),
-		m_userId(userId),
 		m_fiB(fiB)
 	{
 	}
+
 	~CLoadSprayTextureWorkItemContext()
 	{
 		if (m_fiB) {
@@ -139,6 +151,7 @@ public:
 			m_fiB = nullptr;
 		}
 	}
+
 	void Destroy() override
 	{
 		delete this;
@@ -156,23 +169,22 @@ public:
 
 public:
 	int m_playerindex{};
-	std::string m_userId{};
 	FIBITMAP* m_fiB{};
 };
 
-void Draw_LoadSprayTexture_BGRA8ToRGBA8(CLoadSprayTextureWorkItemContext* ctx)
+void Draw_LoadSprayTexture_BGRA8ToRGBA8(FIBITMAP* fiB)
 {
 	size_t pos = 0;
-	size_t w = FreeImage_GetWidth(ctx->m_fiB);
-	size_t h = FreeImage_GetHeight(ctx->m_fiB);
+	size_t w = FreeImage_GetWidth(fiB);
+	size_t h = FreeImage_GetHeight(fiB);
 
-	byte* imageData = FreeImage_GetBits(ctx->m_fiB);
+	byte* imageData = FreeImage_GetBits(fiB);
 
-	FreeImage_FlipVertical(ctx->m_fiB);
+	FreeImage_FlipVertical(fiB);
 
 	for (unsigned y = 0; y < h; ++y) {
 		// Get a pointer to the start of the pixel row.
-		BYTE* bits = FreeImage_GetScanLine(ctx->m_fiB, y);
+		BYTE* bits = FreeImage_GetScanLine(fiB, y);
 		for (unsigned x = 0; x < w; ++x) {
 			// Swap the red and blue bytes.
 			// Assuming the format is BGRA, where the bytes are in the order (B, G, R, A).
@@ -252,7 +264,7 @@ void Draw_LoadSprayTexture_WorkItem(CLoadSprayTextureWorkItemContext* ctx)
 
 				FreeImage_Unload(fiB);
 
-				Draw_LoadSprayTexture_BGRA8ToRGBA8(ctx);
+				Draw_LoadSprayTexture_BGRA8ToRGBA8(ctx->m_fiB);
 
 				GameThreadTaskScheduler()->QueueTask(ctx);
 				return;
@@ -264,7 +276,7 @@ void Draw_LoadSprayTexture_WorkItem(CLoadSprayTextureWorkItemContext* ctx)
 
 	FreeImage_Unload(fiB);
 
-	Draw_LoadSprayTexture_BGRA8ToRGBA8(ctx);
+	Draw_LoadSprayTexture_BGRA8ToRGBA8(ctx->m_fiB);
 
 	GameThreadTaskScheduler()->QueueTask(ctx);
 }
@@ -273,124 +285,95 @@ void Draw_LoadSprayTexture_WorkItem(CLoadSprayTextureWorkItemContext* ctx)
 	Purpose: Load spray texture from FileSystem.
 */
 
-int Draw_LoadSprayTexture(int playerindex, const char* userId, const char* filePath, const char* pathId)
+int Draw_LoadSprayTexture(const char* userId, const char* filePath, const char* pathId, const fnDraw_LoadSprayTextureCallback& callback)
 {
-	if (playerindex < 0)
+	auto fileHandle = FILESYSTEM_ANY_OPEN(filePath, "rb", pathId);
+
+	if (!fileHandle)
 	{
-		playerindex = Draw_FindPlayerIndexByUserId(userId);
+		gEngfuncs.Con_DPrintf("Draw_LoadSprayTexture: Could not open \"%s\" for reading.\n", filePath);
+		return -1;
 	}
 
-	if (playerindex >= 0 && playerindex < gEngfuncs.GetMaxClients())
+	SCOPE_EXIT{ FILESYSTEM_ANY_CLOSE(fileHandle); };
+
+	FreeImageIO fiIO;
+	fiIO.read_proc = FI_Read;
+	fiIO.write_proc = FI_Write;
+	fiIO.seek_proc = FI_Seek;
+	fiIO.tell_proc = FI_Tell;
+
+	auto fiFormat = FIF_UNKNOWN;
+
+	if (fiFormat == FIF_UNKNOWN)
 	{
-		auto fileHandle = FILESYSTEM_ANY_OPEN(filePath, "rb", pathId);
-
-		if (!fileHandle)
-		{
-			gEngfuncs.Con_DPrintf("Draw_UploadSprayTexture: Could not open \"%s\" for reading.\n", filePath);
-			return -1;
-		}
-
-		SCOPE_EXIT{ FILESYSTEM_ANY_CLOSE(fileHandle); };
-
-		FreeImageIO fiIO;
-		fiIO.read_proc = FI_Read;
-		fiIO.write_proc = FI_Write;
-		fiIO.seek_proc = FI_Seek;
-		fiIO.tell_proc = FI_Tell;
-
-		auto fiFormat = FIF_UNKNOWN;
-
-		//if (fiFormat == FIF_UNKNOWN)
-		//{
-		//	fiFormat = FreeImage_GetFIFFromFilename(fileName);
-		//}
-
-		if (fiFormat == FIF_UNKNOWN)
-		{
-			fiFormat = FreeImage_GetFileTypeFromHandle(&fiIO, (fi_handle)fileHandle);
-		}
-
-		if (fiFormat == FIF_UNKNOWN)
-		{
-			gEngfuncs.Con_Printf("Draw_UploadSprayTexture: Could not load \"%s\", Unknown format.\n", filePath);
-			return -2;
-		}
-
-		if (!FreeImage_FIFSupportsReading(fiFormat))
-		{
-			gEngfuncs.Con_Printf("Draw_UploadSprayTexture: Could not load \"%s\", Unsupported format.\n", filePath);
-			return -3;
-		}
-
-		auto fiB = FreeImage_LoadFromHandle(fiFormat, &fiIO, (fi_handle)fileHandle, 0);
-
-		if (!fiB)
-		{
-			gEngfuncs.Con_Printf("Draw_UploadSprayTexture: Could not load \"%s\", FreeImage_LoadFromHandle failed.\n", filePath);
-			return -4;
-		}
-
-		
-#if 0
-		SCOPE_EXIT{ FreeImage_Unload(fiB); };
-
-		auto fiBGRA8 = FreeImage_ConvertTo32Bits(fiB);
-
-		if (!fiBGRA8)
-		{
-			gEngfuncs.Con_Printf("Draw_UploadSprayTexture: Could not load \"%s\", FreeImage_ConvertTo32Bits failed.\n", filePath);
-			return -5;
-		}
-
-		SCOPE_EXIT{ FreeImage_Unload(fiBGRA8); };
-
-		Draw_UploadSprayTextureBGRA8(playerindex, fiBGRA8);
-
-#else
-
-		if (Draw_HasCustomDecal(playerindex))
-		{
-			auto ctx = new CLoadSprayTextureWorkItemContext(playerindex, userId, fiB);
-
-			auto hWorkItemHandle = g_pMetaHookAPI->CreateWorkItem(g_pMetaHookAPI->GetGlobalThreadPool(), [](void* context) -> bool {
-
-				auto ctx = (CLoadSprayTextureWorkItemContext*)context;
-
-				Draw_LoadSprayTexture_WorkItem(ctx);
-
-				return true;
-
-				}, ctx);
-
-			g_pMetaHookAPI->QueueWorkItem(g_pMetaHookAPI->GetGlobalThreadPool(), hWorkItemHandle);
-#endif
-			return 0;
-		}
-		else
-		{
-			gEngfuncs.Con_Printf("[BetterSpray] Player \"%s\" has no custom decal.\n", userId);
-		}
-		return 0;
-	}
-	else
-	{
-		gEngfuncs.Con_DPrintf("Draw_UploadSprayTexture: invalid player index.\n");
+		fiFormat = FreeImage_GetFileTypeFromHandle(&fiIO, (fi_handle)fileHandle);
 	}
 
-	return -7;
+	if (fiFormat == FIF_UNKNOWN)
+	{
+		gEngfuncs.Con_Printf("Draw_LoadSprayTexture: Could not load \"%s\", Unknown format.\n", filePath);
+		return -2;
+	}
+
+	if (!FreeImage_FIFSupportsReading(fiFormat))
+	{
+		gEngfuncs.Con_Printf("Draw_LoadSprayTexture: Could not load \"%s\", Unsupported format.\n", filePath);
+		return -3;
+	}
+
+	auto fiB = FreeImage_LoadFromHandle(fiFormat, &fiIO, (fi_handle)fileHandle, 0);
+
+	if (!fiB)
+	{
+		gEngfuncs.Con_Printf("Draw_LoadSprayTexture: Could not load \"%s\", FreeImage_LoadFromHandle failed.\n", filePath);
+		return -4;
+	}
+
+	return callback(userId, fiB);
 }
 
 /*
 	Purpose: Load spray texture from FileSystem, try {SteamID}.jpg
 */
 
-int Draw_LoadSprayTextures(int playerindex, const char* userId, const char* pathId)
+int Draw_LoadSprayTextures(const char* userId, const char* pathId, const fnDraw_LoadSprayTextureCallback& callback)
 {
 	std::string filePath = std::format("{0}/{1}.jpg", CUSTOM_SPRAY_DIRECTORY, userId);
 
-	auto err = Draw_LoadSprayTexture(playerindex, userId, filePath.c_str(), "GAMEDOWNLOAD");
+	//"GAMEDOWNLOAD"
+	return Draw_LoadSprayTexture(userId, filePath.c_str(), pathId, callback);
+}
 
-	return err;
+int Draw_LoadSprayTexture_AsyncLoadInGame(int playerindex, FIBITMAP* fiB)
+{
+	if (!EngineIsInLevel())
+	{
+		gEngfuncs.Con_Printf("[BetterSpray] Spray loading procedure interrupted, not in level.\n");
+		return -9;
+	}
+
+	if (!Draw_HasCustomDecal(playerindex))
+	{
+		gEngfuncs.Con_Printf("[BetterSpray] Player #%d has no custom decal.\n", playerindex);
+		return -10;
+	}
+
+	auto ctx = new CLoadSprayTextureWorkItemContext(playerindex, fiB);
+
+	auto hWorkItemHandle = g_pMetaHookAPI->CreateWorkItem(g_pMetaHookAPI->GetGlobalThreadPool(), [](void* context) -> bool {
+
+		auto ctx = (CLoadSprayTextureWorkItemContext*)context;
+
+		Draw_LoadSprayTexture_WorkItem(ctx);
+
+		return true;
+
+	}, ctx);
+
+	g_pMetaHookAPI->QueueWorkItem(g_pMetaHookAPI->GetGlobalThreadPool(), hWorkItemHandle);
+
+	return 0;
 }
 
 texture_t* Draw_DecalTexture(int index)
@@ -416,15 +399,20 @@ texture_t* Draw_DecalTexture(int index)
 
 					if (queryStatus == SprayQueryState_Unknown)
 					{
-						auto err = Draw_LoadSprayTextures(playerindex, userId.c_str(), "GAMEDOWNLOAD");
+						auto result = Draw_LoadSprayTextures(userId.c_str(), NULL, [playerindex](const char* userId, FIBITMAP* fiB)->int{
+							return Draw_LoadSprayTexture_AsyncLoadInGame(playerindex, fiB);
+						});
 
-						if (err == 0)
+						if (result == 0)
 						{
 							retval->name[0] = '?';
+						}
 
+						if (result == 0)
+						{
 							SprayDatabase()->UpdatePlayerSprayQueryStatus(userId.c_str(), SprayQueryState_Finished);
 						}
-						else if (err == -1)
+						else if (result == -1)
 						{
 							//File not found ?
 							SprayDatabase()->QueryPlayerSpray(playerindex, userId.c_str());
@@ -437,9 +425,11 @@ texture_t* Draw_DecalTexture(int index)
 					}
 					else if (queryStatus == SprayQueryState_Finished)
 					{
-						auto err = Draw_LoadSprayTextures(playerindex, userId.c_str(), "GAMEDOWNLOAD");
+						auto result = Draw_LoadSprayTextures(userId.c_str(), NULL, [playerindex](const char* userId, FIBITMAP* fiB)->int {
+							return Draw_LoadSprayTexture_AsyncLoadInGame(playerindex, fiB);
+						});
 
-						if (err == 0)
+						if (result == 0)
 						{
 							retval->name[0] = '?';
 						}
@@ -928,65 +918,16 @@ FIBITMAP* BS_NormalizeToSquareRGBA24(FIBITMAP* fibSquareRGB, FIBITMAP* fibSquare
 	return newBitmap;
 }
 
-void BS_UploadSprayFile(const char *fileName, bool bNormalizeToSquare, bool bWithAlphaChannel, bool bAlphaInverted)
+void BS_UploadSprayBitmap(FIBITMAP *fiB, bool bNormalizeToSquare, bool bWithAlphaChannel, bool bAlphaInverted)
 {
-	auto steamId = SteamUser()->GetSteamID();
-	auto userId = std::format("{0}", steamId.ConvertToUint64());
-
-	std::string filePath = std::format("{0}/{1}", CUSTOM_SPRAY_DIRECTORY, fileName);
-
-	auto fileHandle = FILESYSTEM_ANY_OPEN(filePath.c_str(), "rb");
-
-	if (!fileHandle)
-	{
-		gEngfuncs.Con_Printf("[BetterSpray] Could not open \"%s\" for reading.\n", filePath.c_str());
-		return;
-	}
-
-	SCOPE_EXIT{ FILESYSTEM_ANY_CLOSE(fileHandle); };
-
 	FreeImageIO fiIO;
 	fiIO.read_proc = FI_Read;
 	fiIO.write_proc = FI_Write;
 	fiIO.seek_proc = FI_Seek;
 	fiIO.tell_proc = FI_Tell;
 
-	auto fiFormat = FIF_UNKNOWN;
-
-	if (fiFormat == FIF_UNKNOWN)
-	{
-		fiFormat = FreeImage_GetFileTypeFromHandle(&fiIO, (fi_handle)fileHandle);
-	}
-
-	if (fiFormat == FIF_UNKNOWN)
-	{
-		gEngfuncs.Con_Printf("[BetterSpray] Could not upload \"%s\", Unknown format.\n", filePath.c_str());
-		return;
-	}
-
-	if (!FreeImage_FIFSupportsReading(fiFormat))
-	{
-		gEngfuncs.Con_Printf("[BetterSpray] Could not upload \"%s\", Unsupported format.\n", filePath.c_str());
-		return;
-	}
-
-#if 0
-	if (fiFormat != FIF_JPEG && fiFormat != FIF_PNG && fiFormat != FIF_TARGA)
-	{
-		gEngfuncs.Con_Printf("[BetterSpray] Could not upload \"%s\", Only JPEG / PNG / TGA supported.\n", filePath.c_str());
-		return;
-	}
-#endif
-
-	auto fiB = FreeImage_LoadFromHandle(fiFormat, &fiIO, (fi_handle)fileHandle, 0);
-
-	if (!fiB)
-	{
-		gEngfuncs.Con_Printf("[BetterSpray] Could not upload \"%s\", FreeImage_LoadFromHandle failed.\n", filePath.c_str());
-		return;
-	}
-
-	SCOPE_EXIT{ FreeImage_Unload(fiB); };
+	auto steamId = SteamUser()->GetSteamID();
+	auto userId = std::format("{0}", steamId.ConvertToUint64());
 
 	auto width = FreeImage_GetWidth(fiB);
 	auto height = FreeImage_GetHeight(fiB);
@@ -995,7 +936,8 @@ void BS_UploadSprayFile(const char *fileName, bool bNormalizeToSquare, bool bWit
 
 	std::string newFilePath = std::format("{0}/{1}", CUSTOM_SPRAY_DIRECTORY, newFileName);
 
-	if (newFilePath != filePath)
+	//if (newFilePath != filePath)
+	if(1)
 	{
 		auto hNewFileHandle = FILESYSTEM_ANY_OPEN(newFilePath.c_str(), "wb", "GAMEDOWNLOAD");
 
@@ -1054,7 +996,7 @@ void BS_UploadSprayFile(const char *fileName, bool bNormalizeToSquare, bool bWit
 		else
 		{
 			bSaved = FreeImage_SaveToHandle(FIF_JPEG, fiB, &fiIO, (fi_handle)hNewFileHandle);
-				
+
 			if (bSaved)
 			{
 				width = FreeImage_GetWidth(fiB);
@@ -1063,7 +1005,7 @@ void BS_UploadSprayFile(const char *fileName, bool bNormalizeToSquare, bool bWit
 				BS_SaveBitmapToTempDecal(fiB);
 			}
 		}
-			
+
 		if (bSaved)
 		{
 			gEngfuncs.Con_DPrintf("[BetterSpray] File \"%s\" saved !\n", newFilePath.c_str());
@@ -1093,9 +1035,82 @@ void BS_UploadSprayFile(const char *fileName, bool bNormalizeToSquare, bool bWit
 
 	SteamScreenshots()->AddScreenshotToLibrary(pszFullPath, nullptr, width, height);
 
-	Draw_LoadSprayTexture(-1, userId.c_str(), newFilePath.c_str(), "GAMEDOWNLOAD");
+	if (EngineIsInLevel())
+	{
+		int playerindex = EngineFindPlayerIndexByUserId(userId.c_str());
+
+		Draw_LoadSprayTexture(userId.c_str(), newFilePath.c_str(), "GAMEDOWNLOAD", [playerindex](const char* userId, FIBITMAP* fiB)->int {
+			return Draw_LoadSprayTexture_AsyncLoadInGame(playerindex, fiB);
+		});
+	}
 
 	gEngfuncs.Con_Printf("[BetterSpray] \"%s\" has been uploaded to Steam screenshot library. Please set \"!Spray\" as screenshot description.\n", newFilePath.c_str());
+}
+
+void BS_UploadSprayFile(const char *fileName, bool bNormalizeToSquare, bool bWithAlphaChannel, bool bAlphaInverted)
+{
+	std::string filePath = std::format("{0}/{1}", CUSTOM_SPRAY_DIRECTORY, fileName);
+
+	FIBITMAP* fiB = NULL;
+
+	{
+		auto fileHandle = FILESYSTEM_ANY_OPEN(filePath.c_str(), "rb");
+
+		if (!fileHandle)
+		{
+			gEngfuncs.Con_Printf("[BetterSpray] Could not open \"%s\" for reading.\n", filePath.c_str());
+			return;
+		}
+
+		SCOPE_EXIT{ FILESYSTEM_ANY_CLOSE(fileHandle); };
+
+		FreeImageIO fiIO;
+		fiIO.read_proc = FI_Read;
+		fiIO.write_proc = FI_Write;
+		fiIO.seek_proc = FI_Seek;
+		fiIO.tell_proc = FI_Tell;
+
+		auto fiFormat = FIF_UNKNOWN;
+
+		if (fiFormat == FIF_UNKNOWN)
+		{
+			fiFormat = FreeImage_GetFileTypeFromHandle(&fiIO, (fi_handle)fileHandle);
+		}
+
+		if (fiFormat == FIF_UNKNOWN)
+		{
+			gEngfuncs.Con_Printf("[BetterSpray] Could not upload \"%s\", Unknown format.\n", filePath.c_str());
+			return;
+		}
+
+		if (!FreeImage_FIFSupportsReading(fiFormat))
+		{
+			gEngfuncs.Con_Printf("[BetterSpray] Could not upload \"%s\", Unsupported format.\n", filePath.c_str());
+			return;
+		}
+
+#if 0
+		if (fiFormat != FIF_JPEG && fiFormat != FIF_PNG && fiFormat != FIF_TARGA)
+		{
+			gEngfuncs.Con_Printf("[BetterSpray] Could not upload \"%s\", Only JPEG / PNG / TGA supported.\n", filePath.c_str());
+			return;
+		}
+#endif
+
+		fiB = FreeImage_LoadFromHandle(fiFormat, &fiIO, (fi_handle)fileHandle, 0);
+
+		if (!fiB)
+		{
+			gEngfuncs.Con_Printf("[BetterSpray] Could not upload \"%s\", FreeImage_LoadFromHandle failed.\n", filePath.c_str());
+			return;
+		}
+	}
+
+	if (fiB)
+	{
+		BS_UploadSprayBitmap(fiB, bNormalizeToSquare, bWithAlphaChannel, bAlphaInverted);
+		FreeImage_Unload(fiB);
+	}	
 }
 
 void BS_Upload_f()
@@ -1105,7 +1120,7 @@ void BS_Upload_f()
 		return;
 	}
 
-	auto fileName = gEngfuncs.Cmd_Argv(1);
+	const char *fileName = gEngfuncs.Cmd_Argv(1);
 
 	BS_UploadSprayFile(fileName, true, true, true);
 }

@@ -20,9 +20,9 @@
 
 #include "plugins.h"
 
-//#include "SCModelDownloaderDialog.h"
+#include "BetterSprayDialog.h"
 
-//static vgui::DHANDLE<CSCModelDownloaderDialog> s_hSCModelDownloaderDialog;
+static vgui::DHANDLE<CBetterSprayDialog> s_hBetterSprayDialog;
 
 /*
 =================================================================================================================
@@ -56,21 +56,21 @@ public:
 	{
 		if (g_pFileSystem)
 		{
-			if (!vgui::localize()->AddFile(g_pFileSystem, "better_sprays/gameui_%language%.txt"))
+			if (!vgui::localize()->AddFile(g_pFileSystem, "bettersprays/gameui_%language%.txt"))
 			{
-				if (!vgui::localize()->AddFile(g_pFileSystem, "better_sprays/gameui_english.txt"))
+				if (!vgui::localize()->AddFile(g_pFileSystem, "bettersprays/gameui_english.txt"))
 				{
-					//Sys_Error("Failed to load \"better_sprays/gameui_english.txt\"");
+					//Sys_Error("Failed to load \"bettersprays/gameui_english.txt\"");
 				}
 			}
 		}
 		else if (g_pFileSystem_HL25)
 		{
-			if (!vgui::localize()->AddFile((IFileSystem*)g_pFileSystem_HL25, "better_sprays/gameui_%language%.txt"))
+			if (!vgui::localize()->AddFile((IFileSystem*)g_pFileSystem_HL25, "bettersprays/gameui_%language%.txt"))
 			{
-				if (!vgui::localize()->AddFile((IFileSystem*)g_pFileSystem_HL25, "better_sprays/gameui_english.txt"))
+				if (!vgui::localize()->AddFile((IFileSystem*)g_pFileSystem_HL25, "bettersprays/gameui_english.txt"))
 				{
-					//Sys_Error("Failed to load \"better_sprays/gameui_english.txt\"");
+					//Sys_Error("Failed to load \"bettersprays/gameui_english.txt\"");
 				}
 			}
 		}
@@ -267,15 +267,15 @@ class CVGUI2Extension_TaskBarCallbacks : public IVGUI2Extension_GameUITaskBarCal
 	{
 		if (!strcmp(command, "OpenBetterSprayDialog")) {
 
-			//if (!s_hSCModelDownloaderDialog)
-			//{
-			//	s_hSCModelDownloaderDialog = new CSCModelDownloaderDialog((vgui::Panel*)pPanel, "SCModelDownloaderDialog");
-			//}
+			if (!s_hBetterSprayDialog)
+			{
+				s_hBetterSprayDialog = new CBetterSprayDialog((vgui::Panel*)pPanel, "BetterSprayDialog");
+			}
 
-			//if (s_hSCModelDownloaderDialog)
-			//{
-			//	s_hSCModelDownloaderDialog->Activate();
-			//}
+			if (s_hBetterSprayDialog)
+			{
+				s_hBetterSprayDialog->Activate();
+			}
 		}
 	}
 };

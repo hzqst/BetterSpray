@@ -118,11 +118,15 @@
     <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\WizardPanel.cpp" />
     <ClCompile Include="..\thirdparty\MetaHookSv\include\vgui_controls\WizardSubPanel.cpp" />
     <ClCompile Include="BaseUI.cpp" />
+    <ClCompile Include="BetterSprayDialog.cpp" />
+    <ClCompile Include="BetterSpraySettingsPage.cpp" />
     <ClCompile Include="exportfuncs.cpp" />
     <ClCompile Include="GameUI.cpp" />
     <ClCompile Include="plugins.cpp" />
     <ClCompile Include="privatehook.cpp" />
     <ClCompile Include="SprayDatabase.cpp" />
+    <ClCompile Include="TaskListPage.cpp" />
+    <ClCompile Include="TaskListPanel.cpp" />
     <ClCompile Include="UtilHTTPClient.cpp" />
     <ClCompile Include="UtilThreadTask.cpp" />
     <ClCompile Include="VGUI2ExtensionImport.cpp" />
@@ -279,14 +283,19 @@
     <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\URLLabel.h" />
     <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\WizardPanel.h" />
     <ClInclude Include="..\thirdparty\MetaHookSv\include\vgui_controls\WizardSubPanel.h" />
+    <ClInclude Include="BetterSprayDialog.h" />
+    <ClInclude Include="BetterSpraySettingsPage.h" />
     <ClInclude Include="enginedef.h" />
     <ClInclude Include="exportfuncs.h" />
     <ClInclude Include="plugins.h" />
     <ClInclude Include="privatehook.h" />
     <ClInclude Include="SprayDatabase.h" />
+    <ClInclude Include="TaskListPage.h" />
+    <ClInclude Include="TaskListPanel.h" />
     <ClInclude Include="UtilHTTPClient.h" />
     <ClInclude Include="UtilThreadTask.h" />
     <ClInclude Include="VGUI2ExtensionImport.h" />
+    <ClInclude Include="wad3.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\thirdparty\MetaHookSv\include\SourceSDK\tier0\assert_dialog.aps" />
