@@ -119,15 +119,12 @@ int EngineFindPlayerIndexByUserId(const char* userId)
 	{
 		auto playerInfo = (player_info_sc_t*)IEngineStudio.PlayerInfo(i);
 
-		if (g_iEngineType == ENGINE_SVENGINE)
+		if (playerInfo && playerInfo->m_nSteamID != 0)
 		{
-			if (playerInfo && playerInfo->m_nSteamID != 0)
-			{
-				auto steamId = std::format("{0}", playerInfo->m_nSteamID);
+			auto steamId = std::format("{0}", playerInfo->m_nSteamID);
 
-				if (!strcmp(userId, steamId.c_str())) {
-					return i;
-				}
+			if (!strcmp(userId, steamId.c_str())) {
+				return i;
 			}
 		}
 	}
@@ -391,50 +388,47 @@ texture_t* Draw_DecalTexture(int index)
 		{
 			auto playerInfo = (player_info_sc_t*)IEngineStudio.PlayerInfo(playerindex);
 
-			if (g_iEngineType == ENGINE_SVENGINE)
+			if (playerInfo && playerInfo->m_nSteamID != 0)
 			{
-				if (playerInfo && playerInfo->m_nSteamID != 0)
+				auto userId = std::format("{0}", playerInfo->m_nSteamID);
+
+				auto queryStatus = SprayDatabase()->GetPlayerSprayQueryStatus(userId.c_str());
+
+				if (queryStatus == SprayQueryState_Unknown)
 				{
-					auto userId = std::format("{0}", playerInfo->m_nSteamID);
-
-					auto queryStatus = SprayDatabase()->GetPlayerSprayQueryStatus(userId.c_str());
-
-					if (queryStatus == SprayQueryState_Unknown)
-					{
-						auto result = Draw_LoadSprayTextures(userId.c_str(), NULL, [playerindex](const char* userId, FIBITMAP* fiB)->int{
-							return Draw_LoadSprayTexture_AsyncLoadInGame(playerindex, fiB);
+					auto result = Draw_LoadSprayTextures(userId.c_str(), NULL, [playerindex](const char* userId, FIBITMAP* fiB)->int {
+						return Draw_LoadSprayTexture_AsyncLoadInGame(playerindex, fiB);
 						});
 
-						if (result == 0)
-						{
-							retval->name[0] = '?';
-						}
-
-						if (result == 0)
-						{
-							SprayDatabase()->UpdatePlayerSprayQueryStatus(userId.c_str(), SprayQueryState_Finished);
-						}
-						else if (result == -1)
-						{
-							//File not found ?
-							SprayDatabase()->QueryPlayerSpray(playerindex, userId.c_str());
-						}
-						else
-						{
-							//Could be invalid file or what, tonikaku no more retry.
-							SprayDatabase()->UpdatePlayerSprayQueryStatus(userId.c_str(), SprayQueryState_Failed);
-						}
+					if (result == 0)
+					{
+						retval->name[0] = '?';
 					}
-					else if (queryStatus == SprayQueryState_Finished)
+
+					if (result == 0)
 					{
-						auto result = Draw_LoadSprayTextures(userId.c_str(), NULL, [playerindex](const char* userId, FIBITMAP* fiB)->int {
-							return Draw_LoadSprayTexture_AsyncLoadInGame(playerindex, fiB);
+						SprayDatabase()->UpdatePlayerSprayQueryStatus(userId.c_str(), SprayQueryState_Finished);
+					}
+					else if (result == -1)
+					{
+						//File not found ?
+						SprayDatabase()->QueryPlayerSpray(playerindex, userId.c_str());
+					}
+					else
+					{
+						//Could be invalid file or what, tonikaku no more retry.
+						SprayDatabase()->UpdatePlayerSprayQueryStatus(userId.c_str(), SprayQueryState_Failed);
+					}
+				}
+				else if (queryStatus == SprayQueryState_Finished)
+				{
+					auto result = Draw_LoadSprayTextures(userId.c_str(), NULL, [playerindex](const char* userId, FIBITMAP* fiB)->int {
+						return Draw_LoadSprayTexture_AsyncLoadInGame(playerindex, fiB);
 						});
 
-						if (result == 0)
-						{
-							retval->name[0] = '?';
-						}
+					if (result == 0)
+					{
+						retval->name[0] = '?';
 					}
 				}
 			}
@@ -941,6 +935,8 @@ bool BS_UploadSprayBitmap(FIBITMAP *fiB, bool bNormalizeToSquare, bool bWithAlph
 	//if (newFilePath != filePath)
 	if(1)
 	{
+		FILESYSTEM_ANY_CREATEDIR(CUSTOM_SPRAY_DIRECTORY, "GAMEDOWNLOAD");
+
 		auto hNewFileHandle = FILESYSTEM_ANY_OPEN(newFilePath.c_str(), "wb", "GAMEDOWNLOAD");
 
 		if (!hNewFileHandle)
