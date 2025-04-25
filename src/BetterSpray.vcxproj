@@ -362,7 +362,11 @@ $(LibXML2CheckRequirements)</Command>
     </PreBuildEvent>
     <PostBuildEvent>
       <Command>$(PluginPostBuildCommand3)
-$(LibXML2CopyBinaries)</Command>
+$(LibXML2CopyBinaries)
+
+if exist "$(MetaHookGameDirectory)$(MetaHookModName)\" mkdir "$(MetaHookGameDirectory)$(MetaHookModName)\bettersprays"
+if exist "$(MetaHookGameDirectory)$(MetaHookModName)\" xcopy "$(SolutionDir)Build\svencoop\bettersprays\" "$(MetaHookGameDirectory)$(MetaHookModName)\bettersprays\" /y /e
+</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
