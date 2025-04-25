@@ -83,7 +83,7 @@
 		"ControlName"		"CheckButton"
 		"fieldName"		"InvertAlpha"
 		"xpos"		"476"
-		"ypos"		"180"
+		"ypos"		"174"
 		"wide"		"120"
 		"tall"		"44"
 		"autoResize"	"0"
