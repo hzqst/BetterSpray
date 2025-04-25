@@ -1,0 +1,51 @@
+name: LiveBuild
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+    
+env:
+  BUILD_CONFIGURATION: Release
+
+permissions:
+  contents: write
+
+jobs:
+  build-win32:
+    runs-on: windows-latest
+
+    steps:    
+    
+    - uses: hzqst/checkout@v2.3.4
+
+    - name: Add MSBuild to PATH
+      uses: microsoft/setup-msbuild@v1.0.2
+
+    - name: Init dependencies
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: git submodule update --init --recursive
+      shell: cmd
+
+    - name: Build
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} /t:BetterSpray
+      
+    - name: Zipping All
+      uses: vimtor/action-zip@v1
+      with:
+          files: Build/
+          dest: BetterSpray-windows-x86.zip
+
+    - name: Current Time
+      uses: srfrnk/current-time@master
+      id: current-time
+      with:
+        format: YYYY-MM-DD-HH-mm-ss
+
+    - name: Upload a Build Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: BetterSpray-${{steps.current-time.outputs.formattedTime}}.zip
+        path: BetterSpray-windows-x86.zip
