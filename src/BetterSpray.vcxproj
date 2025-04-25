@@ -356,9 +356,9 @@
       </Command>
     </CustomBuildStep>
     <PreBuildEvent>
-      <Command>$(FreeImageCheckRequirements)
-$(CapstoneCheckRequirements)
-$(LibXML2CheckRequirements)</Command>
+      <Command>$(LibXML2CheckRequirements)
+$(FreeImageCheckRequirements)
+$(CapstoneCheckRequirements)</Command>
     </PreBuildEvent>
     <PostBuildEvent>
       <Command>$(PluginPostBuildCommand3)
@@ -392,9 +392,9 @@ if exist "$(MetaHookGameDirectory)$(MetaHookModName)\" copy "$(FreeImageBinaryDi
       <AdditionalDependencies>$(FreeImageLibraryFiles);$(LibXML2Libraries);$(SteamSDKLibraries);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
-      <Command>$(FreeImageCheckRequirements)
-$(CapstoneCheckRequirements)
-$(LibXML2CheckRequirements)</Command>
+      <Command>$(LibXML2CheckRequirements)
+$(FreeImageCheckRequirements)
+$(CapstoneCheckRequirements)</Command>
     </PreBuildEvent>
     <PostBuildEvent>
       <Command>$(PluginPostBuildCommand3)
