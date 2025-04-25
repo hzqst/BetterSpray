@@ -1101,7 +1101,7 @@ void BS_UploadSprayFile(const char *fileName, bool bNormalizeToSquare, bool bWit
 void BS_Upload_f()
 {
 	if (gEngfuncs.Cmd_Argc() < 2) {
-		gEngfuncs.Con_Printf("File name must be specified! e.g. \"bs_upload 123.jpg\" \n");
+		gEngfuncs.Con_Printf("File name must be specified! e.g. \"bs_upload 123.jpg\" will upload \"/custom_sprays/123.jpg\"\n");
 		return;
 	}
 
