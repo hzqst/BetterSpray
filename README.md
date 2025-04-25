@@ -29,13 +29,15 @@ Steam/steamapps/common/Sven Co-op
 (Make a backup of your svencoop.exe first)
 Or follow these steps manually:
 
-1. Copy `BetterSpray.dll` to `/Sven Co-op/svencoop/metahook/plugins/`
+1. Copy `/Build/metahook` to `/Sven Co-op/svencoop/metahook/`
 
 2. Add `BetterSpray.dll` in `/Sven Co-op/svencoop/metahook/configs/plugins.lst`
 
-3. Run game, click "Better Sprays" in the main menu.
+3. Copy `/Build/bettersprays` to `/Sven Co-op/svencoop/bettersprays/`
 
-4. Click "Load" button and load whatever you want.
+4. Run game, click "Better Sprays" in the main menu.
+
+5. Click "Load" button and load whatever image you want.
 
  Note on Antivirus False Positives
 Some antivirus software like Avast may flag this plugin (or the game executable) as "Win32:MalwareX-gen [Misc]". 
