@@ -383,7 +383,7 @@ public:
 	{
 		auto nContentLength = UTIL_GetContentLength(ResponseInstance);
 
-		if (nContentLength >= 0 && size != nContentLength)
+		if (nContentLength >= 0 && size < nContentLength)
 		{
 			gEngfuncs.Con_Printf("[BetterSpray] Content-Length mismatch for \"%s\": expect %d , got %d !\n", m_Url.c_str(), nContentLength, size);
 			return false;
