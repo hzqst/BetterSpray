@@ -1,6 +1,6 @@
 # BetterSpray
 
-**BetterSpray** is a plugin for MetaHookSV that enhances Sven Co-op’s spray system with support
+**BetterSpray** is a plugin for MetaHookSV that enhances Sven Co-op and GoldSrc’s spray system with support
 for multiple images, true aspect ratios, and dynamic reloading.
 
 MetaHookSV: https://github.com/hzqst/MetaHookSv
@@ -18,6 +18,16 @@ MetaHookSV: https://github.com/hzqst/MetaHookSv
 ### 🚀 Performance & Quality
 - 🖌️ Vanilla decal rendering by engine itself.
 - 🔍 Has no limitation on texture size.
+
+### Compatibility
+
+|        Engine               |      |
+|        ----                 | ---- |
+| GoldSrc_blob   (3248~4554)  | x    |
+| GoldSrc_legacy (< 6153)     | x    |
+| GoldSrc_new    (8684 ~)     | x    |
+| SvEngine       (8832 ~)     | √    |
+| GoldSrc_HL25   (>= 9884)    | √    |
 
 ## 📥 Installation
 
