@@ -20,6 +20,60 @@
 cl_enginefunc_t gEngfuncs = {0};
 engine_studio_api_t IEngineStudio = { 0 };
 
+static bool IsPixelWhite(FIBITMAP* fib, int x, int y)
+{
+	RGBQUAD color{};
+	if (FreeImage_GetPixelColor(fib, x, y, &color) && color.rgbRed > 220 && color.rgbGreen > 220 && color.rgbBlue > 220)
+	{
+		return true;
+	}
+	return false;
+}
+
+static bool IsPixelBack(FIBITMAP* fib, int x, int y)
+{
+	RGBQUAD color{};
+	if (FreeImage_GetPixelColor(fib, x, y, &color) && color.rgbRed < 30 && color.rgbGreen < 30 && color.rgbBlue < 30)
+	{
+		return true;
+	}
+
+	return false;
+}
+
+static bool IsPixelRed(FIBITMAP* fib, int x, int y)
+{
+	RGBQUAD color{};
+	if (FreeImage_GetPixelColor(fib, x, y, &color) && color.rgbRed > 128 && color.rgbGreen < 128 && color.rgbBlue < 128)
+	{
+		return true;
+	}
+
+	return false;
+}
+
+static bool IsPixelGreen(FIBITMAP* fib, int x, int y)
+{
+	RGBQUAD color{};
+	if (FreeImage_GetPixelColor(fib, x, y, &color) && color.rgbRed < 128 && color.rgbGreen > 128 && color.rgbBlue < 128)
+	{
+		return true;
+	}
+
+	return false;
+}
+
+static bool IsPixelBlue(FIBITMAP* fib, int x, int y)
+{
+	RGBQUAD color{};
+	if (FreeImage_GetPixelColor(fib, x, y, &color) && color.rgbRed < 128 && color.rgbGreen < 128 && color.rgbBlue > 128)
+	{
+		return true;
+	}
+
+	return false;
+}
+
 unsigned WINAPI FI_Read(void* buffer, unsigned size, unsigned count, fi_handle handle)
 {
 	if (FILESYSTEM_ANY_READ(buffer, size * count, handle))
@@ -195,85 +249,275 @@ void Draw_LoadSprayTexture_BGRA8ToRGBA8(FIBITMAP* fiB)
 	}
 }
 
-void Draw_LoadSprayTexture_ConvertToBGRA32(FIBITMAP** pfiB)
+bool Draw_LoadSprayTexture_DecodeBackground(FIBITMAP* fiB, int* iBackgroundType, bool *bWithAlphaChannel)
+{
+	unsigned w = FreeImage_GetWidth(fiB);
+	unsigned h = FreeImage_GetHeight(fiB);
+
+	if (IsPixelRed(fiB, 0, 0) && IsPixelRed(fiB, 0, h - 1) && IsPixelRed(fiB, w - 1, h - 1) && IsPixelRed(fiB, w - 1, 0))//All R
+	{
+		(*iBackgroundType) = 0;
+		(*bWithAlphaChannel) = false;
+		return true;
+	}
+	if (IsPixelGreen(fiB, 0, 0) && IsPixelGreen(fiB, 0, h - 1) && IsPixelGreen(fiB, w - 1, h - 1) && IsPixelGreen(fiB, w - 1, 0))//All G
+	{
+		(*iBackgroundType) = 1;
+		(*bWithAlphaChannel) = false;
+		return true;
+	}
+	if (IsPixelBlue(fiB, 0, 0) && IsPixelBlue(fiB, 0, h - 1) && IsPixelBlue(fiB, w - 1, h - 1) && IsPixelBlue(fiB, w - 1, 0))//All B
+	{
+		(*iBackgroundType) = 2;
+		(*bWithAlphaChannel) = false;
+		return true;
+	}
+	if (IsPixelRed(fiB, 0, 0) && IsPixelRed(fiB, 0, h - 1) && IsPixelGreen(fiB, w - 1, h - 1) && IsPixelGreen(fiB, w - 1, 0))//leftR rightG
+	{
+		(*iBackgroundType) = 0;
+		(*bWithAlphaChannel) = true;
+		return true;
+	}
+	if (IsPixelGreen(fiB, 0, 0) && IsPixelGreen(fiB, 0, h - 1) && IsPixelBlue(fiB, w - 1, h - 1) && IsPixelBlue(fiB, w - 1, 0))//leftG rightB
+	{
+		(*iBackgroundType) = 1;
+		(*bWithAlphaChannel) = true;
+		return true;
+	}
+	if (IsPixelRed(fiB, 0, 0) && IsPixelRed(fiB, 0, h - 1) && IsPixelBlue(fiB, w - 1, h - 1) && IsPixelBlue(fiB, w - 1, 0))//leftR rightB
+	{
+		(*iBackgroundType) = 2;
+		(*bWithAlphaChannel) = true;
+		return true;
+	}
+
+	return false;
+}
+
+int Draw_LoadSprayTexture_ConvertToBGRA32(FIBITMAP** pfiB)
 {
 	FIBITMAP* fiB = (*pfiB);
 
-	// 检查是否为24bpp图像
-	if (FreeImage_GetBPP(fiB) == 24)
+	unsigned width = FreeImage_GetWidth(fiB);
+	unsigned height = FreeImage_GetHeight(fiB);
+
+	if (FreeImage_GetBPP(fiB) == 24 && 
+		(width == 5160 && height == 2160) || 
+		(width == 3440 && height == 1440) ||
+		(width == 2560 && height == 1080))
 	{
-		unsigned width = FreeImage_GetWidth(fiB);
-		unsigned height = FreeImage_GetHeight(fiB);
+		int newWidth = 1024;
+		int newHeight = 1024;
+		int iBackgroundType = 0;
+		bool bWithAlphaChannel = false;
 
-		// 检查宽度是否为高度的两倍
-		if (width == height * 2)
+		if (height == 2160)
+			newWidth = newHeight = 1024;
+		if (height == 1440)
+			newWidth = newHeight = 768;
+		if (height == 1080)
+			newWidth = newHeight = 512;
+
+		if (Draw_LoadSprayTexture_DecodeBackground(fiB, &iBackgroundType, &bWithAlphaChannel))
 		{
-			// 创建一个新的32bpp图像，宽度为原图的一半
-			auto newBitmap = FreeImage_Allocate(width / 2, height, 32);
+			FIBITMAP* newBitmap = nullptr;
 
-			if (newBitmap)
+			if (iBackgroundType == 0 && !bWithAlphaChannel)
 			{
-				// 检查最右下角像素是否为纯白色
-				bool bInvertedAlpha = false;
+				newBitmap = FreeImage_Allocate(newWidth, newHeight, 24);
 
-				RGBQUAD color;
-				FreeImage_GetPixelColor(fiB, width - 1, height - 1, &color);
-				if (color.rgbRed > 250 && color.rgbGreen >= 250 && color.rgbBlue >= 250)
+				// 从 fiB 最中间的位置提取 newWidth x newHeight 大小图片写入 newBitmap
+				int srcX = (width - newWidth) / 2;
+				int srcY = (height - newHeight) / 2;
+				
+				for (unsigned y = 0; y < newHeight; y++)
 				{
-					bInvertedAlpha = true;
+					BYTE* srcBits = FreeImage_GetScanLine(fiB, (height - 1) - (srcY + y)) + srcX * 3;
+					BYTE* dstBits = FreeImage_GetScanLine(newBitmap, (newHeight - y) - 1);
+					
+					memcpy(dstBits, srcBits, newWidth * 3);
 				}
-
-				// 处理每一行像素
-				for (unsigned y = 0; y < height; y++)
-				{
-					BYTE* srcBits = FreeImage_GetScanLine(fiB, y);
-					BYTE* dstBits = FreeImage_GetScanLine(newBitmap, y);
-
-					// 处理每一列像素
-					for (unsigned x = 0; x < width / 2; x++)
-					{
-						// 左半部分作为RGB通道
-						dstBits[FI_RGBA_BLUE] = srcBits[FI_RGBA_BLUE];
-						dstBits[FI_RGBA_GREEN] = srcBits[FI_RGBA_GREEN];
-						dstBits[FI_RGBA_RED] = srcBits[FI_RGBA_RED];
-
-						// 右半部分计算Alpha值
-						BYTE* alphaSrc = srcBits + (width / 2) * 3; // 指向右半部分对应位置
-						int alphaValue = (alphaSrc[FI_RGBA_RED] + alphaSrc[FI_RGBA_GREEN] + alphaSrc[FI_RGBA_BLUE]) / 3;
-
-						// 根据bInvertedAlpha决定是否反转alpha值
-						if (bInvertedAlpha)
-						{
-							dstBits[FI_RGBA_ALPHA] = 255 - (BYTE)alphaValue;
-						}
-						else
-						{
-							dstBits[FI_RGBA_ALPHA] = (BYTE)alphaValue;
-						}
-
-						// 移动到下一个像素
-						srcBits += 3;
-						dstBits += 4;
-					}
-				}
-
-				(*pfiB) = newBitmap;
-
-				FreeImage_Unload(fiB);
-
-				return;
 			}
+			else if (iBackgroundType == 0 && bWithAlphaChannel)
+			{
+				newWidth *= 2;
+
+				newBitmap = FreeImage_Allocate(newWidth, newHeight, 24);
+
+				// 从 fiB 最中间的位置提取 newWidth x newHeight 大小图片写入 newBitmap
+				int srcX = (width - newWidth) / 2;
+				int srcY = (height - newHeight) / 2;
+				
+				for (unsigned y = 0; y < newHeight; y++)
+				{
+					BYTE* srcBits = FreeImage_GetScanLine(fiB, (height - 1) - (srcY + y)) + srcX * 3;
+					BYTE* dstBits = FreeImage_GetScanLine(newBitmap, (newHeight - y) - 1);
+					
+					memcpy(dstBits, srcBits, newWidth * 3);
+				}
+			}
+			else if (iBackgroundType == 1 && !bWithAlphaChannel)
+			{
+				newBitmap = FreeImage_Allocate(newWidth, newHeight, 24);
+
+				// 从 fiB 最左上角的位置提取 newWidth x newHeight 大小图片写入 newBitmap
+				for (unsigned y = 0; y < newHeight; y++)
+				{
+					BYTE* srcBits = FreeImage_GetScanLine(fiB, (height - 1) - y);
+					BYTE* dstBits = FreeImage_GetScanLine(newBitmap, (newHeight - y) - 1);
+					
+					memcpy(dstBits, srcBits, newWidth * 3);
+				}
+			}
+			else if (iBackgroundType == 1 && bWithAlphaChannel)
+			{
+				newWidth *= 2;
+
+				newBitmap = FreeImage_Allocate(newWidth, newHeight, 24);
+
+				// 从 fiB 最左上角的位置提取 newWidth x newHeight 大小图片写入 newBitmap
+				for (unsigned y = 0; y < newHeight; y++)
+				{
+					BYTE* srcBits = FreeImage_GetScanLine(fiB, (height - 1) - y);
+					BYTE* dstBits = FreeImage_GetScanLine(newBitmap, (newHeight - y) - 1);
+					
+					memcpy(dstBits, srcBits, newWidth * 3);
+				}
+			}
+			else if (iBackgroundType == 2 && !bWithAlphaChannel)
+			{
+				newBitmap = FreeImage_Allocate(newWidth, newHeight, 24);
+
+				// 从 fiB 最右上角的位置提取 newWidth x newHeight 大小图片写入 newBitmap
+				int srcX = width - newWidth;
+				
+				for (unsigned y = 0; y < newHeight; y++)
+				{
+					BYTE* srcBits = FreeImage_GetScanLine(fiB, (height - 1) - y) + srcX * 3;
+					BYTE* dstBits = FreeImage_GetScanLine(newBitmap, (newHeight - y) - 1);
+					
+					memcpy(dstBits, srcBits, newWidth * 3);
+				}
+			}
+			else if (iBackgroundType == 2 && bWithAlphaChannel)
+			{
+				newWidth *= 2;
+
+				newBitmap = FreeImage_Allocate(newWidth, newHeight, 24);
+
+				// 从 fiB 最右上角的位置提取 newWidth x newHeight 大小图片写入 newBitmap
+				int srcX = width - newWidth;
+				
+				for (unsigned y = 0; y < newHeight; y++)
+				{
+					BYTE* srcBits = FreeImage_GetScanLine(fiB, (height - 1) - y) + srcX * 3;
+					BYTE* dstBits = FreeImage_GetScanLine(newBitmap, y);
+					
+					memcpy(dstBits, srcBits, newWidth * 3);
+				}
+			}
+
+			(*pfiB) = newBitmap;
+
+			FreeImage_Unload(fiB);
+
+			return 3;
+		}
+
+		return -1;
+	}
+
+	if (FreeImage_GetBPP(fiB) == 24 && width == height * 2)
+	{
+		auto newBitmap = FreeImage_Allocate(width / 2, height, 32);
+
+		if (newBitmap)
+		{
+			// 检查最右下角像素是否为纯白色
+			bool bInvertedAlpha = false;
+			
+			if (IsPixelWhite(fiB, width - 1, height - 1) ||
+				IsPixelWhite(fiB, width - 2, height - 2) || 
+				IsPixelWhite(fiB, width - 3, height - 3) || 
+				IsPixelWhite(fiB, width - 4, height - 4))
+			{
+				bInvertedAlpha = true;
+			}
+
+			// 处理每一行像素
+			for (unsigned y = 0; y < height; y++)
+			{
+				BYTE* srcBits = FreeImage_GetScanLine(fiB, y);
+				BYTE* dstBits = FreeImage_GetScanLine(newBitmap, y);
+
+				// 处理每一列像素
+				for (unsigned x = 0; x < width / 2; x++)
+				{
+					// 左半部分作为RGB通道
+					dstBits[FI_RGBA_BLUE] = srcBits[FI_RGBA_BLUE];
+					dstBits[FI_RGBA_GREEN] = srcBits[FI_RGBA_GREEN];
+					dstBits[FI_RGBA_RED] = srcBits[FI_RGBA_RED];
+
+					// 右半部分计算Alpha值
+					BYTE* alphaSrc = srcBits + (width / 2) * 3; // 指向右半部分对应位置
+					int alphaValue = (alphaSrc[FI_RGBA_RED] + alphaSrc[FI_RGBA_GREEN] + alphaSrc[FI_RGBA_BLUE]) / 3;
+
+					// 根据bInvertedAlpha决定是否反转alpha值
+					if (bInvertedAlpha)
+					{
+						dstBits[FI_RGBA_ALPHA] = 255 - (BYTE)alphaValue;
+					}
+					else
+					{
+						dstBits[FI_RGBA_ALPHA] = (BYTE)alphaValue;
+					}
+
+					// 移动到下一个像素
+					srcBits += 3;
+					dstBits += 4;
+				}
+			}
+
+			(*pfiB) = newBitmap;
+
+			FreeImage_Unload(fiB);
+
+			return 2;
 		}
 	}
 
-	(*pfiB) = FreeImage_ConvertTo32Bits(fiB);
+	if (FreeImage_GetBPP(fiB) != 32)
+	{	
+		(*pfiB) = FreeImage_ConvertTo32Bits(fiB);
+		FreeImage_Unload(fiB);
 
-	FreeImage_Unload(fiB);
+		return 1;
+	}
+
+	if (width * height > 4096 * 4096)
+		return -1;
+
+	return 0;
 }
 
 void Draw_LoadSprayTexture_WorkItem(CLoadSprayTextureWorkItemContext* ctx)
 {
-	Draw_LoadSprayTexture_ConvertToBGRA32(&ctx->m_fiB);
+	while (1)
+	{
+		auto result = Draw_LoadSprayTexture_ConvertToBGRA32(&ctx->m_fiB);
+
+		if (result > 0)
+			continue;
+
+		if (result == 0)
+			break;
+
+		if (result < 0)
+		{
+			ctx->Destroy();
+			return;
+		}
+	}
 
 	Draw_LoadSprayTexture_BGRA8ToRGBA8(ctx->m_fiB);
 
@@ -753,10 +997,7 @@ FIBITMAP* BS_NormalizeToSquareRGBA32(FIBITMAP* fiB)
 	unsigned int offsetX = (newSize - width) / 2;
 	unsigned int offsetY = (newSize - height) / 2;
 
-	// 使用FreeImage_Paste将原图像粘贴到新图像的中心位置
-	//FreeImage_Paste(newBitmap, fiB, offsetX, offsetY, 255);
-
-	RGBQUAD color;
+	RGBQUAD color{};
 
 	// 遍历原图像的每个像素
 	for (unsigned int y = 0; y < height; y++)
@@ -774,7 +1015,7 @@ FIBITMAP* BS_NormalizeToSquareRGBA32(FIBITMAP* fiB)
 	return newBitmap;
 }
 
-FIBITMAP* BS_NormalizeToSquareRGB24(FIBITMAP* fiB)
+FIBITMAP* BS_NormalizeToSquareRGB24(FIBITMAP* fiB, bool bInvertedAlpha)
 {
 	// 获取原图像的宽度和高度
 	unsigned int width = FreeImage_GetWidth(fiB);
@@ -801,9 +1042,6 @@ FIBITMAP* BS_NormalizeToSquareRGB24(FIBITMAP* fiB)
 	unsigned int offsetX = (newSize - width) / 2;
 	unsigned int offsetY = (newSize - height) / 2;
 	
-	// 使用FreeImage_Paste将原图像粘贴到新图像的中心位置
-	//FreeImage_Paste(newBitmap, fiB, offsetX, offsetY, 255);
-	
 	RGBQUAD color;
 
 	// 遍历原图像的每个像素
@@ -814,6 +1052,12 @@ FIBITMAP* BS_NormalizeToSquareRGB24(FIBITMAP* fiB)
 			// 获取原图像像素的Alpha值
 			FreeImage_GetPixelColor(fiB, x, y, &color);
 
+			if (bInvertedAlpha && color.rgbReserved < 128)
+			{
+				color.rgbRed = 255 - color.rgbRed;
+				color.rgbGreen = 255 - color.rgbGreen;
+				color.rgbBlue = 255 - color.rgbBlue;
+			}
 			// 写入到新图像中（考虑偏移量）
 			FreeImage_SetPixelColor(newBitmap, x + offsetX, y + offsetY, &color);
 		}
@@ -822,7 +1066,7 @@ FIBITMAP* BS_NormalizeToSquareRGB24(FIBITMAP* fiB)
 	return newBitmap;
 }
 
-FIBITMAP *BS_NormalizeToSquareA24(FIBITMAP* fiB, bool bAlphaInverted)
+FIBITMAP *BS_NormalizeToSquareA24(FIBITMAP* fiB, bool bInvertedAlpha)
 {
 	// 获取原图像的宽度和高度
 	unsigned int width = FreeImage_GetWidth(fiB);
@@ -877,7 +1121,7 @@ FIBITMAP *BS_NormalizeToSquareA24(FIBITMAP* fiB, bool bAlphaInverted)
 			color.rgbBlue = alpha;
 			color.rgbReserved = 255;
 
-			if (bAlphaInverted)
+			if (bInvertedAlpha)
 			{
 				color.rgbRed = 255 - color.rgbRed;
 				color.rgbGreen = 255 - color.rgbGreen;
@@ -892,7 +1136,7 @@ FIBITMAP *BS_NormalizeToSquareA24(FIBITMAP* fiB, bool bAlphaInverted)
 	return newBitmap;
 }
 
-FIBITMAP* BS_NormalizeToSquareRGBA24(FIBITMAP* fibSquareRGB, FIBITMAP* fibSquareA, bool bAlphaInverted)
+FIBITMAP* BS_NormalizeToSquareRGBA24(FIBITMAP* fibSquareRGB, FIBITMAP* fibSquareA, bool bInvertedAlpha)
 {
 	unsigned int width = FreeImage_GetWidth(fibSquareRGB);
 	unsigned int height = FreeImage_GetHeight(fibSquareRGB);
@@ -914,7 +1158,283 @@ FIBITMAP* BS_NormalizeToSquareRGBA24(FIBITMAP* fibSquareRGB, FIBITMAP* fibSquare
 	return newBitmap;
 }
 
-bool BS_UploadSprayBitmap(FIBITMAP *fiB, bool bNormalizeToSquare, bool bWithAlphaChannel, bool bAlphaInverted)
+FIBITMAP* BS_CreateBackgroundRGBA24(FIBITMAP* fibSource, FIBITMAP* fibBackground, int iRandomBackgroundType, bool bWithAlphaChannel)
+{
+	auto width = FreeImage_GetWidth(fibSource);
+	auto height = FreeImage_GetHeight(fibSource);
+	FIBITMAP* newFibSource = nullptr;
+	FIBITMAP* newBackground = nullptr;
+	unsigned int nw{};
+	unsigned int nh{};
+
+	if (height <= 512)
+	{
+		newFibSource = FreeImage_Rescale(fibSource, (width * 512.0f / height), 512);
+		newBackground = FreeImage_Rescale(fibBackground, 2560, 1080);
+	}
+	else if (height <= 768)
+	{
+		auto newFibSource = FreeImage_Rescale(fibSource, (width * 768.0f / height), 768);
+		newBackground = FreeImage_Rescale(fibBackground, 3440, 1440);
+	}
+	else
+	{
+		auto newFibSource = FreeImage_Rescale(fibSource, (width * 1024.0f / height), 1024);
+		newBackground = FreeImage_Rescale(fibBackground, 5160, 2160);
+	}
+
+	{
+		nw = FreeImage_GetWidth(newBackground);
+		nh = FreeImage_GetHeight(newBackground);
+
+		if (iRandomBackgroundType == 0)
+			FreeImage_Paste(newBackground, newFibSource, (nw / 2) - (FreeImage_GetWidth(newFibSource) / 2) - 1, (nh / 2) - (FreeImage_GetWidth(newFibSource) / 2) - 1, 255);
+		if (iRandomBackgroundType == 1)
+			FreeImage_Paste(newBackground, newFibSource, 0, 0, 255);
+		if (iRandomBackgroundType == 2)
+			FreeImage_Paste(newBackground, newFibSource, nw - FreeImage_GetWidth(newFibSource) - 1, 0, 255);
+
+		FreeImage_Unload(newFibSource);
+	}
+
+	if (!bWithAlphaChannel)
+	{
+		if (iRandomBackgroundType == 0)//all R
+		{
+			RGBQUAD mark;
+
+			mark = { 0, 0, 255, 255 };
+			FreeImage_SetPixelColor(newBackground, 0, 0, &mark);
+			FreeImage_SetPixelColor(newBackground, 0, 1, &mark);
+			FreeImage_SetPixelColor(newBackground, 1, 1, &mark);
+			FreeImage_SetPixelColor(newBackground, 1, 0, &mark);
+			mark = { 0, 0, 255, 255 };
+			FreeImage_SetPixelColor(newBackground, 0, nh - 1, &mark);
+			FreeImage_SetPixelColor(newBackground, 0, nh - 2, &mark);
+			FreeImage_SetPixelColor(newBackground, 1, nh - 1, &mark);
+			FreeImage_SetPixelColor(newBackground, 1, nh - 2, &mark);
+			mark = { 0, 0, 255, 255 };
+			FreeImage_SetPixelColor(newBackground, nw - 1, nh - 1, &mark);
+			FreeImage_SetPixelColor(newBackground, nw - 1, nh - 2, &mark);
+			FreeImage_SetPixelColor(newBackground, nw - 2, nh - 1, &mark);
+			FreeImage_SetPixelColor(newBackground, nw - 2, nh - 2, &mark);
+			mark = { 0, 0, 255, 255 };
+			FreeImage_SetPixelColor(newBackground, nw - 1, 0, &mark);
+			FreeImage_SetPixelColor(newBackground, nw - 2, 0, &mark);
+			FreeImage_SetPixelColor(newBackground, nw - 1, 1, &mark);
+			FreeImage_SetPixelColor(newBackground, nw - 2, 1, &mark);
+		}
+		if (iRandomBackgroundType == 1)//all G
+		{
+			RGBQUAD mark;
+
+			mark = { 0, 255, 0, 255 };
+			FreeImage_SetPixelColor(newBackground, 0, 0, &mark);
+			FreeImage_SetPixelColor(newBackground, 0, 1, &mark);
+			FreeImage_SetPixelColor(newBackground, 1, 1, &mark);
+			FreeImage_SetPixelColor(newBackground, 1, 0, &mark);
+			mark = { 0, 255, 0, 255 };
+			FreeImage_SetPixelColor(newBackground, 0, nh - 1, &mark);
+			FreeImage_SetPixelColor(newBackground, 0, nh - 2, &mark);
+			FreeImage_SetPixelColor(newBackground, 1, nh - 1, &mark);
+			FreeImage_SetPixelColor(newBackground, 1, nh - 2, &mark);
+			mark = { 0, 255, 0, 255 };
+			FreeImage_SetPixelColor(newBackground, nw - 1, nh - 1, &mark);
+			FreeImage_SetPixelColor(newBackground, nw - 1, nh - 2, &mark);
+			FreeImage_SetPixelColor(newBackground, nw - 2, nh - 1, &mark);
+			FreeImage_SetPixelColor(newBackground, nw - 2, nh - 2, &mark);
+			mark = { 0, 255, 0, 255 };
+			FreeImage_SetPixelColor(newBackground, nw - 1, 0, &mark);
+			FreeImage_SetPixelColor(newBackground, nw - 2, 0, &mark);
+			FreeImage_SetPixelColor(newBackground, nw - 1, 1, &mark);
+			FreeImage_SetPixelColor(newBackground, nw - 2, 1, &mark);
+		}
+		if (iRandomBackgroundType == 2)//all B
+		{
+			RGBQUAD mark;
+
+			mark = { 255, 0, 0, 255 };
+			FreeImage_SetPixelColor(newBackground, 0, 0, &mark);
+			FreeImage_SetPixelColor(newBackground, 0, 1, &mark);
+			FreeImage_SetPixelColor(newBackground, 1, 1, &mark);
+			FreeImage_SetPixelColor(newBackground, 1, 0, &mark);
+			mark = { 255, 0, 0, 255 };
+			FreeImage_SetPixelColor(newBackground, 0, nh - 1, &mark);
+			FreeImage_SetPixelColor(newBackground, 0, nh - 2, &mark);
+			FreeImage_SetPixelColor(newBackground, 1, nh - 1, &mark);
+			FreeImage_SetPixelColor(newBackground, 1, nh - 2, &mark);
+			mark = { 255, 0, 0, 255 };
+			FreeImage_SetPixelColor(newBackground, nw - 1, nh - 1, &mark);
+			FreeImage_SetPixelColor(newBackground, nw - 1, nh - 2, &mark);
+			FreeImage_SetPixelColor(newBackground, nw - 2, nh - 1, &mark);
+			FreeImage_SetPixelColor(newBackground, nw - 2, nh - 2, &mark);
+			mark = { 255, 0, 0, 255 };
+			FreeImage_SetPixelColor(newBackground, nw - 1, 0, &mark);
+			FreeImage_SetPixelColor(newBackground, nw - 2, 0, &mark);
+			FreeImage_SetPixelColor(newBackground, nw - 1, 1, &mark);
+			FreeImage_SetPixelColor(newBackground, nw - 2, 1, &mark);
+		}
+	}
+	else
+	{
+		if (iRandomBackgroundType == 0)//leftR rightG
+		{
+			RGBQUAD mark;
+
+			mark = { 0, 0, 255, 255 };
+			FreeImage_SetPixelColor(newBackground, 0, 0, &mark);
+			FreeImage_SetPixelColor(newBackground, 0, 1, &mark);
+			FreeImage_SetPixelColor(newBackground, 1, 1, &mark);
+			FreeImage_SetPixelColor(newBackground, 1, 0, &mark);
+			mark = { 0, 0, 255, 255 };
+			FreeImage_SetPixelColor(newBackground, 0, nh - 1, &mark);
+			FreeImage_SetPixelColor(newBackground, 0, nh - 2, &mark);
+			FreeImage_SetPixelColor(newBackground, 1, nh - 1, &mark);
+			FreeImage_SetPixelColor(newBackground, 1, nh - 2, &mark);
+			mark = { 0, 255, 0, 255 };
+			FreeImage_SetPixelColor(newBackground, nw - 1, nh - 1, &mark);
+			FreeImage_SetPixelColor(newBackground, nw - 1, nh - 2, &mark);
+			FreeImage_SetPixelColor(newBackground, nw - 2, nh - 1, &mark);
+			FreeImage_SetPixelColor(newBackground, nw - 2, nh - 2, &mark);
+			mark = { 0, 255, 0, 255 };
+			FreeImage_SetPixelColor(newBackground, nw - 1, 0, &mark);
+			FreeImage_SetPixelColor(newBackground, nw - 2, 0, &mark);
+			FreeImage_SetPixelColor(newBackground, nw - 1, 1, &mark);
+			FreeImage_SetPixelColor(newBackground, nw - 2, 1, &mark);
+		}
+		if (iRandomBackgroundType == 1)//leftG rightB
+		{
+			RGBQUAD mark;
+
+			mark = { 0, 255, 0, 255 };
+			FreeImage_SetPixelColor(newBackground, 0, 0, &mark);
+			FreeImage_SetPixelColor(newBackground, 0, 1, &mark);
+			FreeImage_SetPixelColor(newBackground, 1, 1, &mark);
+			FreeImage_SetPixelColor(newBackground, 1, 0, &mark);
+			mark = { 0, 255, 0, 255 };
+			FreeImage_SetPixelColor(newBackground, 0, nh - 1, &mark);
+			FreeImage_SetPixelColor(newBackground, 0, nh - 2, &mark);
+			FreeImage_SetPixelColor(newBackground, 1, nh - 1, &mark);
+			FreeImage_SetPixelColor(newBackground, 1, nh - 2, &mark);
+			mark = { 255, 0, 0, 255 };
+			FreeImage_SetPixelColor(newBackground, nw - 1, nh - 1, &mark);
+			FreeImage_SetPixelColor(newBackground, nw - 1, nh - 2, &mark);
+			FreeImage_SetPixelColor(newBackground, nw - 2, nh - 1, &mark);
+			FreeImage_SetPixelColor(newBackground, nw - 2, nh - 2, &mark);
+			mark = { 255, 0, 0, 255 };
+			FreeImage_SetPixelColor(newBackground, nw - 1, 0, &mark);
+			FreeImage_SetPixelColor(newBackground, nw - 2, 0, &mark);
+			FreeImage_SetPixelColor(newBackground, nw - 1, 1, &mark);
+			FreeImage_SetPixelColor(newBackground, nw - 2, 1, &mark);
+		}
+		if (iRandomBackgroundType == 2)//leftR rightB
+		{
+			RGBQUAD mark;
+
+			mark = { 0, 0, 255, 255 };
+			FreeImage_SetPixelColor(newBackground, 0, 0, &mark);
+			FreeImage_SetPixelColor(newBackground, 0, 1, &mark);
+			FreeImage_SetPixelColor(newBackground, 1, 1, &mark);
+			FreeImage_SetPixelColor(newBackground, 1, 0, &mark);
+			mark = { 0, 0, 255, 255 };
+			FreeImage_SetPixelColor(newBackground, 0, nh - 1, &mark);
+			FreeImage_SetPixelColor(newBackground, 0, nh - 2, &mark);
+			FreeImage_SetPixelColor(newBackground, 1, nh - 1, &mark);
+			FreeImage_SetPixelColor(newBackground, 1, nh - 2, &mark);
+			mark = { 255, 0, 0, 255 };
+			FreeImage_SetPixelColor(newBackground, nw - 1, nh - 1, &mark);
+			FreeImage_SetPixelColor(newBackground, nw - 1, nh - 2, &mark);
+			FreeImage_SetPixelColor(newBackground, nw - 2, nh - 1, &mark);
+			FreeImage_SetPixelColor(newBackground, nw - 2, nh - 2, &mark);
+			mark = { 255, 0, 0, 255 };
+			FreeImage_SetPixelColor(newBackground, nw - 1, 0, &mark);
+			FreeImage_SetPixelColor(newBackground, nw - 2, 0, &mark);
+			FreeImage_SetPixelColor(newBackground, nw - 1, 1, &mark);
+			FreeImage_SetPixelColor(newBackground, nw - 2, 1, &mark);
+		}
+	}
+
+	return newBackground;
+}
+
+int BS_GetRandomBackgroundType(FIBITMAP* fibBackground)
+{
+	auto w = FreeImage_GetWidth(fibBackground);
+	auto h = FreeImage_GetHeight(fibBackground);
+
+	if (IsPixelWhite(fibBackground, 0, h - 1) &&
+		IsPixelWhite(fibBackground, 1, h - 2) &&
+		IsPixelWhite(fibBackground, 2, h - 3))
+	{
+		return 1;
+	}
+
+	if (
+		IsPixelWhite(fibBackground, w - 1, h - 1) && 
+		IsPixelWhite(fibBackground, w - 2, h - 2) &&
+		IsPixelWhite(fibBackground, w - 3, h - 3))
+	{
+		return 2;
+	}
+
+	return 0;
+}
+
+FIBITMAP* BS_LoadRandomBackground(int numBackgrounds)
+{
+	std::string filePath = std::format("bettersprays/random_background_{0}.jpg", gEngfuncs.pfnRandomLong(0, numBackgrounds));
+
+	FIBITMAP* fiB = NULL;
+
+	{
+		auto fileHandle = FILESYSTEM_ANY_OPEN(filePath.c_str(), "rb");
+
+		if (!fileHandle)
+		{
+			gEngfuncs.Con_Printf("[BetterSpray] Could not open \"%s\" for reading.\n", filePath.c_str());
+			return nullptr;
+		}
+
+		SCOPE_EXIT{ FILESYSTEM_ANY_CLOSE(fileHandle); };
+
+		FreeImageIO fiIO;
+		fiIO.read_proc = FI_Read;
+		fiIO.write_proc = FI_Write;
+		fiIO.seek_proc = FI_Seek;
+		fiIO.tell_proc = FI_Tell;
+
+		auto fiFormat = FIF_UNKNOWN;
+
+		if (fiFormat == FIF_UNKNOWN)
+		{
+			fiFormat = FreeImage_GetFileTypeFromHandle(&fiIO, (fi_handle)fileHandle);
+		}
+
+		if (fiFormat == FIF_UNKNOWN)
+		{
+			gEngfuncs.Con_Printf("[BetterSpray] Could not open \"%s\", Unknown format.\n", filePath.c_str());
+			return nullptr;
+		}
+
+		if (!FreeImage_FIFSupportsReading(fiFormat))
+		{
+			gEngfuncs.Con_Printf("[BetterSpray] Could not open \"%s\", Unsupported format.\n", filePath.c_str());
+			return nullptr;
+		}
+
+		fiB = FreeImage_LoadFromHandle(fiFormat, &fiIO, (fi_handle)fileHandle, 0);
+
+		if (!fiB)
+		{
+			gEngfuncs.Con_Printf("[BetterSpray] Could not upload \"%s\", FreeImage_LoadFromHandle failed.\n", filePath.c_str());
+			return nullptr;
+		}
+	}
+
+	return fiB;
+}
+
+bool BS_UploadSprayBitmap(FIBITMAP *fiB, bool bNormalizeToSquare, bool bWithAlphaChannel, bool bInvertedAlpha, bool bRandomBackground)
 {
 	FreeImageIO fiIO;
 	fiIO.read_proc = FI_Read;
@@ -953,35 +1473,70 @@ bool BS_UploadSprayBitmap(FIBITMAP *fiB, bool bNormalizeToSquare, bool bWithAlph
 		{
 			if (bWithAlphaChannel && FreeImage_GetBPP(fiB) == 32)
 			{
-				auto fibSquareRGB24 = BS_NormalizeToSquareRGB24(fiB);
-				auto fibSquareA24 = BS_NormalizeToSquareA24(fiB, bAlphaInverted);
+				auto fibSquareRGB24 = BS_NormalizeToSquareRGB24(fiB, bInvertedAlpha);
+				auto fibSquareA24 = BS_NormalizeToSquareA24(fiB, bInvertedAlpha);
 
-				auto newFIB24 = BS_NormalizeToSquareRGBA24(fibSquareRGB24, fibSquareA24, bAlphaInverted);
+				auto newFIB24 = BS_NormalizeToSquareRGBA24(fibSquareRGB24, fibSquareA24, bInvertedAlpha);
 
 				FreeImage_Unload(fibSquareRGB24);
 				FreeImage_Unload(fibSquareA24);
 
-				bSaved = FreeImage_SaveToHandle(FIF_JPEG, newFIB24, &fiIO, (fi_handle)hNewFileHandle);
+				if (bRandomBackground)
+				{
+					auto fibBackground = BS_LoadRandomBackground(3);
+
+					if (fibBackground)
+					{
+						auto iBackgroundType = BS_GetRandomBackgroundType(fibBackground);
+						auto newFIB24WithBackground = BS_CreateBackgroundRGBA24(newFIB24, fibBackground, iBackgroundType, true);
+						FreeImage_Unload(fibBackground);
+
+						bSaved = FreeImage_SaveToHandle(FIF_JPEG, newFIB24WithBackground, &fiIO, (fi_handle)hNewFileHandle);
+
+						FreeImage_Unload(newFIB24WithBackground);
+					}
+				}
+				else
+				{
+					bSaved = FreeImage_SaveToHandle(FIF_JPEG, newFIB24, &fiIO, (fi_handle)hNewFileHandle);
+				}
 
 				FreeImage_Unload(newFIB24);
 
 				if (bSaved)
 				{
 					auto newFIB32 = BS_NormalizeToSquareRGBA32(fiB);
-					SCOPE_EXIT{ FreeImage_Unload(newFIB32); };
 
 					width = FreeImage_GetWidth(newFIB32);
 					height = FreeImage_GetHeight(newFIB32);
 
 					BS_SaveBitmapToTempDecal(newFIB32);
+
+					FreeImage_Unload(newFIB32);
 				}
 			}
 			else
 			{
 				//no alpha channel
-				auto fibSquareRGB24 = BS_NormalizeToSquareRGB24(fiB);
-				SCOPE_EXIT{ FreeImage_Unload(fibSquareRGB24); };
-				bSaved = FreeImage_SaveToHandle(FIF_JPEG, fibSquareRGB24, &fiIO, (fi_handle)hNewFileHandle);
+				auto fibSquareRGB24 = BS_NormalizeToSquareRGB24(fiB, false);
+
+				if (bRandomBackground)
+				{
+					auto fibBackground = BS_LoadRandomBackground(3);
+					if (fibBackground)
+					{
+						auto iBackgroundType = BS_GetRandomBackgroundType(fibBackground);
+						auto newFIB24WithBackground = BS_CreateBackgroundRGBA24(fibSquareRGB24, fibBackground, iBackgroundType, false);
+						FreeImage_Unload(fibBackground);
+
+						bSaved = FreeImage_SaveToHandle(FIF_JPEG, newFIB24WithBackground, &fiIO, (fi_handle)hNewFileHandle);
+						FreeImage_Unload(newFIB24WithBackground);
+					}
+				}
+				else
+				{
+					bSaved = FreeImage_SaveToHandle(FIF_JPEG, fibSquareRGB24, &fiIO, (fi_handle)hNewFileHandle);
+				}
 
 				if (bSaved)
 				{
@@ -989,6 +1544,8 @@ bool BS_UploadSprayBitmap(FIBITMAP *fiB, bool bNormalizeToSquare, bool bWithAlph
 					height = FreeImage_GetHeight(fibSquareRGB24);
 					BS_SaveBitmapToTempDecal(fibSquareRGB24);
 				}
+
+				FreeImage_Unload(fibSquareRGB24);
 			}
 		}
 		else
@@ -1045,8 +1602,8 @@ bool BS_UploadSprayBitmap(FIBITMAP *fiB, bool bNormalizeToSquare, bool bWithAlph
 	gEngfuncs.Con_Printf("[BetterSpray] \"%s\" has been uploaded to Steam screenshot library. Please set \"!Spray\" as screenshot description.\n", newFilePath.c_str());
 	return true;
 }
-
-bool BS_UploadSprayFile(const char *fileName, bool bNormalizeToSquare, bool bWithAlphaChannel, bool bAlphaInverted)
+#if 0
+bool BS_UploadSprayFile(const char *fileName, bool bNormalizeToSquare, bool bWithAlphaChannel, bool bInvertedAlpha)
 {
 	std::string filePath = std::format("{0}/{1}", CUSTOM_SPRAY_DIRECTORY, fileName);
 
@@ -1087,14 +1644,7 @@ bool BS_UploadSprayFile(const char *fileName, bool bNormalizeToSquare, bool bWit
 			gEngfuncs.Con_Printf("[BetterSpray] Could not upload \"%s\", Unsupported format.\n", filePath.c_str());
 			return false;
 		}
-
-#if 0
-		if (fiFormat != FIF_JPEG && fiFormat != FIF_PNG && fiFormat != FIF_TARGA)
-		{
-			gEngfuncs.Con_Printf("[BetterSpray] Could not upload \"%s\", Only JPEG / PNG / TGA supported.\n", filePath.c_str());
-			return false;
-		}
-#endif
+	
 
 		fiB = FreeImage_LoadFromHandle(fiFormat, &fiIO, (fi_handle)fileHandle, 0);
 
@@ -1108,7 +1658,7 @@ bool BS_UploadSprayFile(const char *fileName, bool bNormalizeToSquare, bool bWit
 	bool success = false;
 	if (fiB)
 	{
-		success = BS_UploadSprayBitmap(fiB, bNormalizeToSquare, bWithAlphaChannel, bAlphaInverted);
+		success = BS_UploadSprayBitmap(fiB, bNormalizeToSquare, bWithAlphaChannel, bInvertedAlpha);
 		FreeImage_Unload(fiB);
 	}	
 	return success;
@@ -1125,6 +1675,7 @@ void BS_Upload_f()
 
 	BS_UploadSprayFile(fileName, true, true, true);
 }
+#endif
 
 void HUD_Frame(double frame)
 {
@@ -1142,8 +1693,13 @@ void HUD_Init(void)
 {
 	gExportfuncs.HUD_Init();
 
-	gEngfuncs.pfnAddCommand("bs_upload", BS_Upload_f);
+	//gEngfuncs.pfnAddCommand("bs_upload", BS_Upload_f);
 
+	SprayDatabase()->Init();
+}
+
+int HUD_VidInit(void)
+{
 	//hpk_maxsize cannot be -1 otherwise we will not be able to use tempdecal.wad.
 	auto hpk_maxsize = gEngfuncs.pfnGetCvarPointer("hpk_maxsize");
 
@@ -1152,7 +1708,7 @@ void HUD_Init(void)
 		gEngfuncs.Cvar_SetValue("hpk_maxsize", 4);
 	}
 
-	SprayDatabase()->Init();
+	return gExportfuncs.HUD_VidInit();
 }
 
 void HUD_Shutdown(void)

@@ -25,9 +25,11 @@ CBetterSpraySettingsPage::CBetterSpraySettingsPage(vgui::Panel* parent, const ch
 	m_pSparyImageWAD = new vgui::ImagePanel(this, "SparyImageWAD");
 	m_pSparyImageJPG = new vgui::ImagePanel(this, "SparyImageJPG");
 
-	m_pLoadSpary = new vgui::Button(this, "LoadSpary", "#GameUI_BetterSpray_Load", this, "OpenLoadSparyDialog");
-	m_pRefreshSpray = new vgui::Button(this, "RefreshSpray", "#GameUI_BetterSpray_Refresh", this, "RefreshSpray");
+	m_pRandomBackground = new vgui::CheckButton(this, "RandomBackground", "#GameUI_BetterSpray_RandomBackground");
+	m_pWithAlpha = new vgui::CheckButton(this, "WithAlpha", "#GameUI_BetterSpray_WithAlpha");
 	m_pInvertAlpha = new vgui::CheckButton(this, "InvertAlpha", "#GameUI_BetterSpray_InvertAlpha");
+	m_pRefreshSpray = new vgui::Button(this, "RefreshSpray", "#GameUI_BetterSpray_Refresh", this, "RefreshSpray");
+	m_pLoadSpary = new vgui::Button(this, "LoadSpary", "#GameUI_BetterSpray_Load", this, "OpenLoadSparyDialog");
 
 	m_pSparyWad = new WadFile();
 
@@ -109,7 +111,22 @@ void CBetterSpraySettingsPage::OnResetData(void)
 
 			auto fiB32 = fiB;
 
-			Draw_LoadSprayTexture_ConvertToBGRA32(&fiB32);
+			while (1)
+			{
+				auto result = Draw_LoadSprayTexture_ConvertToBGRA32(&fiB32);
+
+				if (result > 0)
+					continue;
+
+				if (result == 0)
+					break;
+
+				if (result < 0)
+				{
+					return -1;
+				}
+			}
+
 			Draw_LoadSprayTexture_BGRA8ToRGBA8(fiB32);
 
 			size_t pos = 0;
@@ -208,9 +225,12 @@ void CBetterSpraySettingsPage::OnFileSelected(const char* fullpath)
 	auto fiB = FreeImage_LoadU(fiFormat, wszFullPath, 0);
 	if (fiB)
 	{
+		auto bWithAlpha = m_pWithAlpha->IsSelected() ? true : false;
 		auto bInvertedAlpha = m_pInvertAlpha->IsSelected() ? true : false;
+		auto bRandomBackground = m_pRandomBackground->IsSelected() ? true : false;
 
-		bool bSuccess = BS_UploadSprayBitmap(fiB, true, true, bInvertedAlpha);
+		bool bSuccess = BS_UploadSprayBitmap(fiB, true, bWithAlpha, bInvertedAlpha, bRandomBackground);
+
 		FreeImage_Unload(fiB);
 
 		OnResetData();

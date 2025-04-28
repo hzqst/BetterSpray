@@ -31,6 +31,8 @@ private:
 private:
 	vgui::HFont m_hFont{};
 
+	vgui::CheckButton* m_pRandomBackground{};
+	vgui::CheckButton* m_pWithAlpha{};
 	vgui::CheckButton* m_pInvertAlpha{};
 	vgui::Button* m_pLoadSpary{};
 	vgui::Button* m_pRefreshSpray{};

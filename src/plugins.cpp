@@ -96,6 +96,7 @@ void IPluginsV4::LoadClient(cl_exportfuncs_t* pExportFunc)
 
 	pExportFunc->HUD_Frame = HUD_Frame;
 	pExportFunc->HUD_Init = HUD_Init;
+	pExportFunc->HUD_VidInit = HUD_VidInit;
 	pExportFunc->HUD_Shutdown = HUD_Shutdown;
 	pExportFunc->HUD_GetStudioModelInterface = HUD_GetStudioModelInterface;
 

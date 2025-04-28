@@ -804,7 +804,7 @@ public:
 
 				// 如果至少有fileId，则添加到列表中
 				if (!info->fileId.empty() &&
-					(info->description.starts_with("!Spray") || info->description.starts_with("!BetterSpray"))) {
+					(info->description.starts_with("!"))) {
 
 					ctx->floatHelpList.push_back(info);
 				}
