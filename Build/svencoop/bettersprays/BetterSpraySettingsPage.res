@@ -78,6 +78,47 @@
 		"scaleImage"	"1"
 	}
 
+
+	"RandomBackground"
+	{
+		"ControlName"		"CheckButton"
+		"fieldName"		"RandomBackground"
+		"xpos"		"476"
+		"ypos"		"66"
+		"wide"		"120"
+		"tall"		"44"
+		"autoResize"	"0"
+		"pinCorner"		"0"
+		"visible"		"1"
+		"enabled"		"1"
+		"wrap"			"0"
+		"tabPosition"	"1"
+		"labelText"		"#GameUI_BetterSpray_RandomBackground"
+		"textAlignment"		"west"
+		"dulltext"		"0"
+		"brighttext"		"0"
+		"Default"		"0"
+	}
+	"WithAlpha"
+	{
+		"ControlName"		"CheckButton"
+		"fieldName"		"WithAlpha"
+		"xpos"		"476"
+		"ypos"		"120"
+		"wide"		"120"
+		"tall"		"44"
+		"autoResize"	"0"
+		"pinCorner"		"0"
+		"visible"		"1"
+		"enabled"		"1"
+		"wrap"			"0"
+		"tabPosition"	"1"
+		"labelText"		"#GameUI_BetterSpray_WithAlpha"
+		"textAlignment"		"west"
+		"dulltext"		"0"
+		"brighttext"		"0"
+		"Default"		"0"
+	}
 	"InvertAlpha"
 	{
 		"ControlName"		"CheckButton"
