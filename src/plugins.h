@@ -17,7 +17,7 @@ extern PVOID g_dwEngineRdataBase;
 extern DWORD g_dwEngineRdataSize;
 extern DWORD g_dwEngineBuildnum;
 
-#define MHPluginName "HUDColor"
+#define MHPluginName "BetterSpray"
 #define Sys_Error(msg, ...) g_pMetaHookAPI->SysError("["  MHPluginName   "] " msg, __VA_ARGS__);
 #define Sig_NotFound(name) Sys_Error("Could not found: %s\nEngine buildnum: %d", #name, g_dwEngineBuildnum);
 #define Sig_VarNotFound(name) if(!name) Sig_NotFound(name)
