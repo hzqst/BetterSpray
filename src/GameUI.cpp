@@ -198,6 +198,16 @@ public:
 	{
 
 	}
+
+	void COptionsDialogSubPage_ctor(IGameUIOptionsDialogSubPageCtorCallbackContext* CallbackContext) override
+	{
+
+	}
+
+	void COptionsSubPage_OnApplyChanges(void*& pPanel, const char* name, VGUI2Extension_CallbackContext* CallbackContext) override
+	{
+
+	}
 };
 
 static CVGUI2Extension_GameUIOptionDialogCallbacks s_GameUIOptionDialogCallbacks;
