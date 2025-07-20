@@ -340,14 +340,14 @@ public:
 
 	SprayQueryState GetState() const override
 	{
+		if (m_bFailed)
+			return SprayQueryState_Failed;
+
 		if (m_bFinished)
 			return SprayQueryState_Finished;
 
 		if (m_bResponding)
 			return SprayQueryState_Receiving;
-
-		if (m_bFailed)
-			return SprayQueryState_Failed;
 
 		return SprayQueryState_Querying;
 	}
