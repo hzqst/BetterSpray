@@ -27,10 +27,10 @@
 
   <PropertyGroup>
 
-    <ZLibIncludeDirectory>$(SolutionDir)thirdparty\zlib-win-build</ZLibIncludeDirectory>
-    <ZLibLibrariesDirectory>$(SolutionDir)thirdparty\zlib-win-build\build-VS2022-MT\$(Configuration)</ZLibLibrariesDirectory>
-    <ZLibLibraries>libz-static.lib</ZLibLibraries>
-    <ZLibCheckRequirements>if not exist "$(ZLibLibrariesDirectory)\$(ZLibLibraries)" call "$(SolutionDir)scripts\build-zlib-$(PlatformTarget)-$(Configuration).bat"</ZLibCheckRequirements>
+    <StaticZLibIncludeDirectory>$(SolutionDir)thirdparty\zlib-win-build</StaticZLibIncludeDirectory>
+    <StaticZLibLibrariesDirectory>$(SolutionDir)thirdparty\zlib-win-build\build-VS2022-MT\$(Configuration)</StaticZLibLibrariesDirectory>
+    <StaticZLibLibraries>libz-static.lib</ZLibLibraries>
+    <StaticZLibCheckRequirements>if not exist "$(ZLibLibrariesDirectory)\$(ZLibLibraries)" call "$(SolutionDir)scripts\build-zlib-$(PlatformTarget)-$(Configuration).bat"</StaticZLibCheckRequirements>
 
     <LibIconvIncludeDirectory>$(SolutionDir)thirdparty\libiconv-win-build\include</LibIconvIncludeDirectory>
     <LibIconvLibrariesDirectory>$(SolutionDir)thirdparty\libiconv-win-build\build-VS2022-MT\$(Configuration)</LibIconvLibrariesDirectory>
@@ -47,7 +47,7 @@
     <LibXML2LibrariesDirectory>$(SolutionDir)thirdparty\libxml2-win-build\build-VS2022-MT\$(Configuration)</LibXML2LibrariesDirectory>
     <LibXML2Libraries>libxml2.lib</LibXML2Libraries>
     <LibXML2CheckRequirements>
-    $(ZLibCheckRequirements)
+    $(StaticZLibCheckRequirements)
     $(LibIconvCheckRequirements)
     $(LibLZMACheckRequirements)
     if not exist "$(LibXML2LibrariesDirectory)\$(LibXML2Libraries)" call "$(SolutionDir)scripts\build-libxml2-$(PlatformTarget)-$(Configuration).bat"
