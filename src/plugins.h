@@ -6,15 +6,11 @@ class IFileSystem;
 extern IFileSystem* g_pFileSystem;
 extern IFileSystem_HL25* g_pFileSystem_HL25;
 
+extern mh_dll_info_t g_EngineDLLInfo;
+extern mh_dll_info_t g_MirrorEngineDLLInfo;
+extern mh_dll_info_t g_ClientDLLInfo;
+extern mh_dll_info_t g_MirrorClientDLLInfo;
 extern int g_iEngineType;
-extern PVOID g_dwEngineBase;
-extern DWORD g_dwEngineSize;
-extern PVOID g_dwEngineTextBase;
-extern DWORD g_dwEngineTextSize;
-extern PVOID g_dwEngineDataBase;
-extern DWORD g_dwEngineDataSize;
-extern PVOID g_dwEngineRdataBase;
-extern DWORD g_dwEngineRdataSize;
 extern DWORD g_dwEngineBuildnum;
 
 #define MHPluginName "BetterSpray"
