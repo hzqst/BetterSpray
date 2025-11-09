@@ -25,6 +25,8 @@ MetaHookSV: https://github.com/hzqst/MetaHookSv
 
 You may fill the screenshot description with `!Spray` and share it as `Public` on Steam. In this case other guys with `BetterSprays.dll` installed will automatically download your sprays from Steam profile and be able to see jpeg version of your spray.
 
+![](/img/00.png)
+
 ![](/img/01.png)
 
 ![](/img/02.png)
