@@ -6,11 +6,10 @@ MetaHookSV: https://github.com/hzqst/MetaHookSv
 
 ## 🌟 Main Features
 
-### 🖼️ Spray Management
 - ✅ Supports loading JPG/PNG/BMP/TGA/WEBP as spray texture, with alpha channel.
-- ✅ Auto-convert your image into .jpg in `/Sven Co-op/svencoop_downloads/custom_sprays/`, and upload to Steam profile. 
+- ✅ Auto-convert your image into `/Sven Co-op/svencoop_downloads/custom_sprays/[STEAMID].jpg`. 
 - ✅ Supports cloud sharing via Steam screenshot.
-- ✅ Auto-convert your image into `tempdecal.wad` in `/Sven Co-op/svencoop/` as a fallback for non-MetaHookSv users. (A game restart is required to refresh the cache of loaded `tempdecal.wad` if you has already been connected to a server)
+- ✅ Auto-convert your image into `/Sven Co-op/svencoop/tempdecal.wad` as a fallback solution, so that non-MetaHookSv users are able to see low-res version of your spray. (A game restart is required to refresh the cache of loaded `tempdecal.wad` if you has already been connected to a server)
 
 ### Compatibility
 
