@@ -359,7 +359,8 @@
       <Command>$(LibXML2CheckRequirements)
 $(FreeImageCheckRequirements)
 $(CapstoneCheckRequirements)
-$(ScopeExitCheckRequirements)</Command>
+$(ScopeExitCheckRequirements)
+$(Sqlite3CheckRequirements)</Command>
     </PreBuildEvent>
     <PostBuildEvent>
       <Command>$(PluginPostBuildCommand3)
@@ -396,7 +397,8 @@ if exist "$(MetaHookGameDirectory)$(MetaHookModName)\" copy "$(FreeImageBinaryDi
       <Command>$(LibXML2CheckRequirements)
 $(FreeImageCheckRequirements)
 $(CapstoneCheckRequirements)
-$(ScopeExitCheckRequirements)</Command>
+$(ScopeExitCheckRequirements)
+$(Sqlite3CheckRequirements)</Command>
     </PreBuildEvent>
     <PostBuildEvent>
       <Command>$(PluginPostBuildCommand3)
