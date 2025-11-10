@@ -584,7 +584,7 @@ DRAW_LOADSPRAYTEXTURE_STATUS Draw_LoadSprayTexture(const char* userId, const cha
 DRAW_LOADSPRAYTEXTURE_STATUS Draw_LoadSprayTextures(const char* userId, const char* pathId, const fnDraw_LoadSprayTextureCallback& callback)
 {
 	char filePath[256]{};
-	snprintf(filePath, sizeof(filePath), "%s/%llu.jpg", CUSTOM_SPRAY_DIRECTORY, userId);
+	snprintf(filePath, sizeof(filePath), "%s/%s.jpg", CUSTOM_SPRAY_DIRECTORY, userId);
 
 	//"GAMEDOWNLOAD"
 	return Draw_LoadSprayTexture(userId, filePath, pathId, callback);
