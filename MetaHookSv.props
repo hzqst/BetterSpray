@@ -31,6 +31,11 @@
 
   <PropertyGroup>
 
+    <Sqlite3IncludeDirectory>$(SolutionDir)thirdparty\install\sqlite3\$(PlatformTarget)\$(Configuration)\include</Sqlite3IncludeDirectory>
+    <Sqlite3LibrariesDirectory>$(SolutionDir)thirdparty\install\sqlite3\$(PlatformTarget)\$(Configuration)\lib</Sqlite3LibrariesDirectory>
+    <Sqlite3Libraries>sqlite3.lib</Sqlite3Libraries>
+    <Sqlite3CheckRequirements>if not exist "$(Sqlite3LibrariesDirectory)\$(Sqlite3Libraries)" call "$(SolutionDir)scripts\build-sqlite3-$(PlatformTarget)-$(Configuration).bat"</Sqlite3CheckRequirements>
+
     <StaticZLibIncludeDirectory>$(SolutionDir)thirdparty\zlib-win-build</StaticZLibIncludeDirectory>
     <StaticZLibLibrariesDirectory>$(SolutionDir)thirdparty\zlib-win-build\build-VS2022-MT\$(Configuration)</StaticZLibLibrariesDirectory>
     <StaticZLibLibraries>libz-static.lib</StaticZLibLibraries>
