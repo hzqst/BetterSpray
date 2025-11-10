@@ -25,7 +25,6 @@
     <Import Project="$(MetaHookBaseDir)tools\global.props" Condition="exists('$(MetaHookBaseDir)tools\global.props')" />
     <Import Project="$(MetaHookBaseDir)tools\global_template.props" Condition="!exists('$(MetaHookBaseDir)tools\global.props') and exists('$(MetaHookBaseDir)tools\global_template.props')" />
     <Import Project="$(MetaHookBaseDir)tools\global_common.props" />
-    <Import Project="$(MetaHookBaseDir)tools\global_common.props" />
     <Import Project="$(MetaHookBaseDir)thirdparty\VC-LTL\VC-LTL helper for Visual Studio.props" />
   </ImportGroup>
 

@@ -11,8 +11,6 @@ if not defined SolutionDir (
 :: Ensure the path ends with a backslash
 if not "%SolutionDir:~-1%"=="\" SET "SolutionDir=%SolutionDir%\"
 
-cd /d "%SolutionDir%"
-
 :: Check if curl directory has been initialized
 if not exist "%SolutionDir%thirdparty\sqlite3-cmake\CMakeLists.txt" if not exist "%SolutionDir%thirdparty\sqlite3-cmake\.git" (
     echo Initializing sqlite3-cmake submodule only...
