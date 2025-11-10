@@ -26,7 +26,7 @@ enum CONVERT_TO_BGRA_STATUS
 	CONVERT_BGRA_HAS_BACKGROUND = 3,
 };
 
-enum DRAW_LOADSPRAYTEXTURE_STATUS
+enum LOADSPRAYTEXTURE_STATUS
 {
 	LOAD_SPARY_FAILED_NO_CUSTOM_DECAL = -10,
 	LOAD_SPARY_FAILED_NOT_IN_LEVEL = -9,
@@ -37,14 +37,14 @@ enum DRAW_LOADSPRAYTEXTURE_STATUS
 	LOAD_SPARY_OK = 0,
 };
 
-using fnDraw_LoadSprayTextureCallback = std::function<DRAW_LOADSPRAYTEXTURE_STATUS(const char* userId, FIBITMAP* fiB)>;
+using fnDraw_LoadSprayTextureCallback = std::function<LOADSPRAYTEXTURE_STATUS(const char* userId, const char* wadHash, FIBITMAP* fiB)>;
 
 bool EngineIsInLevel();
 int EngineFindPlayerIndexByUserId(const char* userId);
 bool Draw_HasCustomDecal(int playerindex);
-DRAW_LOADSPRAYTEXTURE_STATUS Draw_LoadSprayTexture_AsyncLoadInGame(int playerindex, FIBITMAP* fiB);
-DRAW_LOADSPRAYTEXTURE_STATUS Draw_LoadSprayTexture(const char* userId, const char* filePath, const char* pathId, const fnDraw_LoadSprayTextureCallback& callback);
-DRAW_LOADSPRAYTEXTURE_STATUS Draw_LoadSprayTextures(const char* userId, const char* pathId, const fnDraw_LoadSprayTextureCallback &callback);
+LOADSPRAYTEXTURE_STATUS Draw_LoadSprayTexture_AsyncLoadInGame(int playerindex, FIBITMAP* fiB);
+LOADSPRAYTEXTURE_STATUS Draw_LoadSprayTexture(const char* userId, const char* wadHash, const char* filePath, const char* pathId OPTIONAL, const fnDraw_LoadSprayTextureCallback& callback);
+LOADSPRAYTEXTURE_STATUS Draw_LoadSprayTextures(const char* userId, const char * wadHash, const char* pathId OPTIONAL, const fnDraw_LoadSprayTextureCallback &callback);
 void Draw_LoadSprayTexture_BGRA8ToRGBA8(FIBITMAP* fiB);
 CONVERT_TO_BGRA_STATUS Draw_LoadSprayTexture_ConvertToBGRA32(FIBITMAP** pfiB);
 

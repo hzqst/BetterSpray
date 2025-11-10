@@ -107,7 +107,7 @@ void CBetterSpraySettingsPage::OnResetData(void)
 
 		std::string filePath = std::format("{0}/{1}", CUSTOM_SPRAY_DIRECTORY, fileName);
 
-		auto SprayBitmapLoader = [this](const char* userId, FIBITMAP* fiB) -> DRAW_LOADSPRAYTEXTURE_STATUS {
+		auto SprayBitmapLoader = [this](const char* userId, FIBITMAP* fiB) -> LOADSPRAYTEXTURE_STATUS {
 
 			auto fiB32 = fiB;
 
@@ -148,12 +148,7 @@ void CBetterSpraySettingsPage::OnResetData(void)
 
 		auto result = Draw_LoadSprayTexture(userId.c_str(), filePath.c_str(), NULL, SprayBitmapLoader);
 
-		//For "GAMEDOWNLOAD"
-		//if (result == -1) {
-		//	result = Draw_LoadSprayTexture(userId.c_str(), filePath.c_str(), NULL, SprayBitmapLoader);
-		//}
-
-		if (result == 0 && m_pSparyBitmapJPG) {
+		if (result == LOAD_SPARY_OK && m_pSparyBitmapJPG) {
 			m_pSparyImageJPG->SetImage(m_pSparyBitmapJPG);
 		}
 		else {

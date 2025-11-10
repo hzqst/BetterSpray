@@ -14,7 +14,6 @@ typedef enum
 	GLT_DETAIL//SvEngine only, blocked
 }GL_TEXTURETYPE;
 
-
 #define TEX_TYPE_NONE	0
 #define TEX_TYPE_ALPHA	1
 #define TEX_TYPE_ALPHA_SVENGINE	1
@@ -49,3 +48,19 @@ typedef struct BSPMipTexHeader_s {
     unsigned int height;
     unsigned int offsets[4];
 } BSPMipTexHeader_t;
+
+typedef struct cachewad_s
+{
+	char* name;
+	void* cache;
+	int cacheCount;
+	int cacheMax;
+	void* lumps;
+	int lumpCount;
+	int cacheExtra;
+	void* pfnCacheBuild;
+	int numpaths;
+	char** basedirs;
+	int* lumppathindices;
+	qboolean tempWad;
+} cachewad_t;

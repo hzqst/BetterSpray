@@ -110,34 +110,28 @@ BS_UploadSprayBitmap()
 ### 喷漆加载流程
 
 ```
-引擎请求贴图 (~playerindex)
-    ↓
-Draw_DecalTexture() [钩子]
+Draw_DecalTexture() [钩子] 引擎请求贴图 (~playerindex)
     ↓
 检查本地缓存 custom_sprays/{SteamID}.jpg
     ↓
-[未找到] → SprayDatabase::QueryPlayerSpray()
+[找到 / 未找到] → SprayDatabase::QueryPlayerSpray() → 从对应玩家的 Steam Profile 下载 → 下载截图 → 保存至 custom_sprays/{SteamID}.jpg ↓
     ↓
-查询 Steam API → 下载截图 → 保存
+Draw_LoadSprayTexture 调用FreeImage 从custom_sprays打开对应的jpg文件 <---------------------------------------------------------------------------------------------------
     ↓
-Draw_LoadSprayTexture()
+在工作线程上启动WorkItem，在WorkItem中转换jpg至RGBA8以便后续上传至GPU
     ↓
-FreeImage 加载图像
-    ↓
-异步工作项: 转换 + 上传到 OpenGL
-    ↓
-GameThreadTaskScheduler 执行最终上传
+通过 GameThreadTaskScheduler 发送任务给主线程，在主线程上传至OpenGL
 ```
 
 ## 编译说明
 
 ### 依赖项
-- **MetaHookSV SDK**: 必须先设置 `$(SolutionDir)MetaHookSv.props`
+- **MetaHookSV SDK**: 由 `$(SolutionDir)Directory.build.props` 自动加载 `$(SolutionDir)MetaHookSv.props`
 - **FreeImage**: 图像处理库
 - **Steam API**: 截图上传和查询
 - **libxml2**: HTTP 请求
 - **SQLite3**: 数据库存储
-- **zlib, liblzma, libiconv**: libxml2 依赖
+- **zlib, liblzma, libiconv**: libxml2 的依赖项
 
 ### 构建脚本
 位于 `scripts/` 目录，用于编译第三方库:
@@ -203,18 +197,18 @@ A:
 ### Q: Steam 云同步如何工作？
 A: 
 1. 用户上传截图到 Steam 库，描述填写 `!Spray`
-2. 其他玩家的插件查询 Steam API
-3. 自动下载并缓存到本地
+2. 其他玩家的插件查询对应用户的 Steam Profile Screenshot 页面并查找描述以`!`开头的Screenshot
+3. 自动下载对应Screenshot的完整版图片并缓存至本地
 
 ### Q: 图像尺寸限制？
 A: 
-- 引擎限制: ~14336 像素总面积 (建议 256x256 或更小)
-- 云共享: 建议使用正方形图像以获得最佳兼容性
+- WAD版本限制: ~14336 像素总面积 (建议 256x256 或更小)
+- jpeg云共享: 建议使用正方形图像以获得最佳兼容性
 
 ## 文件命名约定
 
-- 喷漆文件: `{SteamID64}.jpg`
-- 临时贴图: `tempdecal.wad`
+- jpeg版本喷漆文件: `{SteamID64}.jpg`
+- WAD版本喷漆: `tempdecal.wad`
 - 随机背景: `bettersprays/random_background_{0-N}.jpg`
 
 ## 性能考虑
@@ -253,4 +247,3 @@ A:
 维护此文件时，请记录重要的架构更改：
 
 - 2024: 初始版本，支持基本喷漆加载和 Steam 云同步
-
