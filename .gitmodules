@@ -13,3 +13,6 @@
 [submodule "thirdparty/libxml2-win-build"]
 	path = thirdparty/libxml2-win-build
 	url = https://github.com/hzqst/libxml2-win-build
+[submodule "thirdparty/sqlite3-cmake"]
+	path = thirdparty/sqlite3-cmake
+	url = https://github.com/sjinks/sqlite3-cmake

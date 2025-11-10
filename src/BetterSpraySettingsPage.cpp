@@ -219,9 +219,6 @@ void CBetterSpraySettingsPage::OnFileSelected(const char* fullpath)
 	if (!FreeImage_FIFSupportsReading(fiFormat))
 		return;
 
-#ifdef MessageBox
-#undef MessageBox
-#endif
 	auto fiB = FreeImage_LoadU(fiFormat, wszFullPath, 0);
 	if (fiB)
 	{
