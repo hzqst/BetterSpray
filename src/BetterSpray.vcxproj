@@ -342,7 +342,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;BETTERSPRAY_EXPORTS;_WINDOWS;_USRDLL;_CRT_SECURE_NO_WARNINGS;$(VGUI2ExtensionDefines);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(MetaHookBaseDir)include;$(MetaHookBaseDir)include\HLSDK\cl_dll;$(MetaHookBaseDir)include\HLSDK\common;$(MetaHookBaseDir)include\HLSDK\engine;$(MetaHookBaseDir)include\HLSDK\pm_shared;$(MetaHookBaseDir)include\HLSDK\public;$(MetaHookBaseDir)include\Interface;$(MetaHookBaseDir)include\Interface\VGUI;$(MetaHookBaseDir)include\VGUI;$(MetaHookBaseDir)include\SteamSDK;$(MetaHookBaseDir)include\vgui_controls;$(MetaHookBaseDir)include\SourceSDK;$(MetaHookBaseDir)include\SourceSDK\vstdlib;$(MetaHookBaseDir)include\SourceSDK\tier0;$(MetaHookBaseDir)include\SourceSDK\tier1;$(CapstoneIncludeDirectory);$(FreeImageIncludeDirectory);$(LibXML2IncludeDirectory);$(ScopeExitIncludeDirectory);$(Sqlite3IncludeDirectory);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(MetaHookBaseDir)include;$(MetaHookBaseDir)include\HLSDK\cl_dll;$(MetaHookBaseDir)include\HLSDK\common;$(MetaHookBaseDir)include\HLSDK\engine;$(MetaHookBaseDir)include\HLSDK\pm_shared;$(MetaHookBaseDir)include\HLSDK\public;$(MetaHookBaseDir)include\Interface;$(MetaHookBaseDir)include\Interface\VGUI;$(MetaHookBaseDir)include\VGUI;$(MetaHookBaseDir)include\SteamSDK;$(MetaHookBaseDir)include\vgui_controls;$(MetaHookBaseDir)include\SourceSDK;$(MetaHookBaseDir)include\SourceSDK\vstdlib;$(MetaHookBaseDir)include\SourceSDK\tier0;$(MetaHookBaseDir)include\SourceSDK\tier1;$(CapstoneIncludeDirectory);$(FreeImageIncludeDirectory);$(LibXML2IncludeDirectory);$(ScopeExitIncludeDirectory);$(Chocobo1HashDirectory);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
@@ -359,8 +359,7 @@
       <Command>$(LibXML2CheckRequirements)
 $(FreeImageCheckRequirements)
 $(CapstoneCheckRequirements)
-$(ScopeExitCheckRequirements)
-$(Sqlite3CheckRequirements)</Command>
+$(ScopeExitCheckRequirements)</Command>
     </PreBuildEvent>
     <PostBuildEvent>
       <Command>$(PluginPostBuildCommand3)
@@ -383,7 +382,7 @@ if exist "$(MetaHookGameDirectory)$(MetaHookModName)\" copy "$(FreeImageBinaryDi
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;BETTERSPRAY_EXPORTS;_WINDOWS;_USRDLL;_CRT_SECURE_NO_WARNINGS;$(VGUI2ExtensionDefines);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(MetaHookBaseDir)include;$(MetaHookBaseDir)include\HLSDK\cl_dll;$(MetaHookBaseDir)include\HLSDK\common;$(MetaHookBaseDir)include\HLSDK\engine;$(MetaHookBaseDir)include\HLSDK\pm_shared;$(MetaHookBaseDir)include\HLSDK\public;$(MetaHookBaseDir)include\Interface;$(MetaHookBaseDir)include\Interface\VGUI;$(MetaHookBaseDir)include\VGUI;$(MetaHookBaseDir)include\SteamSDK;$(MetaHookBaseDir)include\vgui_controls;$(MetaHookBaseDir)include\SourceSDK;$(MetaHookBaseDir)include\SourceSDK\vstdlib;$(MetaHookBaseDir)include\SourceSDK\tier0;$(MetaHookBaseDir)include\SourceSDK\tier1;$(CapstoneIncludeDirectory);$(FreeImageIncludeDirectory);$(LibXML2IncludeDirectory);$(ScopeExitIncludeDirectory);$(Sqlite3IncludeDirectory);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(MetaHookBaseDir)include;$(MetaHookBaseDir)include\HLSDK\cl_dll;$(MetaHookBaseDir)include\HLSDK\common;$(MetaHookBaseDir)include\HLSDK\engine;$(MetaHookBaseDir)include\HLSDK\pm_shared;$(MetaHookBaseDir)include\HLSDK\public;$(MetaHookBaseDir)include\Interface;$(MetaHookBaseDir)include\Interface\VGUI;$(MetaHookBaseDir)include\VGUI;$(MetaHookBaseDir)include\SteamSDK;$(MetaHookBaseDir)include\vgui_controls;$(MetaHookBaseDir)include\SourceSDK;$(MetaHookBaseDir)include\SourceSDK\vstdlib;$(MetaHookBaseDir)include\SourceSDK\tier0;$(MetaHookBaseDir)include\SourceSDK\tier1;$(CapstoneIncludeDirectory);$(FreeImageIncludeDirectory);$(LibXML2IncludeDirectory);$(ScopeExitIncludeDirectory);$(Chocobo1HashDirectory);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
@@ -397,8 +396,7 @@ if exist "$(MetaHookGameDirectory)$(MetaHookModName)\" copy "$(FreeImageBinaryDi
       <Command>$(LibXML2CheckRequirements)
 $(FreeImageCheckRequirements)
 $(CapstoneCheckRequirements)
-$(ScopeExitCheckRequirements)
-$(Sqlite3CheckRequirements)</Command>
+$(ScopeExitCheckRequirements)</Command>
     </PreBuildEvent>
     <PostBuildEvent>
       <Command>$(PluginPostBuildCommand3)

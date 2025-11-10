@@ -17,7 +17,12 @@
 
 #include <steam_api.h>
 
-cl_enginefunc_t gEngfuncs = {0};
+//Fuck microsoft
+#undef min
+#undef max
+#include <md5.h>
+
+cl_enginefunc_t gEngfuncs = { 0 };
 engine_studio_api_t IEngineStudio = { 0 };
 
 static bool IsPixelWhite(FIBITMAP* fib, int x, int y)
@@ -111,6 +116,9 @@ bool EngineIsInLevel()
 	return false;
 }
 
+/*
+	Purpose: Check if playerindex has custom decal
+*/
 bool Draw_HasCustomDecal(int playerindex)
 {
 	if (playerindex >= 0 && playerindex < MAX_CLIENTS)
@@ -130,6 +138,51 @@ bool Draw_HasCustomDecal(int playerindex)
 			return false;
 
 		return true;
+	}
+
+	return false;
+}
+
+/*
+	Purpose: Get info about player custom decal
+*/
+bool Draw_GetCustomDecalInfo(
+	int playerindex,
+	OUT uint64_t* pSteamID64,
+	OUT cachewad_t** ppOutCachedWad,
+	OUT void** ppBuffer,
+	OUT int* pBufferSize,
+	OUT void* pubMD5Hash)
+{
+	auto playerInfo = (player_info_sc_t*)IEngineStudio.PlayerInfo(playerindex);
+
+	if (playerInfo && playerInfo->m_nSteamID != 0)
+	{
+		customization_t* pCust = playerInfo->customdata.pNext;
+		if (pCust != NULL && pCust->pBuffer != NULL && pCust->pInfo != NULL)
+		{
+			if (pSteamID64)
+			{
+				(*pSteamID64) = playerInfo->m_nSteamID;
+			}
+			if (ppOutCachedWad)
+			{
+				(*ppOutCachedWad) = (cachewad_t*)pCust->pInfo;
+			}
+			if (ppBuffer)
+			{
+				(*ppBuffer) = pCust->pBuffer;
+			}
+			if (pBufferSize)
+			{
+				(*pBufferSize) = pCust->resource.nDownloadSize;
+			}
+			if (pubMD5Hash)
+			{
+				memcpy(pubMD5Hash, pCust->resource.rgucMD5_hash, 16);
+			}
+			return true;
+		}
 	}
 
 	return false;
@@ -167,19 +220,41 @@ void Draw_UploadSprayTextureRGBA8(int playerindex, FIBITMAP* fiB)
 	}
 }
 
+/*
+	Purpose: Find playerindex (1~MAX_CLIENTS) by userid (SteamID64), return -1 if not found
+*/
 int EngineFindPlayerIndexByUserId(const char* userId)
 {
-	for (int i = 0; i < gEngfuncs.GetMaxClients(); ++i)
+	for (int playerindex = 0; playerindex <= gEngfuncs.GetMaxClients(); ++playerindex)
 	{
-		auto playerInfo = (player_info_sc_t*)IEngineStudio.PlayerInfo(i);
+		auto playerInfo = (player_info_sc_t*)IEngineStudio.PlayerInfo(playerindex);
 
 		if (playerInfo && playerInfo->m_nSteamID != 0)
 		{
-			auto steamId = std::format("{0}", playerInfo->m_nSteamID);
+			char userIdSteamID64[32]{};
+			snprintf(userIdSteamID64, sizeof(userIdSteamID64), "%llu", playerInfo->m_nSteamID);
 
-			if (!strcmp(userId, steamId.c_str())) {
-				return i;
+			if (!strcmp(userId, userIdSteamID64)) {
+				return playerindex;
 			}
+		}
+	}
+
+	return -1;
+}
+
+/*
+	Purpose: Find playerindex (1~MAX_CLIENTS) by SteamID64, return -1 if not found
+*/
+int EngineFindPlayerIndexBySteamID64(uint64_t nSteamID64)
+{
+	for (int playerindex = 0; playerindex <= gEngfuncs.GetMaxClients(); ++playerindex)
+	{
+		auto playerInfo = (player_info_sc_t*)IEngineStudio.PlayerInfo(playerindex);
+
+		if (playerInfo && playerInfo->m_nSteamID == nSteamID64)
+		{
+			return playerindex;
 		}
 	}
 
@@ -249,7 +324,7 @@ void Draw_LoadSprayTexture_BGRA8ToRGBA8(FIBITMAP* fiB)
 	}
 }
 
-bool Draw_LoadSprayTexture_DecodeBackground(FIBITMAP* fiB, int* iBackgroundType, bool *bWithAlphaChannel)
+bool Draw_LoadSprayTexture_DecodeBackground(FIBITMAP* fiB, int* iBackgroundType, bool* bWithAlphaChannel)
 {
 	unsigned w = FreeImage_GetWidth(fiB);
 	unsigned h = FreeImage_GetHeight(fiB);
@@ -294,7 +369,7 @@ bool Draw_LoadSprayTexture_DecodeBackground(FIBITMAP* fiB, int* iBackgroundType,
 	return false;
 }
 
-CONVERT_TO_BGRA_STATUS 
+CONVERT_TO_BGRA_STATUS
 Draw_LoadSprayTexture_ConvertToBGRA32(FIBITMAP** pfiB)
 {
 	FIBITMAP* fiB = (*pfiB);
@@ -302,8 +377,8 @@ Draw_LoadSprayTexture_ConvertToBGRA32(FIBITMAP** pfiB)
 	unsigned width = FreeImage_GetWidth(fiB);
 	unsigned height = FreeImage_GetHeight(fiB);
 
-	if (FreeImage_GetBPP(fiB) == 24 && 
-		(width == 5160 && height == 2160) || 
+	if (FreeImage_GetBPP(fiB) == 24 &&
+		(width == 5160 && height == 2160) ||
 		(width == 3440 && height == 1440) ||
 		(width == 2560 && height == 1080))
 	{
@@ -330,12 +405,12 @@ Draw_LoadSprayTexture_ConvertToBGRA32(FIBITMAP** pfiB)
 				// 从 fiB 最中间的位置提取 newWidth x newHeight 大小图片写入 newBitmap
 				int srcX = (width - newWidth) / 2;
 				int srcY = (height - newHeight) / 2;
-				
+
 				for (unsigned y = 0; y < newHeight; y++)
 				{
 					BYTE* srcBits = FreeImage_GetScanLine(fiB, (height - 1) - (srcY + y)) + srcX * 3;
 					BYTE* dstBits = FreeImage_GetScanLine(newBitmap, (newHeight - y) - 1);
-					
+
 					memcpy(dstBits, srcBits, newWidth * 3);
 				}
 			}
@@ -348,12 +423,12 @@ Draw_LoadSprayTexture_ConvertToBGRA32(FIBITMAP** pfiB)
 				// 从 fiB 最中间的位置提取 newWidth x newHeight 大小图片写入 newBitmap
 				int srcX = (width - newWidth) / 2;
 				int srcY = (height - newHeight) / 2;
-				
+
 				for (unsigned y = 0; y < newHeight; y++)
 				{
 					BYTE* srcBits = FreeImage_GetScanLine(fiB, (height - 1) - (srcY + y)) + srcX * 3;
 					BYTE* dstBits = FreeImage_GetScanLine(newBitmap, (newHeight - y) - 1);
-					
+
 					memcpy(dstBits, srcBits, newWidth * 3);
 				}
 			}
@@ -366,7 +441,7 @@ Draw_LoadSprayTexture_ConvertToBGRA32(FIBITMAP** pfiB)
 				{
 					BYTE* srcBits = FreeImage_GetScanLine(fiB, (height - 1) - y);
 					BYTE* dstBits = FreeImage_GetScanLine(newBitmap, (newHeight - y) - 1);
-					
+
 					memcpy(dstBits, srcBits, newWidth * 3);
 				}
 			}
@@ -381,7 +456,7 @@ Draw_LoadSprayTexture_ConvertToBGRA32(FIBITMAP** pfiB)
 				{
 					BYTE* srcBits = FreeImage_GetScanLine(fiB, (height - 1) - y);
 					BYTE* dstBits = FreeImage_GetScanLine(newBitmap, (newHeight - y) - 1);
-					
+
 					memcpy(dstBits, srcBits, newWidth * 3);
 				}
 			}
@@ -391,12 +466,12 @@ Draw_LoadSprayTexture_ConvertToBGRA32(FIBITMAP** pfiB)
 
 				// 从 fiB 最右上角的位置提取 newWidth x newHeight 大小图片写入 newBitmap
 				int srcX = width - newWidth;
-				
+
 				for (unsigned y = 0; y < newHeight; y++)
 				{
 					BYTE* srcBits = FreeImage_GetScanLine(fiB, (height - 1) - y) + srcX * 3;
 					BYTE* dstBits = FreeImage_GetScanLine(newBitmap, (newHeight - y) - 1);
-					
+
 					memcpy(dstBits, srcBits, newWidth * 3);
 				}
 			}
@@ -408,12 +483,12 @@ Draw_LoadSprayTexture_ConvertToBGRA32(FIBITMAP** pfiB)
 
 				// 从 fiB 最右上角的位置提取 newWidth x newHeight 大小图片写入 newBitmap
 				int srcX = width - newWidth;
-				
+
 				for (unsigned y = 0; y < newHeight; y++)
 				{
 					BYTE* srcBits = FreeImage_GetScanLine(fiB, (height - 1) - y) + srcX * 3;
 					BYTE* dstBits = FreeImage_GetScanLine(newBitmap, y);
-					
+
 					memcpy(dstBits, srcBits, newWidth * 3);
 				}
 			}
@@ -436,10 +511,10 @@ Draw_LoadSprayTexture_ConvertToBGRA32(FIBITMAP** pfiB)
 		{
 			// 检查最右下角像素是否为纯白色
 			bool bInvertedAlpha = false;
-			
+
 			if (IsPixelWhite(fiB, width - 1, height - 1) ||
-				IsPixelWhite(fiB, width - 2, height - 2) || 
-				IsPixelWhite(fiB, width - 3, height - 3) || 
+				IsPixelWhite(fiB, width - 2, height - 2) ||
+				IsPixelWhite(fiB, width - 3, height - 3) ||
 				IsPixelWhite(fiB, width - 4, height - 4))
 			{
 				bInvertedAlpha = true;
@@ -488,7 +563,7 @@ Draw_LoadSprayTexture_ConvertToBGRA32(FIBITMAP** pfiB)
 	}
 
 	if (FreeImage_GetBPP(fiB) != 32)
-	{	
+	{
 		(*pfiB) = FreeImage_ConvertTo32Bits(fiB);
 		FreeImage_Unload(fiB);
 
@@ -526,10 +601,10 @@ void Draw_LoadSprayTexture_WorkItem(CLoadSprayTextureWorkItemContext* ctx)
 }
 
 /*
-	Purpose: Load spray texture from FileSystem.
+	Purpose: Load spray texture from FileSystem. userId and filePath must be specified
 */
 
-LOADSPRAYTEXTURE_STATUS Draw_LoadSprayTexture(const char* userId, const char* wadHash, const char* filePath, const char* pathId OPTIONAL, const fnDraw_LoadSprayTextureCallback& callback)
+LOADSPRAYTEXTURE_STATUS Draw_LoadSprayTexture(const char* userId, const char* filePath, const char* pathId OPTIONAL, const fnDraw_LoadSprayTextureCallback& callback)
 {
 	auto fileHandle = FILESYSTEM_ANY_OPEN(filePath, "rb", pathId);
 
@@ -574,11 +649,11 @@ LOADSPRAYTEXTURE_STATUS Draw_LoadSprayTexture(const char* userId, const char* wa
 		return LOAD_SPARY_FAILED_COULD_NOT_LOAD;
 	}
 
-	return callback(userId, wadHash, fiB);
+	return callback(userId, fiB);
 }
 
 /*
-	Purpose: Load spray texture from FileSystem, try {SteamID}.jpg
+	Purpose: Load spray texture from FileSystem, try {SteamID}_{wadHash}.jpg and {SteamID}.jpg
 */
 
 LOADSPRAYTEXTURE_STATUS Draw_LoadSprayTextures(const char* userId, const char* wadHash, const char* pathId OPTIONAL, const fnDraw_LoadSprayTextureCallback& callback)
@@ -586,8 +661,16 @@ LOADSPRAYTEXTURE_STATUS Draw_LoadSprayTextures(const char* userId, const char* w
 	char filePath[256]{};
 	snprintf(filePath, sizeof(filePath), "%s/%s_%s.jpg", CUSTOM_SPRAY_DIRECTORY, userId, wadHash);
 
-	//"GAMEDOWNLOAD"
-	return Draw_LoadSprayTexture(userId, wadHash, filePath, pathId, callback);
+	auto st = Draw_LoadSprayTexture(userId, filePath, pathId, callback);
+
+	if (st == LOAD_SPARY_FAILED_NOT_FOUND)
+	{
+		//fallback to {SteamID}.jpg
+		snprintf(filePath, sizeof(filePath), "%s/%s.jpg", CUSTOM_SPRAY_DIRECTORY, userId);
+		st = Draw_LoadSprayTexture(userId, filePath, pathId, callback);
+	}
+
+	return st;
 }
 
 LOADSPRAYTEXTURE_STATUS Draw_LoadSprayTexture_AsyncLoadInGame(int playerindex, FIBITMAP* fiB)
@@ -614,56 +697,11 @@ LOADSPRAYTEXTURE_STATUS Draw_LoadSprayTexture_AsyncLoadInGame(int playerindex, F
 
 		return true;
 
-	}, ctx);
+		}, ctx);
 
 	g_pMetaHookAPI->QueueWorkItem(g_pMetaHookAPI->GetGlobalThreadPool(), hWorkItemHandle);
 
 	return LOAD_SPARY_OK;
-}
-
-/*
-	Purpose: Get info about player custom decal
-*/
-bool Draw_GetCustomDecalInfo(
-	int playerindex,
-	OUT uint64_t* pSteamID64,
-	OUT cachewad_t** ppOutCachedWad,
-	OUT void **ppBuffer,
-	OUT int *pBufferSize,
-	OUT void *pubMD5Hash)
-{
-	auto playerInfo = (player_info_sc_t*)IEngineStudio.PlayerInfo(playerindex);
-
-	if (playerInfo && playerInfo->m_nSteamID != 0)
-	{
-		customization_t* pCust = playerInfo->customdata.pNext;
-		if (pCust != NULL && pCust->pBuffer != NULL && pCust->pInfo != NULL)
-		{
-			if (pSteamID64)
-			{
-				(*pSteamID64) = playerInfo->m_nSteamID;
-			}
-			if (ppOutCachedWad)
-			{
-				(*ppOutCachedWad) = (cachewad_t *)pCust->pInfo;
-			}
-			if (ppBuffer)
-			{
-				(*ppBuffer) = pCust->pBuffer;
-			}
-			if (pBufferSize)
-			{
-				(*pBufferSize) = pCust->resource.nDownloadSize;
-			}
-			if (pubMD5Hash)
-			{
-				memcpy(pubMD5Hash, pCust->resource.rgucMD5_hash, 16);
-			}
-			return true;
-		}
-	}
-
-	return false;
 }
 
 texture_t* Draw_DecalTexture(int index)
@@ -708,7 +746,7 @@ texture_t* Draw_DecalTexture(int index)
 						rgucMD5[14],
 						rgucMD5[15]);
 
-					auto result = Draw_LoadSprayTextures(userId, wadHash, nullptr, [playerindex](const char* userId, const char *wadHash, FIBITMAP* fiB) -> LOADSPRAYTEXTURE_STATUS {
+					auto result = Draw_LoadSprayTextures(userId, wadHash, nullptr, [playerindex](const char* userId, FIBITMAP* fiB) -> LOADSPRAYTEXTURE_STATUS {
 						return Draw_LoadSprayTexture_AsyncLoadInGame(playerindex, fiB);
 						});
 
@@ -753,9 +791,9 @@ texture_t* Draw_DecalTexture(int index)
 						rgucMD5[14],
 						rgucMD5[15]);
 
-					auto result = Draw_LoadSprayTextures(userId, wadHash, nullptr, [playerindex](const char* userId, const char* wadHash, FIBITMAP* fiB) -> LOADSPRAYTEXTURE_STATUS {
+					auto result = Draw_LoadSprayTextures(userId, wadHash, nullptr, [playerindex](const char* userId, FIBITMAP* fiB) -> LOADSPRAYTEXTURE_STATUS {
 						return Draw_LoadSprayTexture_AsyncLoadInGame(playerindex, fiB);
-					});
+						});
 
 					if (result == 0)
 					{
@@ -820,26 +858,29 @@ static int Draw_FindPaletteIndex(RGBQUAD* palette, RGBQUAD rgb)
 }
 
 /*
-	Purpose: write fiB to tempdecal.wad
+	Purpose: write fiB to tempdecal.wad, and hash the WAD file content as MD5
 */
-void BS_SaveBitmapToTempDecal(FIBITMAP* fiB, unsigned char * rgucMD5_WAD)
+/*
+  Purpose: write fiB to tempdecal.wad, and hash the WAD file content as MD5
+*/
+void BS_SaveBitmapToTempDecal(FIBITMAP* fiB, unsigned char* rgucMD5_WAD)
 {
 	// 获取原始图像尺寸
 	size_t w = FreeImage_GetWidth(fiB);
 	size_t h = FreeImage_GetHeight(fiB);
 	size_t nw = w;
 	size_t nh = h;
-	
+
 	// 验证并调整图像尺寸
 	Draw_GetValidateSparySize(nw, nh);
-	
+
 	// 缩放图像到新尺寸
 	FIBITMAP* nimg = FreeImage_Rescale(fiB, nw, nh);
 	if (!nimg) {
 		gEngfuncs.Con_Printf("BS_SaveToTempDecal: Failed to rescale image!");
 		return;
 	}
-	
+
 	SCOPE_EXIT{ FreeImage_Unload(nimg); };
 
 	// 量化透明像素
@@ -848,7 +889,7 @@ void BS_SaveBitmapToTempDecal(FIBITMAP* fiB, unsigned char * rgucMD5_WAD)
 	BYTE* bits = FreeImage_GetBits(nimg);
 	size_t bitnum = bpp / 8;
 	bits += pitch * (nh - 1);
-	
+
 	for (size_t y = 0; y < nh; y++) {
 		BYTE* pixel = (BYTE*)bits;
 		for (size_t x = 0; x < nw; x++) {
@@ -875,7 +916,7 @@ void BS_SaveBitmapToTempDecal(FIBITMAP* fiB, unsigned char * rgucMD5_WAD)
 		gEngfuncs.Con_Printf("BS_SaveToTempDecal: Failed to quantize image!");
 		return;
 	}
-		
+
 	// 交换调色板
 	RGBQUAD* palette = FreeImage_GetPalette(qimg);
 
@@ -891,7 +932,7 @@ void BS_SaveBitmapToTempDecal(FIBITMAP* fiB, unsigned char * rgucMD5_WAD)
 		}
 	}
 
-	//leave 0,0,255 at palette[255]
+	//leave 0,0,255 at palette[255] 
 	if (bluindex == -1)
 	{
 		FreeImage_Unload(qimg);
@@ -903,19 +944,36 @@ void BS_SaveBitmapToTempDecal(FIBITMAP* fiB, unsigned char * rgucMD5_WAD)
 
 	if (hFileHandle) {
 
+		Chocobo1::MD5 hasher;
+
+		size_t size = nw * nh;
+
+		// 辅助函数：计算填充字节数
+		auto requiredPadding = [](int length, int padToMultipleOf) {
+			int excess = length % padToMultipleOf;
+			return excess == 0 ? 0 : padToMultipleOf - excess;
+			};
+
+		// 提前计算 lump 大小和偏移量
+		int lumpsize = (int)(sizeof(BSPMipTexHeader_t) + size + (size / 4) + (size / 16) + (size / 64) + sizeof(short) + 256 * 3);
+		int padding = requiredPadding(lumpsize, 4);
+		lumpsize += padding;
+
+		int lumpoffset = sizeof(WAD3Header_t) + lumpsize;
+
 		// 写入WAD3头部
 		const char magic[] = "WAD3";
 		FILESYSTEM_ANY_WRITE(magic, 4, hFileHandle);
+		hasher.addData(magic, 4);
 
-		// 写入lump数量(1)
+		// 写入lump数量(1) 
 		unsigned int headerbuf = 1;
 		FILESYSTEM_ANY_WRITE(&headerbuf, 4, hFileHandle);
+		hasher.addData(&headerbuf, 4);
 
-		// 写入lump偏移量占位符
-		headerbuf = 0;
-		FILESYSTEM_ANY_WRITE(&headerbuf, 4, hFileHandle);
-
-		size_t size = nw * nh;
+		// 写入lump偏移量（提前计算好的值）
+		FILESYSTEM_ANY_WRITE(&lumpoffset, 4, hFileHandle);
+		hasher.addData(&lumpoffset, 4);
 
 		// 写入mips头部
 		BSPMipTexHeader_t header;
@@ -933,6 +991,7 @@ void BS_SaveBitmapToTempDecal(FIBITMAP* fiB, unsigned char * rgucMD5_WAD)
 		header.offsets[2] = sizeof(BSPMipTexHeader_t) + size + (size / 4);
 		header.offsets[3] = sizeof(BSPMipTexHeader_t) + size + (size / 4) + (size / 16);
 		FILESYSTEM_ANY_WRITE(&header, sizeof(BSPMipTexHeader_t), hFileHandle);
+		hasher.addData(&header, sizeof(BSPMipTexHeader_t));
 
 		auto qbits = FreeImage_GetBits(qimg);
 
@@ -950,7 +1009,7 @@ void BS_SaveBitmapToTempDecal(FIBITMAP* fiB, unsigned char * rgucMD5_WAD)
 			}
 		}
 
-		// 修改 write_mips 函数的实现
+		// 写入 mips 数据
 		auto write_mips = [&](int mips_level) {
 			int lv = pow(2, mips_level);
 			for (size_t i = 0; i < (nh / lv); i++) {
@@ -959,71 +1018,76 @@ void BS_SaveBitmapToTempDecal(FIBITMAP* fiB, unsigned char * rgucMD5_WAD)
 					BYTE buf = flipped[i * lv * nw + j * lv];
 
 					FILESYSTEM_ANY_WRITE(&buf, 1, hFileHandle);
+					hasher.addData(&buf, 1);
 				}
 			}
-		};
+			};
 
 		for (int i = 0; i < 4; i++) {
 			write_mips(i);
 		}
 
+		delete[] flipped;
+
 		// 写入调色板
 		short colorused = 256;
 		FILESYSTEM_ANY_WRITE(&colorused, sizeof(short), hFileHandle);
+		hasher.addData(&colorused, sizeof(short));
 
 		for (int i = 0; i < numPalette; i++) {
 			RGBQUAD p = palette[i];
+
 			FILESYSTEM_ANY_WRITE(&p.rgbRed, 1, hFileHandle);
 			FILESYSTEM_ANY_WRITE(&p.rgbGreen, 1, hFileHandle);
 			FILESYSTEM_ANY_WRITE(&p.rgbBlue, 1, hFileHandle);
+
+			hasher.addData(&p.rgbRed, 1);
+			hasher.addData(&p.rgbGreen, 1);
+			hasher.addData(&p.rgbBlue, 1);
 		}
 
 		if (numPalette == 255) {
 			RGBQUAD p = { 255, 0, 0, 255 };
+
 			FILESYSTEM_ANY_WRITE(&p.rgbRed, 1, hFileHandle);
 			FILESYSTEM_ANY_WRITE(&p.rgbGreen, 1, hFileHandle);
 			FILESYSTEM_ANY_WRITE(&p.rgbBlue, 1, hFileHandle);
-		}
 
-		int currentPos = FILESYSTEM_ANY_TELL(hFileHandle);
+			hasher.addData(&p.rgbRed, 1);
+			hasher.addData(&p.rgbGreen, 1);
+			hasher.addData(&p.rgbBlue, 1);
+		}
 
 		// 写入填充字节以对齐到4字节边界
-		auto requiredPadding = [](int length, int padToMultipleOf) {
-			int excess = length % padToMultipleOf;
-			return excess == 0 ? 0 : padToMultipleOf - excess;
-			};
-
-		// 计算需要的填充字节
-		int padding = requiredPadding(currentPos, 4);
-
 		headerbuf = 0;
-
 		for (int i = 0; i < padding; i++) {
 			FILESYSTEM_ANY_WRITE(&headerbuf, 1, hFileHandle);
+			hasher.addData(&headerbuf, 1);
 		}
 
-		// 获取lump偏移量
-		int lumpoffset = FILESYSTEM_ANY_TELL(hFileHandle);
-
-		auto lumpsize = (int)(sizeof(BSPMipTexHeader_t) + size + (size / 4) + (size / 16) + (size / 64) + sizeof(short) + 256 * 3 + requiredPadding(2 + 256 * 3, 4));
-
 		// 写入lump信息
-
 		WAD3Lump_t lump = {
-			sizeof(WAD3Header_t),  // filepos 修正为WAD3 header的大小
-			lumpsize,  // disksize
-			lumpsize,  // size
-			0x43, // type (miptex)
-			0,    // compression
-			0,    // pad1
-			"{LOGO\0"  // name
+		  sizeof(WAD3Header_t),  // filepos 修正为WAD3 header的大小
+		  lumpsize,  // disksize
+		  lumpsize,  // size
+		  0x43, // type (miptex) 
+		  0,    // compression
+		  0,    // pad1
+		  "{LOGO\0"  // name
 		};
 		FILESYSTEM_ANY_WRITE(&lump, sizeof(WAD3Lump_t), hFileHandle);
+		hasher.addData(&lump, sizeof(WAD3Lump_t));
 
-		// 回写lump偏移量
-		FILESYSTEM_ANY_SEEK(hFileHandle, 8, FILESYSTEM_SEEK_HEAD);
-		FILESYSTEM_ANY_WRITE(&lumpoffset, 4, hFileHandle);
 		FILESYSTEM_ANY_CLOSE(hFileHandle);
+
+		//hash the WAD file content as MD5. 
+		const auto& md5 = hasher.finalize();
+		const auto& md5Array = md5.toArray();
+
+		for (int i = 0; i < 16; ++i)
+		{
+			rgucMD5_WAD[i] = md5Array[i];
+		}
 	}
 	else
 	{
@@ -1033,9 +1097,9 @@ void BS_SaveBitmapToTempDecal(FIBITMAP* fiB, unsigned char * rgucMD5_WAD)
 	FreeImage_Unload(qimg);
 }
 
-bool Draw_ValidateImageFormatMemoryIO(const void *data, size_t dataSize, const char *identifier)
+bool Draw_ValidateImageFormatMemoryIO(const void* data, size_t dataSize, const char* identifier)
 {
-	FIMEMORY* fim = FreeImage_OpenMemory((BYTE *)data, dataSize);
+	FIMEMORY* fim = FreeImage_OpenMemory((BYTE*)data, dataSize);
 
 	if (!fim)
 	{
@@ -1111,28 +1175,28 @@ FIBITMAP* BS_NormalizeToSquareRGB24(FIBITMAP* fiB, bool bInvertedAlpha)
 	// 获取原图像的宽度和高度
 	unsigned int width = FreeImage_GetWidth(fiB);
 	unsigned int height = FreeImage_GetHeight(fiB);
-	
+
 	// 计算新图像的尺寸（取宽高的最大值）
 	unsigned int newSize = (width > height) ? width : height;
-	
+
 	// 创建一个新的方形图像 Always 24bpp
 	FIBITMAP* newBitmap = FreeImage_Allocate(newSize, newSize, 24);
 	if (!newBitmap)
 	{
 		return NULL;
 	}
-	
+
 	// 获取左上角像素的颜色值
 	RGBQUAD cornerColor{};
 	FreeImage_GetPixelColor(fiB, 0, 0, &cornerColor);
-	
+
 	// 使用FreeImage_FillBackground填充整个新图像
 	FreeImage_FillBackground(newBitmap, &cornerColor);
-	
+
 	// 计算原图像在新图像中的起始位置（居中）
 	unsigned int offsetX = (newSize - width) / 2;
 	unsigned int offsetY = (newSize - height) / 2;
-	
+
 	RGBQUAD color;
 
 	// 遍历原图像的每个像素
@@ -1157,7 +1221,7 @@ FIBITMAP* BS_NormalizeToSquareRGB24(FIBITMAP* fiB, bool bInvertedAlpha)
 	return newBitmap;
 }
 
-FIBITMAP *BS_NormalizeToSquareA24(FIBITMAP* fiB, bool bInvertedAlpha)
+FIBITMAP* BS_NormalizeToSquareA24(FIBITMAP* fiB, bool bInvertedAlpha)
 {
 	// 获取原图像的宽度和高度
 	unsigned int width = FreeImage_GetWidth(fiB);
@@ -1186,10 +1250,10 @@ FIBITMAP *BS_NormalizeToSquareA24(FIBITMAP* fiB, bool bInvertedAlpha)
 	// 将fiB的Alpha通道的值作为R、G、B值，写入newBitmap（如果fiB比newBitmap小则居中写入）
 	RGBQUAD color;
 	BYTE alpha;
-	
+
 	// 检查原图像是否有Alpha通道
 	bool hasAlpha = FreeImage_IsTransparent(fiB);
-	
+
 	// 遍历原图像的每个像素
 	for (unsigned int y = 0; y < height; y++)
 	{
@@ -1205,7 +1269,7 @@ FIBITMAP *BS_NormalizeToSquareA24(FIBITMAP* fiB, bool bInvertedAlpha)
 			{
 				alpha = 255; // 如果没有Alpha通道，默认为不透明
 			}
-			
+
 			// 将Alpha值设置为新像素的RGB值
 			color.rgbRed = alpha;
 			color.rgbGreen = alpha;
@@ -1218,7 +1282,7 @@ FIBITMAP *BS_NormalizeToSquareA24(FIBITMAP* fiB, bool bInvertedAlpha)
 				color.rgbGreen = 255 - color.rgbGreen;
 				color.rgbBlue = 255 - color.rgbBlue;
 			}
-			
+
 			// 写入到新图像中（考虑偏移量）
 			FreeImage_SetPixelColor(newBitmap, x + offsetX, y + offsetY, &color);
 		}
@@ -1239,10 +1303,10 @@ FIBITMAP* BS_NormalizeToSquareRGBA24(FIBITMAP* fibSquareRGB, FIBITMAP* fibSquare
 	{
 		return NULL;
 	}
-	
+
 	// 复制fibSquareRGB到左侧
 	FreeImage_Paste(newBitmap, fibSquareRGB, 0, 0, 255);
-	
+
 	// 复制fibSquareA到右侧
 	FreeImage_Paste(newBitmap, fibSquareA, width, 0, 255);
 
@@ -1461,7 +1525,7 @@ int BS_GetRandomBackgroundType(FIBITMAP* fibBackground)
 	}
 
 	if (
-		IsPixelWhite(fibBackground, w - 1, h - 1) && 
+		IsPixelWhite(fibBackground, w - 1, h - 1) &&
 		IsPixelWhite(fibBackground, w - 2, h - 2) &&
 		IsPixelWhite(fibBackground, w - 3, h - 3))
 	{
@@ -1525,7 +1589,7 @@ FIBITMAP* BS_LoadRandomBackground(int numBackgrounds)
 	return fiB;
 }
 
-bool BS_UploadSprayBitmap(FIBITMAP *fiB, bool bNormalizeToSquare, bool bWithAlphaChannel, bool bInvertedAlpha, bool bRandomBackground)
+bool BS_UploadSprayBitmap(FIBITMAP* fiB, bool bNormalizeToSquare, bool bWithAlphaChannel, bool bInvertedAlpha, bool bRandomBackground)
 {
 	FreeImageIO fiIO;
 	fiIO.read_proc = FI_Read;
@@ -1538,159 +1602,18 @@ bool BS_UploadSprayBitmap(FIBITMAP *fiB, bool bNormalizeToSquare, bool bWithAlph
 	char userId[32]{};
 	snprintf(userId, sizeof(userId), "%llu", steamId.ConvertToUint64());
 
-	auto width = FreeImage_GetWidth(fiB);
-	auto height = FreeImage_GetHeight(fiB);
-
 	char newFileName[256]{};
-	snprintf(newFileName, sizeof(newFileName), "%s.jpg", userId);
-
 	char newFilePath[256]{};
-	snprintf(newFilePath, sizeof(newFilePath), "%s/%s", CUSTOM_SPRAY_DIRECTORY, newFileName);
 
 	unsigned char rgucMD5_WAD[16]{};
+	char wadHash[64]{};
 
-	if(1)
-	{
-		FILESYSTEM_ANY_CREATEDIR(CUSTOM_SPRAY_DIRECTORY, "GAMEDOWNLOAD");
+	auto width = FreeImage_GetWidth(fiB);
+	auto height = FreeImage_GetHeight(fiB);
+	FileHandle_t hNewFileHandle = nullptr;
 
-		auto hNewFileHandle = FILESYSTEM_ANY_OPEN(newFilePath, "wb", "GAMEDOWNLOAD");
+	const auto& OpenFileHandle = [&hNewFileHandle, &userId, &rgucMD5_WAD, &newFileName, &newFilePath, &wadHash]() -> bool {
 
-		if (!hNewFileHandle)
-		{
-			gEngfuncs.Con_Printf("[BetterSpray] Could not open \"%s\" for writing.\n", newFilePath);
-			return false;
-		}
-
-		SCOPE_EXIT{ FILESYSTEM_ANY_CLOSE(hNewFileHandle); };
-
-		bool bSaved = false;
-
-		if (bNormalizeToSquare)
-		{
-			if (bWithAlphaChannel && FreeImage_GetBPP(fiB) == 32)
-			{
-				auto fibSquareRGB24 = BS_NormalizeToSquareRGB24(fiB, bInvertedAlpha);
-				auto fibSquareA24 = BS_NormalizeToSquareA24(fiB, bInvertedAlpha);
-
-				auto newFIB24 = BS_NormalizeToSquareRGBA24(fibSquareRGB24, fibSquareA24, bInvertedAlpha);
-
-				FreeImage_Unload(fibSquareRGB24);
-				FreeImage_Unload(fibSquareA24);
-
-				if (bRandomBackground)
-				{
-					auto fibBackground = BS_LoadRandomBackground(3);
-
-					if (fibBackground)
-					{
-						auto iBackgroundType = BS_GetRandomBackgroundType(fibBackground);
-						auto newFIB24WithBackground = BS_CreateBackgroundRGBA24(newFIB24, fibBackground, iBackgroundType, true);
-						FreeImage_Unload(fibBackground);
-
-						bSaved = FreeImage_SaveToHandle(FIF_JPEG, newFIB24WithBackground, &fiIO, (fi_handle)hNewFileHandle);
-
-						FreeImage_Unload(newFIB24WithBackground);
-					}
-				}
-				else
-				{
-					bSaved = FreeImage_SaveToHandle(FIF_JPEG, newFIB24, &fiIO, (fi_handle)hNewFileHandle);
-				}
-
-				FreeImage_Unload(newFIB24);
-
-				if (bSaved)
-				{
-					auto newFIB32 = BS_NormalizeToSquareRGBA32(fiB);
-
-					width = FreeImage_GetWidth(newFIB32);
-					height = FreeImage_GetHeight(newFIB32);
-
-					BS_SaveBitmapToTempDecal(newFIB32, rgucMD5_WAD);
-
-					FreeImage_Unload(newFIB32);
-				}
-			}
-			else
-			{
-				//no alpha channel
-				auto fibSquareRGB24 = BS_NormalizeToSquareRGB24(fiB, false);
-
-				if (bRandomBackground)
-				{
-					auto fibBackground = BS_LoadRandomBackground(3);
-					if (fibBackground)
-					{
-						auto iBackgroundType = BS_GetRandomBackgroundType(fibBackground);
-						auto newFIB24WithBackground = BS_CreateBackgroundRGBA24(fibSquareRGB24, fibBackground, iBackgroundType, false);
-						FreeImage_Unload(fibBackground);
-
-						bSaved = FreeImage_SaveToHandle(FIF_JPEG, newFIB24WithBackground, &fiIO, (fi_handle)hNewFileHandle);
-						FreeImage_Unload(newFIB24WithBackground);
-					}
-				}
-				else
-				{
-					bSaved = FreeImage_SaveToHandle(FIF_JPEG, fibSquareRGB24, &fiIO, (fi_handle)hNewFileHandle);
-				}
-
-				if (bSaved)
-				{
-					width = FreeImage_GetWidth(fibSquareRGB24);
-					height = FreeImage_GetHeight(fibSquareRGB24);
-					BS_SaveBitmapToTempDecal(fibSquareRGB24, rgucMD5_WAD);
-				}
-
-				FreeImage_Unload(fibSquareRGB24);
-			}
-		}
-		else
-		{
-			bSaved = FreeImage_SaveToHandle(FIF_JPEG, fiB, &fiIO, (fi_handle)hNewFileHandle);
-
-			if (bSaved)
-			{
-				width = FreeImage_GetWidth(fiB);
-				height = FreeImage_GetHeight(fiB);
-
-				BS_SaveBitmapToTempDecal(fiB, rgucMD5_WAD);
-			}
-		}
-
-		if (bSaved)
-		{
-			gEngfuncs.Con_DPrintf("[BetterSpray] File \"%s\" saved !\n", newFilePath);
-		}
-		else
-		{
-			gEngfuncs.Con_Printf("[BetterSpray] Could not save \"%s\", FreeImage_SaveToHandle failed!\n", newFilePath);
-			return false;
-		}
-	}
-	else
-	{
-		width = FreeImage_GetWidth(fiB);
-		height = FreeImage_GetHeight(fiB);
-
-		BS_SaveBitmapToTempDecal(fiB, rgucMD5_WAD);
-	}
-
-	char fullPath[MAX_PATH] = { 0 };
-	auto pszFullPath = FILESYSTEM_ANY_GETLOCALPATH(newFilePath, fullPath, MAX_PATH);
-
-	if (!pszFullPath)
-	{
-		gEngfuncs.Con_Printf("[BetterSpray] Could not upload \"%s\", GetLocalPath failed.\n", newFilePath);
-		return false;
-	}
-
-	SteamScreenshots()->AddScreenshotToLibrary(pszFullPath, nullptr, width, height);
-
-	if (EngineIsInLevel())
-	{
-		int playerindex = EngineFindPlayerIndexByUserId(userId);
-
-		char wadHash[64]{};
 		snprintf(wadHash, sizeof(wadHash), "%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X",
 			rgucMD5_WAD[0],
 			rgucMD5_WAD[1],
@@ -1709,12 +1632,203 @@ bool BS_UploadSprayBitmap(FIBITMAP *fiB, bool bNormalizeToSquare, bool bWithAlph
 			rgucMD5_WAD[14],
 			rgucMD5_WAD[15]);
 
-		Draw_LoadSprayTexture(userId, wadHash, newFilePath, "GAMEDOWNLOAD", [playerindex](const char* userId, const char* wadHash, FIBITMAP* fiB) -> LOADSPRAYTEXTURE_STATUS {
-			return Draw_LoadSprayTexture_AsyncLoadInGame(playerindex, fiB);
-		});
+			snprintf(newFileName, sizeof(newFileName), "%s_%s.jpg", userId, wadHash);
+			snprintf(newFilePath, sizeof(newFilePath), "%s/%s", CUSTOM_SPRAY_DIRECTORY, newFileName);
+
+			hNewFileHandle = FILESYSTEM_ANY_OPEN(newFilePath, "wb", "GAMEDOWNLOAD");
+
+			if (!hNewFileHandle)
+			{
+				gEngfuncs.Con_Printf("[BetterSpray] Could not open \"%s\" for writing.\n", newFilePath);
+				return false;
+			}
+
+			return true;
+		};
+
+	bool bSaved = false;
+
+	if (1)
+	{
+		FILESYSTEM_ANY_CREATEDIR(CUSTOM_SPRAY_DIRECTORY, "GAMEDOWNLOAD");
+
+		if (bNormalizeToSquare)
+		{
+			if (bWithAlphaChannel && FreeImage_GetBPP(fiB) == 32)
+			{
+				auto newFIB32 = BS_NormalizeToSquareRGBA32(fiB);
+
+				if (newFIB32)
+				{
+					BS_SaveBitmapToTempDecal(newFIB32, rgucMD5_WAD);
+
+					FreeImage_Unload(newFIB32);
+
+					if (!OpenFileHandle())
+						return false;
+				}
+
+				auto fibSquareRGB24 = BS_NormalizeToSquareRGB24(fiB, bInvertedAlpha);
+				auto fibSquareA24 = BS_NormalizeToSquareA24(fiB, bInvertedAlpha);
+
+				auto newFIB24 = BS_NormalizeToSquareRGBA24(fibSquareRGB24, fibSquareA24, bInvertedAlpha);
+
+				FreeImage_Unload(fibSquareRGB24);
+				FreeImage_Unload(fibSquareA24);
+
+				if (bRandomBackground)
+				{
+					auto fibBackground = BS_LoadRandomBackground(3);
+
+					if (fibBackground)
+					{
+						auto iBackgroundType = BS_GetRandomBackgroundType(fibBackground);
+						auto newFIB24WithBackground = BS_CreateBackgroundRGBA24(newFIB24, fibBackground, iBackgroundType, true);
+
+						FreeImage_Unload(fibBackground);
+
+						bSaved = FreeImage_SaveToHandle(FIF_JPEG, newFIB24WithBackground, &fiIO, (fi_handle)hNewFileHandle);
+
+						//if (bSaved)
+						//{
+						//	width = FreeImage_GetWidth(newFIB24WithBackground);
+						//	height = FreeImage_GetHeight(newFIB24WithBackground);
+						//}
+
+						FreeImage_Unload(newFIB24WithBackground);
+					}
+				}
+				else
+				{
+					bSaved = FreeImage_SaveToHandle(FIF_JPEG, newFIB24, &fiIO, (fi_handle)hNewFileHandle);
+
+					//if (bSaved)
+					//{
+					//	width = FreeImage_GetWidth(newFIB24);
+					//	height = FreeImage_GetHeight(newFIB24);
+					//}
+				}
+
+				FreeImage_Unload(newFIB24);
+			}
+			else
+			{
+				//no alpha channel
+				auto fibSquareRGB24 = BS_NormalizeToSquareRGB24(fiB, false);
+
+				if (fibSquareRGB24)
+				{
+					BS_SaveBitmapToTempDecal(fibSquareRGB24, rgucMD5_WAD);
+
+					if (!OpenFileHandle())
+						return false;
+
+					if (bRandomBackground)
+					{
+						auto fibBackground = BS_LoadRandomBackground(3);
+
+						if (fibBackground)
+						{
+							auto iBackgroundType = BS_GetRandomBackgroundType(fibBackground);
+							auto newFIB24WithBackground = BS_CreateBackgroundRGBA24(fibSquareRGB24, fibBackground, iBackgroundType, false);
+
+							FreeImage_Unload(fibBackground);
+
+							bSaved = FreeImage_SaveToHandle(FIF_JPEG, newFIB24WithBackground, &fiIO, (fi_handle)hNewFileHandle);
+
+							//if (bSaved)
+							//{
+							//	width = FreeImage_GetWidth(newFIB24WithBackground);
+							//	height = FreeImage_GetHeight(newFIB24WithBackground);
+							//}
+
+							FreeImage_Unload(newFIB24WithBackground);
+						}
+					}
+					else
+					{
+						bSaved = FreeImage_SaveToHandle(FIF_JPEG, fibSquareRGB24, &fiIO, (fi_handle)hNewFileHandle);
+
+						//if (bSaved)
+						//{
+						//	width = FreeImage_GetWidth(fibSquareRGB24);
+						//	height = FreeImage_GetHeight(fibSquareRGB24);
+						//}
+					}
+				}
+
+				FreeImage_Unload(fibSquareRGB24);
+			}
+		}
+		else
+		{
+			BS_SaveBitmapToTempDecal(fiB, rgucMD5_WAD);
+
+			if (!OpenFileHandle())
+				return false;
+
+			bSaved = FreeImage_SaveToHandle(FIF_JPEG, fiB, &fiIO, (fi_handle)hNewFileHandle);
+
+			//if (bSaved)
+			//{
+			//	width = FreeImage_GetWidth(fiB);
+			//	height = FreeImage_GetHeight(fiB);
+			//}
+		}
+
+		if (bSaved)
+		{
+			gEngfuncs.Con_DPrintf("[BetterSpray] File \"%s\" saved !\n", newFilePath);
+		}
+		else
+		{
+			gEngfuncs.Con_Printf("[BetterSpray] Could not save to \"%s\", FreeImage_SaveToHandle failed!\n", newFilePath);
+		}
+	}
+	else
+	{
+		BS_SaveBitmapToTempDecal(fiB, rgucMD5_WAD);
+
+		if (!OpenFileHandle())
+			return false;
+
+		//width = FreeImage_GetWidth(fiB);
+		//height = FreeImage_GetHeight(fiB);
 	}
 
-	gEngfuncs.Con_Printf("[BetterSpray] \"%s\" has been committed to Steam screenshot library. Please set \"!Spray\" as screenshot description and share it as \"Public\" on Steam.\n", newFilePath.c_str());
+	if (hNewFileHandle)
+	{
+		FILESYSTEM_ANY_CLOSE(hNewFileHandle);
+		hNewFileHandle = nullptr;
+	}
+
+	if (!bSaved)
+		return false;
+
+	char fullPath[MAX_PATH] = { 0 };
+	auto pszFullPath = FILESYSTEM_ANY_GETLOCALPATH(newFilePath, fullPath, MAX_PATH);
+
+	if (!pszFullPath)
+	{
+		gEngfuncs.Con_Printf("[BetterSpray] Could not upload \"%s\", GetLocalPath failed.\n", newFilePath);
+		return false;
+	}
+
+	SteamScreenshots()->AddScreenshotToLibrary(pszFullPath, nullptr, 0, 0);
+
+	if (EngineIsInLevel())
+	{
+		int playerindex = EngineFindPlayerIndexByUserId(userId);
+
+		if (playerindex != -1)
+		{
+			Draw_LoadSprayTexture(userId, newFilePath, "GAMEDOWNLOAD", [playerindex](const char* userId, FIBITMAP* fiB) -> LOADSPRAYTEXTURE_STATUS {
+				return Draw_LoadSprayTexture_AsyncLoadInGame(playerindex, fiB);
+				});
+		}
+	}
+
+	gEngfuncs.Con_Printf("[BetterSpray] \"%s\" has been committed to Steam screenshot library. Please share it as \"Public\" on Steam with \"!Spray\" as screenshot description.\n", newFilePath);
 	return true;
 }
 
@@ -1726,15 +1840,13 @@ void HUD_Frame(double frame)
 	UtilHTTPClient()->RunFrame();
 
 	float time = gEngfuncs.GetAbsoluteTime();
-	
+
 	GameThreadTaskScheduler()->RunTasks(time, 0);
 }
 
 void HUD_Init(void)
 {
 	gExportfuncs.HUD_Init();
-
-	//gEngfuncs.pfnAddCommand("bs_upload", BS_Upload_f);
 
 	SprayDatabase()->Init();
 }

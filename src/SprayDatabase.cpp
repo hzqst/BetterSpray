@@ -1001,11 +1001,11 @@ public:
 		{
 			int playerindex = EngineFindPlayerIndexByUserId(userId.c_str());
 
-			int result = Draw_LoadSprayTexture(userId.c_str(), filePath.c_str(), "GAMEDOWNLOAD", [playerindex](const char* userId, FIBITMAP* fiB) -> LOADSPRAYTEXTURE_STATUS {
+			auto result = Draw_LoadSprayTexture(userId.c_str(), filePath.c_str(), "GAMEDOWNLOAD", [playerindex](const char* userId, FIBITMAP* fiB) -> LOADSPRAYTEXTURE_STATUS {
 				return Draw_LoadSprayTexture_AsyncLoadInGame(playerindex, fiB);
 			});
 
-			if (result == 0)
+			if (result == LOAD_SPARY_OK)
 			{
 				UpdatePlayerSprayQueryStatusInternal(userId, SprayQueryState_Finished);
 			}

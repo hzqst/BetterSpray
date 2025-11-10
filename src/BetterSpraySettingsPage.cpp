@@ -77,9 +77,16 @@ void CBetterSpraySettingsPage::OnApplyChanges(void)
 
 void CBetterSpraySettingsPage::OnResetData(void)
 {
+	unsigned char rgucMD5_WAD[16]{};
+	char wadHash[64]{};
+	char fileName[256]{};
+	char filePath[256]{};
+
+	bool bTempDecalLoaded = false;
+
 	if (m_pSparyWad)
 	{
-		m_pSparyWad->Load("tempdecal.wad");
+		bTempDecalLoaded = m_pSparyWad->Load("tempdecal.wad");
 		auto tex = m_pSparyWad->Get("{logo");
 
 		if (tex)
@@ -96,18 +103,20 @@ void CBetterSpraySettingsPage::OnResetData(void)
 		{
 			m_pSparyImageWAD->SetImage((vgui::IImage *)nullptr);
 		}
+
+		if (bTempDecalLoaded) {
+			memcpy(rgucMD5_WAD, m_pSparyWad->GetMD5(), sizeof(rgucMD5_WAD));
+		}
 	}
 
 	if (1)
 	{
 		auto steamId = SteamUser()->GetSteamID();
-		auto userId = std::format("{0}", steamId.ConvertToUint64());
 
-		std::string fileName = std::format("{0}.jpg", userId);
+		char userId[32]{};
+		snprintf(userId, sizeof(userId), "%llu", steamId.ConvertToUint64());
 
-		std::string filePath = std::format("{0}/{1}", CUSTOM_SPRAY_DIRECTORY, fileName);
-
-		auto SprayBitmapLoader = [this](const char* userId, FIBITMAP* fiB) -> LOADSPRAYTEXTURE_STATUS {
+		const auto& SprayBitmapLoader = [this](const char* userId, FIBITMAP* fiB) -> LOADSPRAYTEXTURE_STATUS {
 
 			auto fiB32 = fiB;
 
@@ -146,9 +155,44 @@ void CBetterSpraySettingsPage::OnResetData(void)
 			return LOAD_SPARY_OK;
 		};
 
-		auto result = Draw_LoadSprayTexture(userId.c_str(), filePath.c_str(), NULL, SprayBitmapLoader);
+		LOADSPRAYTEXTURE_STATUS st = LOAD_SPARY_FAILED_NOT_FOUND;
 
-		if (result == LOAD_SPARY_OK && m_pSparyBitmapJPG) {
+		if (bTempDecalLoaded && st == LOAD_SPARY_FAILED_NOT_FOUND)
+		{
+			snprintf(wadHash, sizeof(wadHash), "%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X",
+				rgucMD5_WAD[0],
+				rgucMD5_WAD[1],
+				rgucMD5_WAD[2],
+				rgucMD5_WAD[3],
+				rgucMD5_WAD[4],
+				rgucMD5_WAD[5],
+				rgucMD5_WAD[6],
+				rgucMD5_WAD[7],
+				rgucMD5_WAD[8],
+				rgucMD5_WAD[9],
+				rgucMD5_WAD[10],
+				rgucMD5_WAD[11],
+				rgucMD5_WAD[12],
+				rgucMD5_WAD[13],
+				rgucMD5_WAD[14],
+				rgucMD5_WAD[15]);
+
+			snprintf(fileName, sizeof(fileName), "%s_%s.jpg", userId, wadHash);
+			snprintf(filePath, sizeof(filePath), "%s/%s", CUSTOM_SPRAY_DIRECTORY, fileName);
+
+			st = Draw_LoadSprayTexture(userId, filePath, nullptr, SprayBitmapLoader);
+		}
+
+		if (st == LOAD_SPARY_FAILED_NOT_FOUND)
+		{
+			//fallback to {SteamID}.jpg
+			snprintf(fileName, sizeof(fileName), "%s.jpg", userId);
+			snprintf(filePath, sizeof(filePath), "%s/%s", CUSTOM_SPRAY_DIRECTORY, fileName);
+
+			st = Draw_LoadSprayTexture(userId, filePath, nullptr, SprayBitmapLoader);
+		}
+
+		if (st == LOAD_SPARY_OK && m_pSparyBitmapJPG) {
 			m_pSparyImageJPG->SetImage(m_pSparyBitmapJPG);
 		}
 		else {

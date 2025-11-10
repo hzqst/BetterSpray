@@ -4,7 +4,13 @@
 #include "enginedef.h"
 #include <vector>
 #include <string>
+
 #include <ScopeExit/ScopeExit.h>
+
+//Fuck microsoft
+#undef min
+#undef max
+#include <md5.h>
 
 class WadFile;
 
@@ -111,10 +117,17 @@ private:
 class WadFile
 {
 public:
+
     ~WadFile()
     {
         Clear();
     }
+
+    const unsigned char* GetMD5() const
+    {
+        return m_rgubMD5;
+    }
+
     WadTexture* Get(const char *name, bool ignoreCase = true) const
     {
         if (ignoreCase)
@@ -137,6 +150,7 @@ public:
         }
         return nullptr;
     }
+
     bool Load(const char *filePath)
     {
         Clear();
@@ -166,6 +180,24 @@ public:
             delete[] lumpData;
         }
 
+        auto fileSize = FILESYSTEM_ANY_SIZE(hFileHandle);
+
+        std::vector<unsigned char> wadBytes(fileSize);
+        FILESYSTEM_ANY_SEEK(hFileHandle, 0, FILESYSTEM_SEEK_HEAD);
+        FILESYSTEM_ANY_READ(wadBytes.data(), fileSize, hFileHandle);
+
+        Chocobo1::MD5 hasher;
+        hasher.addData(wadBytes.data(), wadBytes.size());
+
+        //hash the WAD file content as MD5. 
+        const auto& md5 = hasher.finalize();
+        const auto& md5Array = md5.toArray();
+
+        for (int i = 0; i < 16; ++i)
+        {
+            m_rgubMD5[i] = md5Array[i];
+        }
+
         m_pHeader = header;
         return true;
     }
@@ -188,4 +220,5 @@ private:
     std::vector<WadTexture*> m_textures;
     WAD3Header_t m_pHeader;
     WAD3Lump_t* m_lumps{};
+    unsigned char m_rgubMD5[16]{};
 };
