@@ -1001,7 +1001,7 @@ public:
 		{
 			int playerindex = EngineFindPlayerIndexByUserId(userId.c_str());
 
-			int result = Draw_LoadSprayTexture(userId.c_str(), filePath.c_str(), "GAMEDOWNLOAD", [playerindex](const char* userId, FIBITMAP* fiB)->int {
+			int result = Draw_LoadSprayTexture(userId.c_str(), filePath.c_str(), "GAMEDOWNLOAD", [playerindex](const char* userId, FIBITMAP* fiB) -> DRAW_LOADSPRAYTEXTURE_STATUS {
 				return Draw_LoadSprayTexture_AsyncLoadInGame(playerindex, fiB);
 			});
 

@@ -107,7 +107,7 @@ void CBetterSpraySettingsPage::OnResetData(void)
 
 		std::string filePath = std::format("{0}/{1}", CUSTOM_SPRAY_DIRECTORY, fileName);
 
-		auto SprayBitmapLoader = [this](const char* userId, FIBITMAP* fiB) -> int {
+		auto SprayBitmapLoader = [this](const char* userId, FIBITMAP* fiB) -> DRAW_LOADSPRAYTEXTURE_STATUS {
 
 			auto fiB32 = fiB;
 
@@ -115,15 +115,15 @@ void CBetterSpraySettingsPage::OnResetData(void)
 			{
 				auto result = Draw_LoadSprayTexture_ConvertToBGRA32(&fiB32);
 
-				if (result > 0)
+				if (result > CONVERT_BGRA_OK)
 					continue;
 
-				if (result == 0)
+				if (result == CONVERT_BGRA_OK)
 					break;
 
-				if (result < 0)
+				if (result < CONVERT_BGRA_OK)
 				{
-					return -1;
+					return LOAD_SPARY_FAILED_NOT_FOUND;
 				}
 			}
 
@@ -143,7 +143,7 @@ void CBetterSpraySettingsPage::OnResetData(void)
 
 			FreeImage_Unload(fiB32);
 
-			return 0;
+			return LOAD_SPARY_OK;
 		};
 
 		auto result = Draw_LoadSprayTexture(userId.c_str(), filePath.c_str(), NULL, SprayBitmapLoader);
