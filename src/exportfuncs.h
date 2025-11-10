@@ -17,17 +17,35 @@ int HUD_VidInit(void);
 void HUD_Shutdown(void);
 int HUD_GetStudioModelInterface(int version, struct r_studio_interface_s** ppinterface, struct engine_studio_api_s* pstudio);
 
-//typedef int (*fnDraw_LoadSprayTextureCallback)(int playerindex, const char* userId, FIBITMAP* fiB);
+enum CONVERT_TO_BGRA_STATUS
+{
+	CONVERT_BGRA_FAILED = -1,
+	CONVERT_BGRA_OK = 0,
+	CONVERT_BGRA_NON_32BPP = 1,
+	CONVERT_BGRA_HAS_ALPHA_REGION = 2,
+	CONVERT_BGRA_HAS_BACKGROUND = 3,
+};
 
-using fnDraw_LoadSprayTextureCallback = std::function<int(const char* userId, FIBITMAP* fiB)>;
+enum DRAW_LOADSPRAYTEXTURE_STATUS
+{
+	LOAD_SPARY_FAILED_NO_CUSTOM_DECAL = -10,
+	LOAD_SPARY_FAILED_NOT_IN_LEVEL = -9,
+	LOAD_SPARY_FAILED_COULD_NOT_LOAD = -4,
+	LOAD_SPARY_FAILED_UNSUPPORTED_FORMAT = -3,
+	LOAD_SPARY_FAILED_UNKNOWN_FORMAT = -2,
+	LOAD_SPARY_FAILED_NOT_FOUND = -1,
+	LOAD_SPARY_OK = 0,
+};
+
+using fnDraw_LoadSprayTextureCallback = std::function<DRAW_LOADSPRAYTEXTURE_STATUS(const char* userId, FIBITMAP* fiB)>;
 
 bool EngineIsInLevel();
 int EngineFindPlayerIndexByUserId(const char* userId);
 bool Draw_HasCustomDecal(int playerindex);
-int Draw_LoadSprayTexture_AsyncLoadInGame(int playerindex, FIBITMAP* fiB);
-int Draw_LoadSprayTexture(const char* userId, const char* filePath, const char* pathId, const fnDraw_LoadSprayTextureCallback& callback);
-int Draw_LoadSprayTextures(const char* userId, const char* pathId, const fnDraw_LoadSprayTextureCallback &callback);
+DRAW_LOADSPRAYTEXTURE_STATUS Draw_LoadSprayTexture_AsyncLoadInGame(int playerindex, FIBITMAP* fiB);
+DRAW_LOADSPRAYTEXTURE_STATUS Draw_LoadSprayTexture(const char* userId, const char* filePath, const char* pathId, const fnDraw_LoadSprayTextureCallback& callback);
+DRAW_LOADSPRAYTEXTURE_STATUS Draw_LoadSprayTextures(const char* userId, const char* pathId, const fnDraw_LoadSprayTextureCallback &callback);
 void Draw_LoadSprayTexture_BGRA8ToRGBA8(FIBITMAP* fiB);
-int Draw_LoadSprayTexture_ConvertToBGRA32(FIBITMAP** pfiB);
+CONVERT_TO_BGRA_STATUS Draw_LoadSprayTexture_ConvertToBGRA32(FIBITMAP** pfiB);
 
 bool BS_UploadSprayBitmap(FIBITMAP* fiB, bool bNormalizeToSquare, bool bWithAlphaChannel, bool bAlphaInverted, bool bRandomBackground);
