@@ -37,6 +37,14 @@ enum LOADSPRAYTEXTURE_STATUS
 	LOAD_SPARY_OK = 0,
 };
 
+typedef struct BackgroundSpraySize_s
+{
+	unsigned int backgroundWidth;
+	unsigned int backgroundHeight;
+	unsigned int sprayWidth;
+	unsigned int sprayHeight;
+}BackgroundSpraySize_t;
+
 using fnDraw_LoadSprayTextureCallback = std::function<LOADSPRAYTEXTURE_STATUS(const char* userId, FIBITMAP* fiB)>;
 
 bool EngineIsInLevel();
@@ -49,4 +57,12 @@ LOADSPRAYTEXTURE_STATUS Draw_LoadSprayTextures(const char* userId, const char * 
 void Draw_LoadSprayTexture_BGRA8ToRGBA8(FIBITMAP* fiB);
 CONVERT_TO_BGRA_STATUS Draw_LoadSprayTexture_ConvertToBGRA32(FIBITMAP** pfiB);
 
-bool BS_UploadSprayBitmap(FIBITMAP* fiB, bool bNormalizeToSquare, bool bWithAlphaChannel, bool bAlphaInverted, bool bRandomBackground);
+typedef struct BS_UploadSprayBitmapArgs_s
+{
+	unsigned int bNormalizeToSquare : 1;
+	unsigned int bWithAlphaChannel : 1;
+	unsigned int bAlphaInverted : 1;
+	unsigned int bRandomBackground : 1;
+}BS_UploadSprayBitmapArgs;
+
+bool BS_UploadSprayBitmap(FIBITMAP* fiB, const BS_UploadSprayBitmapArgs *args);

@@ -188,7 +188,6 @@ void CBetterSpraySettingsPage::OnResetData(void)
 			//fallback to {SteamID}.jpg
 			snprintf(fileName, sizeof(fileName), "%s.jpg", userId);
 			snprintf(filePath, sizeof(filePath), "%s/%s", CUSTOM_SPRAY_DIRECTORY, fileName);
-
 			st = Draw_LoadSprayTexture(userId, filePath, nullptr, SprayBitmapLoader);
 		}
 
@@ -259,13 +258,17 @@ void CBetterSpraySettingsPage::OnFileSelected(const char* fullpath)
 		return;
 
 	auto fiB = FreeImage_LoadU(fiFormat, wszFullPath, 0);
+
 	if (fiB)
 	{
-		auto bWithAlpha = m_pWithAlpha->IsSelected() ? true : false;
-		auto bInvertedAlpha = m_pInvertAlpha->IsSelected() ? true : false;
-		auto bRandomBackground = m_pRandomBackground->IsSelected() ? true : false;
+		BS_UploadSprayBitmapArgs args;
 
-		bool bSuccess = BS_UploadSprayBitmap(fiB, true, bWithAlpha, bInvertedAlpha, bRandomBackground);
+		args.bNormalizeToSquare = true;
+		args.bWithAlphaChannel = m_pWithAlpha->IsSelected() ? true : false;
+		args.bAlphaInverted = m_pInvertAlpha->IsSelected() ? true : false;
+		args.bRandomBackground = m_pRandomBackground->IsSelected() ? true : false;
+
+		bool bSuccess = BS_UploadSprayBitmap(fiB, &args);
 
 		FreeImage_Unload(fiB);
 

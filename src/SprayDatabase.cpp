@@ -22,7 +22,11 @@
 
 static unsigned int g_uiAllocatedTaskId = 0;
 
-bool Draw_ValidateImageFormatMemoryIO(const void* data, size_t dataSize, const char* identifier);
+FIBITMAP* BS_RscaleImageToClosestBackgroundSize(const void* data, size_t dataSize, const char* identifier);
+unsigned WINAPI FI_Read(void* buffer, unsigned size, unsigned count, fi_handle handle);
+unsigned WINAPI FI_Write(void* buffer, unsigned size, unsigned count, fi_handle handle);
+int WINAPI FI_Seek(fi_handle handle, long offset, int origin);
+long WINAPI FI_Tell(fi_handle handle);
 
 static int UTIL_GetContentLength(IUtilHTTPResponse* ResponseInstance)
 {
@@ -58,7 +62,7 @@ public:
 class ISprayDatabaseInternal : public ISprayDatabase
 {
 public:
-	virtual void BuildQueryImageLink(const std::string& userId, const std::string& fileId) = 0;
+	virtual void BuildQueryImageLink(const std::string& userId, const std::string& wadHash, const std::string& fileId) = 0;
 	virtual void BuildQueryImageFile(const std::string& userId, const std::string& fileName, const std::string& actualMediaUrl) = 0;
 	virtual void OnImageFileAcquired(const std::string& userId, const std::string& filePath) = 0;
 	virtual void UpdatePlayerSprayQueryStatusInternal(const std::string& userId, SprayQueryState newQueryStatus) = 0;
@@ -469,26 +473,46 @@ public:
 		if (!CSprayQueryBase::OnProcessPayload(RequestInstance, ResponseInstance, data, size))
 			return false;
 
-		if (!Draw_ValidateImageFormatMemoryIO(data, size, m_fileName.c_str()))
+		auto fiB = BS_RscaleImageToClosestBackgroundSize(data, size, m_fileName.c_str());
+
+		if (!fiB)
 		{
-			gEngfuncs.Con_DPrintf("[BetterSpray] Acquired image file \"%s\" has invalid image format !\n", m_fileName.c_str());
+			gEngfuncs.Con_DPrintf("[BetterSpray] Acquired image file \"%s\" is invalid !\n", m_fileName.c_str());
 			return true;
 		}
+
+		SCOPE_EXIT{ FreeImage_Unload(fiB); };
 
 		FILESYSTEM_ANY_CREATEDIR(CUSTOM_SPRAY_DIRECTORY, "GAMEDOWNLOAD");
 
 		std::string filePath = std::format("{0}/{1}", CUSTOM_SPRAY_DIRECTORY, m_fileName);
 
-		auto FileHandle = FILESYSTEM_ANY_OPEN(filePath.c_str(), "wb", "GAMEDOWNLOAD");
+		auto hFileHandle = FILESYSTEM_ANY_OPEN(filePath.c_str(), "wb", "GAMEDOWNLOAD");
 
-		if (FileHandle)
+		if (hFileHandle)
 		{
-			FILESYSTEM_ANY_WRITE(data, size, FileHandle);
-			FILESYSTEM_ANY_CLOSE(FileHandle);
+			FreeImageIO fiIO;
+			fiIO.read_proc = FI_Read;
+			fiIO.write_proc = FI_Write;
+			fiIO.seek_proc = FI_Seek;
+			fiIO.tell_proc = FI_Tell;
 
-			gEngfuncs.Con_DPrintf("[BetterSpray] File \"%s\" acquired!\n", filePath.c_str());
+			BOOL bSaved = FreeImage_SaveToHandle(FIF_JPEG, fiB, &fiIO, (fi_handle)hFileHandle);
 
-			SprayDatabaseInternal()->OnImageFileAcquired(m_userId, filePath);
+			FILESYSTEM_ANY_CLOSE(hFileHandle);
+
+			if (bSaved)
+			{
+				gEngfuncs.Con_DPrintf("[BetterSpray] File \"%s\" acquired!\n", filePath.c_str());
+
+				SprayDatabaseInternal()->OnImageFileAcquired(m_userId, filePath);
+			}
+			else
+			{
+				gEngfuncs.Con_DPrintf("[BetterSpray] Could not save \"%s\" !\n", filePath.c_str());
+
+				SprayDatabaseInternal()->UpdatePlayerSprayQueryStatus(m_userId.c_str(), SprayQueryState_Failed);
+			}
 		}
 		else
 		{
@@ -515,13 +539,15 @@ class CSprayQueryImageLinkTask : public CSprayQueryBase
 {
 public:
 	std::string m_userId;
+	std::string m_wadHash;
 	std::string m_fileId;
 	bool m_bWorkItemCompleted{};
 
 public:
-	CSprayQueryImageLinkTask(const std::string& userId, const std::string& fileId) :
+	CSprayQueryImageLinkTask(const std::string& userId, const std::string& wadHash, const std::string& fileId) :
 		CSprayQueryBase(),
 		m_userId(userId),
+		m_wadHash(wadHash),
 		m_fileId(fileId)
 	{
 
@@ -609,7 +635,43 @@ public:
 		SCOPE_EXIT() { xmlFree(src); };
 
 		// 保存图片URL
-		ctx->actualMediaUrl = (const char*)src;
+		//Example: https://images.steamusercontent.com/ugc/10260779110356958471/2C72D4FEADC79B9E412B0C7FE4681200725FE75E/?imw=2048&imh=857&ima=fit&impolicy=Letterbox&imcolor=%23000000&letterbox=true
+		//ctx->actualMediaUrl = (const char*)src;
+
+		// 将imw=与imh=的值均修改为5000以获取最高分辨率图片
+		std::string modifiedUrl = (const char*)src;
+		
+		// 查找并替换imw参数
+		size_t imwPos = modifiedUrl.find("imw=");
+		if (imwPos != std::string::npos) {
+			size_t imwEnd = modifiedUrl.find_first_of("&", imwPos);
+			if (imwEnd != std::string::npos) {
+				modifiedUrl.replace(imwPos, imwEnd - imwPos, "imw=5000");
+			} else {
+				// imw是最后一个参数
+				modifiedUrl.replace(imwPos, modifiedUrl.length() - imwPos, "imw=5000");
+			}
+		}
+		
+		// 查找并替换imh参数
+		size_t imhPos = modifiedUrl.find("imh=");
+		if (imhPos != std::string::npos) {
+			size_t imhEnd = modifiedUrl.find_first_of("&", imhPos);
+			if (imhEnd != std::string::npos) {
+				modifiedUrl.replace(imhPos, imhEnd - imhPos, "imh=5000");
+			} else {
+				// imh是最后一个参数
+				modifiedUrl.replace(imhPos, modifiedUrl.length() - imhPos, "imh=5000");
+			}
+		}
+		
+		// 修改 letterbox=true 至 letterbox=false 以避免黑边
+		size_t letterboxPos = modifiedUrl.find("letterbox=true");
+		if (letterboxPos != std::string::npos) {
+			modifiedUrl.replace(letterboxPos, sizeof("letterbox=true") - 1, "letterbox=false");
+		}
+
+		ctx->actualMediaUrl = modifiedUrl;
 	}
 
 	void OnProcessPayloadWorkItemComplete(void* context) override
@@ -620,7 +682,7 @@ public:
 		{
 			gEngfuncs.Con_DPrintf("[BetterSpray] Found image URL: %s\n", ctx->actualMediaUrl.c_str());
 
-			std::string localFileName = std::format("{0}.jpg", m_userId);
+			std::string localFileName = std::format("{0}_{1}.jpg", m_userId, m_wadHash);
 
 			SprayDatabaseInternal()->BuildQueryImageFile(m_userId, localFileName, ctx->actualMediaUrl);
 		}
@@ -672,12 +734,14 @@ class CSprayQueryTaskList : public CSprayQueryBase
 {
 public:
 	std::string m_userId;
+	std::string m_wadHash;
 	bool m_bWorkItemCompleted{};
 
 public:
-	CSprayQueryTaskList(const std::string& userId) :
+	CSprayQueryTaskList(const char* userId, const char* wadHash) :
 		CSprayQueryBase(),
-		m_userId(userId)
+		m_userId(userId),
+		m_wadHash(wadHash)
 	{
 
 	}
@@ -831,7 +895,7 @@ public:
 			// 调用BuildQueryImageLink
 			gEngfuncs.Con_DPrintf("[BetterSpray] Spary selected: fileId=%s\n", selectedItem->fileId.c_str());
 
-			SprayDatabaseInternal()->BuildQueryImageLink(m_userId, selectedItem->fileId);
+			SprayDatabaseInternal()->BuildQueryImageLink(m_userId, m_wadHash, selectedItem->fileId);
 		}
 		else
 		{
@@ -934,7 +998,7 @@ public:
 		Purpose: Build query based on userId (steamId64), to get screenshot list.
 	*/
 
-	bool BuildQueryTaskList(int playerindex, const char* userId)
+	bool BuildQueryTaskList(int playerindex, const char* userId, const char * wadHash)
 	{
 		for (const auto& p : m_QueryList)
 		{
@@ -945,7 +1009,7 @@ public:
 			}
 		}
 
-		auto QueryList = new CSprayQueryTaskList(userId);
+		auto QueryList = new CSprayQueryTaskList(userId, wadHash);
 		m_QueryList.emplace_back(QueryList);
 		QueryList->StartQuery();
 		QueryList->Release();  
@@ -957,7 +1021,7 @@ public:
 		Purpose: Build query based on fileId, to get actual image link.
 	*/
 
-	void BuildQueryImageLink(const std::string& userId, const std::string& fileId) override
+	void BuildQueryImageLink(const std::string& userId, const std::string& wadHash, const std::string& fileId) override
 	{
 		for (const auto& p : m_QueryList)
 		{
@@ -968,7 +1032,7 @@ public:
 			}
 		}
 
-		auto QueryInstance = new CSprayQueryImageLinkTask(userId, fileId);
+		auto QueryInstance = new CSprayQueryImageLinkTask(userId, wadHash, fileId);
 		QueryInstance->StartQuery();
 		m_QueryList.emplace_back(QueryInstance);
 		QueryInstance->Release();
@@ -1016,7 +1080,7 @@ public:
 		}
 	}
 
-	void QueryPlayerSpray(int playerindex, const char* userId) override
+	void QueryPlayerSpray(int playerindex, const char* userId, const char * wadHash) override
 	{
 		std::string userIdString = userId;
 
@@ -1028,7 +1092,7 @@ public:
 
 			UpdatePlayerSprayQueryStatusInternal(userIdString, SprayQueryState_Querying);
 
-			BuildQueryTaskList(playerindex, userId);
+			BuildQueryTaskList(playerindex, userId, wadHash);
 		}
 		else
 		{

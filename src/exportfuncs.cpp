@@ -22,6 +22,8 @@
 #undef max
 #include <md5.h>
 
+#define BACKGROUND_MARK_SIZE 8
+
 cl_enginefunc_t gEngfuncs = { 0 };
 engine_studio_api_t IEngineStudio = { 0 };
 
@@ -369,30 +371,83 @@ bool Draw_LoadSprayTexture_DecodeBackground(FIBITMAP* fiB, int* iBackgroundType,
 	return false;
 }
 
+const BackgroundSpraySize_t s_BackgroundSpraySize[] = {
+	{5160, 2160, 1024, 1024},
+	{3440, 1440, 768, 768},
+	{2560, 1080, 512, 512},
+};
+
+/*
+	Purpose: find closest (width x height) to (s_BackgroundSpraySize[i].backgroundWidth x s_BackgroundSpraySize[i].backgroundHeight)
+*/
+void GetClosestBackgroundSize(unsigned int w, unsigned int h, unsigned int* closestWidth, unsigned int* closestHeight)
+{
+	if (_countof(s_BackgroundSpraySize) == 0)
+		return;
+
+	// Initialize with the first size
+	int closestIndex = 0;
+	double minDistance = DBL_MAX;
+
+	// Find the closest size by calculating Euclidean distance
+	for (int i = 0; i < _countof(s_BackgroundSpraySize); ++i)
+	{
+		double dw = (double)w - (double)s_BackgroundSpraySize[i].backgroundWidth;
+		double dh = (double)h - (double)s_BackgroundSpraySize[i].backgroundHeight;
+		double distance = sqrt(dw * dw + dh * dh);
+
+		if (distance < minDistance)
+		{
+			minDistance = distance;
+			closestIndex = i;
+		}
+	}
+
+	// Return the closest background size
+	if (closestWidth)
+		(*closestWidth) = s_BackgroundSpraySize[closestIndex].backgroundWidth;
+	if (closestHeight)
+		(*closestHeight) = s_BackgroundSpraySize[closestIndex].backgroundHeight;
+}
+
+/*
+	Purpose: Check if w x h exactly matches s_BackgroundSpraySize
+*/
+bool GetBackgroundSpraySize(unsigned int w, unsigned int h, unsigned int *sw, unsigned int* sh)
+{
+	for (int i = 0; i < _countof(s_BackgroundSpraySize); ++i)
+	{
+		if (w == s_BackgroundSpraySize[i].backgroundWidth && h == s_BackgroundSpraySize[i].backgroundHeight)
+		{
+			if(sw)
+				(*sw) = s_BackgroundSpraySize[i].sprayWidth;
+			if(sh)
+				(*sh) = s_BackgroundSpraySize[i].sprayHeight;
+
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/*
+	Purpose: convert image to BGRA32, decoding background spray.
+*/
 CONVERT_TO_BGRA_STATUS
 Draw_LoadSprayTexture_ConvertToBGRA32(FIBITMAP** pfiB)
 {
 	FIBITMAP* fiB = (*pfiB);
 
-	unsigned width = FreeImage_GetWidth(fiB);
-	unsigned height = FreeImage_GetHeight(fiB);
+	unsigned int width = FreeImage_GetWidth(fiB);
+	unsigned int height = FreeImage_GetHeight(fiB);
+	unsigned int newWidth = 1024;
+	unsigned int newHeight = 1024;
 
-	if (FreeImage_GetBPP(fiB) == 24 &&
-		(width == 5160 && height == 2160) ||
-		(width == 3440 && height == 1440) ||
-		(width == 2560 && height == 1080))
+	if (FreeImage_GetBPP(fiB) == 24 && GetBackgroundSpraySize(width, height, &newWidth, &newHeight))
 	{
-		int newWidth = 1024;
-		int newHeight = 1024;
 		int iBackgroundType = 0;
 		bool bWithAlphaChannel = false;
-
-		if (height == 2160)
-			newWidth = newHeight = 1024;
-		if (height == 1440)
-			newWidth = newHeight = 768;
-		if (height == 1080)
-			newWidth = newHeight = 512;
 
 		if (Draw_LoadSprayTexture_DecodeBackground(fiB, &iBackgroundType, &bWithAlphaChannel))
 		{
@@ -762,7 +817,7 @@ texture_t* Draw_DecalTexture(int index)
 					else if (result == LOAD_SPARY_FAILED_NOT_FOUND)
 					{
 						//File not found ?
-						SprayDatabase()->QueryPlayerSpray(playerindex, userId);
+						SprayDatabase()->QueryPlayerSpray(playerindex, userId, wadHash);
 					}
 					else
 					{
@@ -1097,14 +1152,14 @@ void BS_SaveBitmapToTempDecal(FIBITMAP* fiB, unsigned char* rgucMD5_WAD)
 	FreeImage_Unload(qimg);
 }
 
-bool Draw_ValidateImageFormatMemoryIO(const void* data, size_t dataSize, const char* identifier)
+FIBITMAP *BS_RscaleImageToClosestBackgroundSize(const void* data, size_t dataSize, const char* identifier)
 {
 	FIMEMORY* fim = FreeImage_OpenMemory((BYTE*)data, dataSize);
 
 	if (!fim)
 	{
-		gEngfuncs.Con_Printf("Draw_ValidateImageFormatMemoryIO: FreeImage_OpenMemory failed for \"%s\".\n", identifier);
-		return false;
+		gEngfuncs.Con_Printf("BS_RscaleImageToClosestBackgroundSize: FreeImage_OpenMemory failed for \"%s\".\n", identifier);
+		return nullptr;
 	}
 
 	SCOPE_EXIT{ FreeImage_CloseMemory(fim); };
@@ -1118,11 +1173,34 @@ bool Draw_ValidateImageFormatMemoryIO(const void* data, size_t dataSize, const c
 
 	if (fiFormat == FIF_UNKNOWN)
 	{
-		gEngfuncs.Con_Printf("Draw_ValidateImageFormatMemoryIO: Could not load \"%s\", Unknown format.\n", identifier);
-		return false;
+		gEngfuncs.Con_Printf("BS_RscaleImageToClosestBackgroundSize: Could not load \"%s\", Unknown format.\n", identifier);
+		return nullptr;
 	}
 
-	return true;
+	auto fiB = FreeImage_LoadFromMemory(fiFormat, fim);
+
+	if (!fiB)
+	{
+		gEngfuncs.Con_Printf("BS_RscaleImageToClosestBackgroundSize: Could not load \"%s\", FreeImage_LoadFromMemory failed.\n", identifier);
+		return nullptr;
+	}
+
+	unsigned int width = FreeImage_GetWidth(fiB);
+	unsigned int height = FreeImage_GetHeight(fiB);
+	unsigned int closestWidth{};
+	unsigned int closestHeight{};
+
+	GetClosestBackgroundSize(width, height, &closestWidth, &closestHeight);
+
+	if (closestWidth != width || closestHeight != height)
+	{
+		auto newFIB = FreeImage_Rescale(fiB, closestWidth, closestHeight);
+		FreeImage_Unload(fiB);
+
+		return newFIB;
+	}
+
+	return fiB;
 }
 
 FIBITMAP* BS_NormalizeToSquareRGBA32(FIBITMAP* fiB)
@@ -1324,30 +1402,36 @@ FIBITMAP* BS_CreateBackgroundRGBA24(FIBITMAP* fibSource, FIBITMAP* fibBackground
 
 	if (height <= 512)
 	{
-		newFibSource = FreeImage_Rescale(fibSource, (width * 512.0f / height), 512);
+		int scaledWidth = (width * 512.0f / (float)height);
+		newFibSource = FreeImage_Rescale(fibSource, scaledWidth, 512);
 		newBackground = FreeImage_Rescale(fibBackground, 2560, 1080);
 	}
 	else if (height <= 768)
 	{
-		auto newFibSource = FreeImage_Rescale(fibSource, (width * 768.0f / height), 768);
+		int scaledWidth = (width * 768.0f / (float)height);
+		newFibSource = FreeImage_Rescale(fibSource, scaledWidth, 768);
 		newBackground = FreeImage_Rescale(fibBackground, 3440, 1440);
 	}
 	else
 	{
-		auto newFibSource = FreeImage_Rescale(fibSource, (width * 1024.0f / height), 1024);
+		int scaledWidth = (width * 1024.0f / (float)height);
+		newFibSource = FreeImage_Rescale(fibSource, scaledWidth, 1024);
 		newBackground = FreeImage_Rescale(fibBackground, 5160, 2160);
 	}
 
+	if (newFibSource)
 	{
 		nw = FreeImage_GetWidth(newBackground);
 		nh = FreeImage_GetHeight(newBackground);
 
+		BOOL bPasted = false;
+
 		if (iRandomBackgroundType == 0)
-			FreeImage_Paste(newBackground, newFibSource, (nw / 2) - (FreeImage_GetWidth(newFibSource) / 2) - 1, (nh / 2) - (FreeImage_GetWidth(newFibSource) / 2) - 1, 255);
+			bPasted = FreeImage_Paste(newBackground, newFibSource, (nw / 2) - (FreeImage_GetWidth(newFibSource) / 2) - 1, (nh / 2) - (FreeImage_GetWidth(newFibSource) / 2) - 1, 255);
 		if (iRandomBackgroundType == 1)
-			FreeImage_Paste(newBackground, newFibSource, 0, 0, 255);
+			bPasted = FreeImage_Paste(newBackground, newFibSource, 0, 0, 255);
 		if (iRandomBackgroundType == 2)
-			FreeImage_Paste(newBackground, newFibSource, nw - FreeImage_GetWidth(newFibSource) - 1, 0, 255);
+			bPasted = FreeImage_Paste(newBackground, newFibSource, nw - FreeImage_GetWidth(newFibSource) - 1, 0, 255);
 
 		FreeImage_Unload(newFibSource);
 	}
@@ -1356,78 +1440,84 @@ FIBITMAP* BS_CreateBackgroundRGBA24(FIBITMAP* fibSource, FIBITMAP* fibBackground
 	{
 		if (iRandomBackgroundType == 0)//all R
 		{
-			RGBQUAD mark;
+			RGBQUAD mark = { 0, 0, 255, 255 };
+			for (int x = 0; x <  BACKGROUND_MARK_SIZE; ++x) {
+				for (int y = 0; y <  BACKGROUND_MARK_SIZE; ++y) {
+					FreeImage_SetPixelColor(newBackground, x, y, &mark);
+				}
+			}
 
-			mark = { 0, 0, 255, 255 };
-			FreeImage_SetPixelColor(newBackground, 0, 0, &mark);
-			FreeImage_SetPixelColor(newBackground, 0, 1, &mark);
-			FreeImage_SetPixelColor(newBackground, 1, 1, &mark);
-			FreeImage_SetPixelColor(newBackground, 1, 0, &mark);
-			mark = { 0, 0, 255, 255 };
-			FreeImage_SetPixelColor(newBackground, 0, nh - 1, &mark);
-			FreeImage_SetPixelColor(newBackground, 0, nh - 2, &mark);
-			FreeImage_SetPixelColor(newBackground, 1, nh - 1, &mark);
-			FreeImage_SetPixelColor(newBackground, 1, nh - 2, &mark);
-			mark = { 0, 0, 255, 255 };
-			FreeImage_SetPixelColor(newBackground, nw - 1, nh - 1, &mark);
-			FreeImage_SetPixelColor(newBackground, nw - 1, nh - 2, &mark);
-			FreeImage_SetPixelColor(newBackground, nw - 2, nh - 1, &mark);
-			FreeImage_SetPixelColor(newBackground, nw - 2, nh - 2, &mark);
-			mark = { 0, 0, 255, 255 };
-			FreeImage_SetPixelColor(newBackground, nw - 1, 0, &mark);
-			FreeImage_SetPixelColor(newBackground, nw - 2, 0, &mark);
-			FreeImage_SetPixelColor(newBackground, nw - 1, 1, &mark);
-			FreeImage_SetPixelColor(newBackground, nw - 2, 1, &mark);
+			for (int x = 0; x <  BACKGROUND_MARK_SIZE; ++x) {
+				for (int y = 0; y <  BACKGROUND_MARK_SIZE; ++y) {
+					FreeImage_SetPixelColor(newBackground, x, nh - 1 - y, &mark);
+				}
+			}
+
+			for (int x = 0; x <  BACKGROUND_MARK_SIZE; ++x) {
+				for (int y = 0; y <  BACKGROUND_MARK_SIZE; ++y) {
+					FreeImage_SetPixelColor(newBackground, nw-1-x, nh - 1 - y, &mark);
+				}
+			}
+
+			for (int x = 0; x <  BACKGROUND_MARK_SIZE; ++x) {
+				for (int y = 0; y <  BACKGROUND_MARK_SIZE; ++y) {
+					FreeImage_SetPixelColor(newBackground, nw - 1 - x, y, &mark);
+				}
+			}
 		}
 		if (iRandomBackgroundType == 1)//all G
 		{
-			RGBQUAD mark;
+			RGBQUAD mark = { 0, 255, 0, 255 };
+			for (int x = 0; x <  BACKGROUND_MARK_SIZE; ++x) {
+				for (int y = 0; y <  BACKGROUND_MARK_SIZE; ++y) {
+					FreeImage_SetPixelColor(newBackground, x, y, &mark);
+				}
+			}
 
-			mark = { 0, 255, 0, 255 };
-			FreeImage_SetPixelColor(newBackground, 0, 0, &mark);
-			FreeImage_SetPixelColor(newBackground, 0, 1, &mark);
-			FreeImage_SetPixelColor(newBackground, 1, 1, &mark);
-			FreeImage_SetPixelColor(newBackground, 1, 0, &mark);
-			mark = { 0, 255, 0, 255 };
-			FreeImage_SetPixelColor(newBackground, 0, nh - 1, &mark);
-			FreeImage_SetPixelColor(newBackground, 0, nh - 2, &mark);
-			FreeImage_SetPixelColor(newBackground, 1, nh - 1, &mark);
-			FreeImage_SetPixelColor(newBackground, 1, nh - 2, &mark);
-			mark = { 0, 255, 0, 255 };
-			FreeImage_SetPixelColor(newBackground, nw - 1, nh - 1, &mark);
-			FreeImage_SetPixelColor(newBackground, nw - 1, nh - 2, &mark);
-			FreeImage_SetPixelColor(newBackground, nw - 2, nh - 1, &mark);
-			FreeImage_SetPixelColor(newBackground, nw - 2, nh - 2, &mark);
-			mark = { 0, 255, 0, 255 };
-			FreeImage_SetPixelColor(newBackground, nw - 1, 0, &mark);
-			FreeImage_SetPixelColor(newBackground, nw - 2, 0, &mark);
-			FreeImage_SetPixelColor(newBackground, nw - 1, 1, &mark);
-			FreeImage_SetPixelColor(newBackground, nw - 2, 1, &mark);
+			for (int x = 0; x <  BACKGROUND_MARK_SIZE; ++x) {
+				for (int y = 0; y <  BACKGROUND_MARK_SIZE; ++y) {
+					FreeImage_SetPixelColor(newBackground, x, nh - 1 - y, &mark);
+				}
+			}
+
+			for (int x = 0; x <  BACKGROUND_MARK_SIZE; ++x) {
+				for (int y = 0; y <  BACKGROUND_MARK_SIZE; ++y) {
+					FreeImage_SetPixelColor(newBackground, nw - 1 - x, nh - 1 - y, &mark);
+				}
+			}
+
+			for (int x = 0; x <  BACKGROUND_MARK_SIZE; ++x) {
+				for (int y = 0; y <  BACKGROUND_MARK_SIZE; ++y) {
+					FreeImage_SetPixelColor(newBackground, nw - 1 - x, y, &mark);
+				}
+			}
 		}
 		if (iRandomBackgroundType == 2)//all B
 		{
-			RGBQUAD mark;
+			RGBQUAD mark = { 255, 0, 0, 255 };
+			for (int x = 0; x <  BACKGROUND_MARK_SIZE; ++x) {
+				for (int y = 0; y <  BACKGROUND_MARK_SIZE; ++y) {
+					FreeImage_SetPixelColor(newBackground, x, y, &mark);
+				}
+			}
 
-			mark = { 255, 0, 0, 255 };
-			FreeImage_SetPixelColor(newBackground, 0, 0, &mark);
-			FreeImage_SetPixelColor(newBackground, 0, 1, &mark);
-			FreeImage_SetPixelColor(newBackground, 1, 1, &mark);
-			FreeImage_SetPixelColor(newBackground, 1, 0, &mark);
-			mark = { 255, 0, 0, 255 };
-			FreeImage_SetPixelColor(newBackground, 0, nh - 1, &mark);
-			FreeImage_SetPixelColor(newBackground, 0, nh - 2, &mark);
-			FreeImage_SetPixelColor(newBackground, 1, nh - 1, &mark);
-			FreeImage_SetPixelColor(newBackground, 1, nh - 2, &mark);
-			mark = { 255, 0, 0, 255 };
-			FreeImage_SetPixelColor(newBackground, nw - 1, nh - 1, &mark);
-			FreeImage_SetPixelColor(newBackground, nw - 1, nh - 2, &mark);
-			FreeImage_SetPixelColor(newBackground, nw - 2, nh - 1, &mark);
-			FreeImage_SetPixelColor(newBackground, nw - 2, nh - 2, &mark);
-			mark = { 255, 0, 0, 255 };
-			FreeImage_SetPixelColor(newBackground, nw - 1, 0, &mark);
-			FreeImage_SetPixelColor(newBackground, nw - 2, 0, &mark);
-			FreeImage_SetPixelColor(newBackground, nw - 1, 1, &mark);
-			FreeImage_SetPixelColor(newBackground, nw - 2, 1, &mark);
+			for (int x = 0; x <  BACKGROUND_MARK_SIZE; ++x) {
+				for (int y = 0; y <  BACKGROUND_MARK_SIZE; ++y) {
+					FreeImage_SetPixelColor(newBackground, x, nh - 1 - y, &mark);
+				}
+			}
+
+			for (int x = 0; x <  BACKGROUND_MARK_SIZE; ++x) {
+				for (int y = 0; y <  BACKGROUND_MARK_SIZE; ++y) {
+					FreeImage_SetPixelColor(newBackground, nw - 1 - x, nh - 1 - y, &mark);
+				}
+			}
+
+			for (int x = 0; x <  BACKGROUND_MARK_SIZE; ++x) {
+				for (int y = 0; y <  BACKGROUND_MARK_SIZE; ++y) {
+					FreeImage_SetPixelColor(newBackground, nw - 1 - x, y, &mark);
+				}
+			}
 		}
 	}
 	else
@@ -1437,75 +1527,90 @@ FIBITMAP* BS_CreateBackgroundRGBA24(FIBITMAP* fibSource, FIBITMAP* fibBackground
 			RGBQUAD mark;
 
 			mark = { 0, 0, 255, 255 };
-			FreeImage_SetPixelColor(newBackground, 0, 0, &mark);
-			FreeImage_SetPixelColor(newBackground, 0, 1, &mark);
-			FreeImage_SetPixelColor(newBackground, 1, 1, &mark);
-			FreeImage_SetPixelColor(newBackground, 1, 0, &mark);
+			for (int x = 0; x <  BACKGROUND_MARK_SIZE; ++x) {
+				for (int y = 0; y <  BACKGROUND_MARK_SIZE; ++y) {
+					FreeImage_SetPixelColor(newBackground, x, y, &mark);
+				}
+			}
+
 			mark = { 0, 0, 255, 255 };
-			FreeImage_SetPixelColor(newBackground, 0, nh - 1, &mark);
-			FreeImage_SetPixelColor(newBackground, 0, nh - 2, &mark);
-			FreeImage_SetPixelColor(newBackground, 1, nh - 1, &mark);
-			FreeImage_SetPixelColor(newBackground, 1, nh - 2, &mark);
+			for (int x = 0; x <  BACKGROUND_MARK_SIZE; ++x) {
+				for (int y = 0; y <  BACKGROUND_MARK_SIZE; ++y) {
+					FreeImage_SetPixelColor(newBackground, x, nh - 1 - y, &mark);
+				}
+			}
+
 			mark = { 0, 255, 0, 255 };
-			FreeImage_SetPixelColor(newBackground, nw - 1, nh - 1, &mark);
-			FreeImage_SetPixelColor(newBackground, nw - 1, nh - 2, &mark);
-			FreeImage_SetPixelColor(newBackground, nw - 2, nh - 1, &mark);
-			FreeImage_SetPixelColor(newBackground, nw - 2, nh - 2, &mark);
+			for (int x = 0; x <  BACKGROUND_MARK_SIZE; ++x) {
+				for (int y = 0; y <  BACKGROUND_MARK_SIZE; ++y) {
+					FreeImage_SetPixelColor(newBackground, nw - 1 - x, nh - 1 - y, &mark);
+				}
+			}
+
 			mark = { 0, 255, 0, 255 };
-			FreeImage_SetPixelColor(newBackground, nw - 1, 0, &mark);
-			FreeImage_SetPixelColor(newBackground, nw - 2, 0, &mark);
-			FreeImage_SetPixelColor(newBackground, nw - 1, 1, &mark);
-			FreeImage_SetPixelColor(newBackground, nw - 2, 1, &mark);
+			for (int x = 0; x <  BACKGROUND_MARK_SIZE; ++x) {
+				for (int y = 0; y <  BACKGROUND_MARK_SIZE; ++y) {
+					FreeImage_SetPixelColor(newBackground, nw - 1 - x, y, &mark);
+				}
+			}
 		}
 		if (iRandomBackgroundType == 1)//leftG rightB
 		{
 			RGBQUAD mark;
 
 			mark = { 0, 255, 0, 255 };
-			FreeImage_SetPixelColor(newBackground, 0, 0, &mark);
-			FreeImage_SetPixelColor(newBackground, 0, 1, &mark);
-			FreeImage_SetPixelColor(newBackground, 1, 1, &mark);
-			FreeImage_SetPixelColor(newBackground, 1, 0, &mark);
+			for (int x = 0; x <  BACKGROUND_MARK_SIZE; ++x) {
+				for (int y = 0; y <  BACKGROUND_MARK_SIZE; ++y) {
+					FreeImage_SetPixelColor(newBackground, x, y, &mark);
+				}
+			}
 			mark = { 0, 255, 0, 255 };
-			FreeImage_SetPixelColor(newBackground, 0, nh - 1, &mark);
-			FreeImage_SetPixelColor(newBackground, 0, nh - 2, &mark);
-			FreeImage_SetPixelColor(newBackground, 1, nh - 1, &mark);
-			FreeImage_SetPixelColor(newBackground, 1, nh - 2, &mark);
+			for (int x = 0; x <  BACKGROUND_MARK_SIZE; ++x) {
+				for (int y = 0; y <  BACKGROUND_MARK_SIZE; ++y) {
+					FreeImage_SetPixelColor(newBackground, x, nh - 1 - y, &mark);
+				}
+			}
 			mark = { 255, 0, 0, 255 };
-			FreeImage_SetPixelColor(newBackground, nw - 1, nh - 1, &mark);
-			FreeImage_SetPixelColor(newBackground, nw - 1, nh - 2, &mark);
-			FreeImage_SetPixelColor(newBackground, nw - 2, nh - 1, &mark);
-			FreeImage_SetPixelColor(newBackground, nw - 2, nh - 2, &mark);
+			for (int x = 0; x <  BACKGROUND_MARK_SIZE; ++x) {
+				for (int y = 0; y <  BACKGROUND_MARK_SIZE; ++y) {
+					FreeImage_SetPixelColor(newBackground, nw - 1 - x, nh - 1 - y, &mark);
+				}
+			}
 			mark = { 255, 0, 0, 255 };
-			FreeImage_SetPixelColor(newBackground, nw - 1, 0, &mark);
-			FreeImage_SetPixelColor(newBackground, nw - 2, 0, &mark);
-			FreeImage_SetPixelColor(newBackground, nw - 1, 1, &mark);
-			FreeImage_SetPixelColor(newBackground, nw - 2, 1, &mark);
+			for (int x = 0; x <  BACKGROUND_MARK_SIZE; ++x) {
+				for (int y = 0; y <  BACKGROUND_MARK_SIZE; ++y) {
+					FreeImage_SetPixelColor(newBackground, nw - 1 - x, y, &mark);
+				}
+			}
 		}
 		if (iRandomBackgroundType == 2)//leftR rightB
 		{
 			RGBQUAD mark;
 
 			mark = { 0, 0, 255, 255 };
-			FreeImage_SetPixelColor(newBackground, 0, 0, &mark);
-			FreeImage_SetPixelColor(newBackground, 0, 1, &mark);
-			FreeImage_SetPixelColor(newBackground, 1, 1, &mark);
-			FreeImage_SetPixelColor(newBackground, 1, 0, &mark);
+			for (int x = 0; x <  BACKGROUND_MARK_SIZE; ++x) {
+				for (int y = 0; y <  BACKGROUND_MARK_SIZE; ++y) {
+					FreeImage_SetPixelColor(newBackground, x, y, &mark);
+				}
+			}
 			mark = { 0, 0, 255, 255 };
-			FreeImage_SetPixelColor(newBackground, 0, nh - 1, &mark);
-			FreeImage_SetPixelColor(newBackground, 0, nh - 2, &mark);
-			FreeImage_SetPixelColor(newBackground, 1, nh - 1, &mark);
-			FreeImage_SetPixelColor(newBackground, 1, nh - 2, &mark);
+			for (int x = 0; x <  BACKGROUND_MARK_SIZE; ++x) {
+				for (int y = 0; y <  BACKGROUND_MARK_SIZE; ++y) {
+					FreeImage_SetPixelColor(newBackground, x, nh - 1 - y, &mark);
+				}
+			}
 			mark = { 255, 0, 0, 255 };
-			FreeImage_SetPixelColor(newBackground, nw - 1, nh - 1, &mark);
-			FreeImage_SetPixelColor(newBackground, nw - 1, nh - 2, &mark);
-			FreeImage_SetPixelColor(newBackground, nw - 2, nh - 1, &mark);
-			FreeImage_SetPixelColor(newBackground, nw - 2, nh - 2, &mark);
+			for (int x = 0; x <  BACKGROUND_MARK_SIZE; ++x) {
+				for (int y = 0; y <  BACKGROUND_MARK_SIZE; ++y) {
+					FreeImage_SetPixelColor(newBackground, nw - 1 - x, nh - 1 - y, &mark);
+				}
+			}
 			mark = { 255, 0, 0, 255 };
-			FreeImage_SetPixelColor(newBackground, nw - 1, 0, &mark);
-			FreeImage_SetPixelColor(newBackground, nw - 2, 0, &mark);
-			FreeImage_SetPixelColor(newBackground, nw - 1, 1, &mark);
-			FreeImage_SetPixelColor(newBackground, nw - 2, 1, &mark);
+			for (int x = 0; x <  BACKGROUND_MARK_SIZE; ++x) {
+				for (int y = 0; y <  BACKGROUND_MARK_SIZE; ++y) {
+					FreeImage_SetPixelColor(newBackground, nw - 1 - x, y, &mark);
+				}
+			}
 		}
 	}
 
@@ -1589,7 +1694,7 @@ FIBITMAP* BS_LoadRandomBackground(int numBackgrounds)
 	return fiB;
 }
 
-bool BS_UploadSprayBitmap(FIBITMAP* fiB, bool bNormalizeToSquare, bool bWithAlphaChannel, bool bInvertedAlpha, bool bRandomBackground)
+bool BS_UploadSprayBitmap(FIBITMAP* fiB, const BS_UploadSprayBitmapArgs* args)
 {
 	FreeImageIO fiIO;
 	fiIO.read_proc = FI_Read;
@@ -1652,9 +1757,9 @@ bool BS_UploadSprayBitmap(FIBITMAP* fiB, bool bNormalizeToSquare, bool bWithAlph
 	{
 		FILESYSTEM_ANY_CREATEDIR(CUSTOM_SPRAY_DIRECTORY, "GAMEDOWNLOAD");
 
-		if (bNormalizeToSquare)
+		if (args->bNormalizeToSquare)
 		{
-			if (bWithAlphaChannel && FreeImage_GetBPP(fiB) == 32)
+			if (args->bWithAlphaChannel && FreeImage_GetBPP(fiB) == 32)
 			{
 				auto newFIB32 = BS_NormalizeToSquareRGBA32(fiB);
 
@@ -1668,15 +1773,15 @@ bool BS_UploadSprayBitmap(FIBITMAP* fiB, bool bNormalizeToSquare, bool bWithAlph
 						return false;
 				}
 
-				auto fibSquareRGB24 = BS_NormalizeToSquareRGB24(fiB, bInvertedAlpha);
-				auto fibSquareA24 = BS_NormalizeToSquareA24(fiB, bInvertedAlpha);
+				auto fibSquareRGB24 = BS_NormalizeToSquareRGB24(fiB, args->bAlphaInverted);
+				auto fibSquareA24 = BS_NormalizeToSquareA24(fiB, args->bAlphaInverted);
 
-				auto newFIB24 = BS_NormalizeToSquareRGBA24(fibSquareRGB24, fibSquareA24, bInvertedAlpha);
+				auto newFIB24 = BS_NormalizeToSquareRGBA24(fibSquareRGB24, fibSquareA24, args->bAlphaInverted);
 
 				FreeImage_Unload(fibSquareRGB24);
 				FreeImage_Unload(fibSquareA24);
 
-				if (bRandomBackground)
+				if (args->bRandomBackground)
 				{
 					auto fibBackground = BS_LoadRandomBackground(3);
 
@@ -1723,7 +1828,7 @@ bool BS_UploadSprayBitmap(FIBITMAP* fiB, bool bNormalizeToSquare, bool bWithAlph
 					if (!OpenFileHandle())
 						return false;
 
-					if (bRandomBackground)
+					if (args->bRandomBackground)
 					{
 						auto fibBackground = BS_LoadRandomBackground(3);
 

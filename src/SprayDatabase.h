@@ -47,7 +47,7 @@ public:
 	virtual void OnConnectToServer() = 0;
 	virtual void UpdatePlayerSprayQueryStatus(const char* userId, SprayQueryState newQueryStatus) = 0;
 	virtual SprayQueryState GetPlayerSprayQueryStatus(const char* userId) const = 0;
-	virtual void QueryPlayerSpray(int playerindex, const char* userId) = 0;
+	virtual void QueryPlayerSpray(int playerindex, const char* userId, const char* wadHash) = 0;
 	virtual void EnumQueries(IEnumSprayQueryHandler *handler) = 0;
 	virtual void RegisterQueryStateChangeCallback(ISprayQueryStateChangeHandler* handler) = 0;
 	virtual void UnregisterQueryStateChangeCallback(ISprayQueryStateChangeHandler* handler) = 0;
