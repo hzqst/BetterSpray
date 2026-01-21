@@ -32,3 +32,5 @@ You may fill the screenshot description with `!Spray` and share it as `Public` o
 ![](/img/02.png)
 
 ![](/img/03.png)
+
+* Make sure the uploaded spray appears in `https://steamcommunity.com/profiles/7656************/screenshots/?appid=225840&sort=newestfirst&browsefilter=myfiles&view=grid`, where `7656************` is your STEAMID64, `225840` is [the AppId of Sven Co-op](https://steamdb.info/app/225840/)
