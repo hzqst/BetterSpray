@@ -1,4 +1,4 @@
-# CLAUDE.md - BetterSpray 项目指南
+# AGENTS.md - BetterSpray 项目指南
 
 ## 项目概述
 
@@ -241,9 +241,3 @@ A:
 - **MetaHookSV**: https://github.com/hzqst/MetaHookSv
 - **FreeImage**: http://freeimage.sourceforge.net/
 - **Steam API**: https://partner.steamgames.com/doc/api
-
-## 更新日志
-
-维护此文件时，请记录重要的架构更改：
-
-- 2024: 初始版本，支持基本喷漆加载和 Steam 云同步
