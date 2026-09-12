@@ -2,3 +2,23 @@
 /Debug
 /Release
 *.vcxproj.user
+
+# Build output: MSBuild intermediate directories
+/src/Debug/
+/src/Release/
+
+# Build output: plugin binaries copied next to the game
+/Build/svencoop/metahook/
+
+# Build output: compiled binaries and intermediate files
+*.dll
+*.exe
+*.lib
+*.exp
+*.obj
+*.pdb
+*.ilk
+*.idb
+*.tlog
+*.lastbuildstate
+*.log
