@@ -39,6 +39,5 @@ description `!Spray`; see [Features](docs/en/features.md).
 
 ## License
 
-This repository currently provides no standalone project license. Dependencies
-retain their own licenses and terms; bundled notices are installed under
-`svencoop/metahook/licenses/betterspray/`.
+BetterSpray is available under the MIT License; see `LICENSE`. Bundled third-party
+sources keep their own license files.

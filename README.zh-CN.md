@@ -31,6 +31,6 @@ BetterSpray 是喷漆增强插件，支持将WAD喷漆替换成透明通道的�
 - [gamedata](docs/zh-CN/gamedata.md)
 - [自动化构建与发布](docs/zh-CN/ci-cd.md)
 
-## 许可证
+## License
 
-本仓库目前未提供独立的项目许可证。各依赖保留自己的许可证及使用条款；
+BetterSpray 采用 MIT License，见 `LICENSE`。随附的第三方源码保留各自的许可证文件。
