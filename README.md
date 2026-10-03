@@ -1,36 +1,47 @@
 # BetterSpray
 
-**BetterSpray** is a plugin for MetaHookSV that enhances Sven Co-op and GoldSrc’s spray system with support for high-res images, dynamic reloading and cloud sharing.
+[中文文档](README.zh-CN.md)
 
-MetaHookSV: https://github.com/hzqst/MetaHookSv
+BetterSpray is a spray enhancement plugin for MetaHook. It supports high-resolution
+images with alpha, dynamic reloading, Steam screenshot sharing and a WAD fallback
+for players without the plugin.
 
-## 🌟 Main Features
+## Compatibility
 
-- ✅ Supports loading JPG/PNG/BMP/TGA/WEBP as spray texture, with alpha channel.
-- ✅ Auto-convert your image into `/Sven Co-op/svencoop_downloads/custom_sprays/[STEAMID].jpg`. 
-- ✅ Supports cloud sharing via Steam screenshot.
-- ✅ Auto-convert your image into `/Sven Co-op/svencoop/tempdecal.wad` as a fallback solution, so that non-MetaHookSv users are able to see low-res version of your spray. (A game restart is required to refresh the cache of loaded `tempdecal.wad` if you has already been connected to a server)
+| Engine | |
+| --- | --- |
+| GoldSrc_blob (3248~4554) | x |
+| GoldSrc_legacy (< 6153) | x |
+| GoldSrc_new (8684 ~) | x |
+| SvEngine (8832 ~) | √ |
+| GoldSrc_HL25 (>= 9884) | √ |
 
-### Compatibility
+These are the project's existing compatibility claims. The bundled engine catalog
+covers Sven Co-op 8948/10257 and Half-Life 10210; see [gamedata](docs/en/gamedata.md).
 
-|        Engine               |      |
-|        ----                 | ---- |
-| GoldSrc_blob   (3248~4554)  | x    |
-| GoldSrc_legacy (< 6153)     | x    |
-| GoldSrc_new    (8684 ~)     | x    |
-| SvEngine       (8832 ~)     | √    |
-| GoldSrc_HL25   (>= 9884)    | √    |
+## Quick start
 
-### Cloud Sharing
+Obtain `BetterSpray-windows-x86.7z` from
+[GitHub Releases](https://github.com/MetaHookSv/BetterSpray/releases), or
+[build the plugin locally](docs/en/build-instruction.md).
 
-You may fill the screenshot description with `!Spray` and share it as `Public` on Steam. In this case other guys with `BetterSprays.dll` installed will automatically download your sprays from Steam profile and be able to see jpeg version of your spray.
+Install the [runtime dependencies](docs/en/installation.md), then merge the extracted
+`svencoop/` into the target mod directory.
 
-![](/img/00.png)
+Enable `BetterSpray.dll` in MetaHook's `metahook/configs/plugins.lst`, then launch the
+game through MetaHook. For cloud sharing, publish a Steam screenshot with the
+description `!Spray`; see [Features](docs/en/features.md).
 
-![](/img/01.png)
+## Documentation
 
-![](/img/02.png)
+- [Build instruction](docs/en/build-instruction.md)
+- [Installation](docs/en/installation.md)
+- [Features](docs/en/features.md)
+- [gamedata](docs/en/gamedata.md)
+- [CI/CD](docs/en/ci-cd.md)
 
-![](/img/03.png)
+## License
 
-* Make sure the uploaded spray appears in `https://steamcommunity.com/profiles/7656************/screenshots/?appid=225840&sort=newestfirst&browsefilter=myfiles&view=grid`, where `7656************` is your STEAMID64, `225840` is [the AppId of Sven Co-op](https://steamdb.info/app/225840/)
+This repository currently provides no standalone project license. Dependencies
+retain their own licenses and terms; bundled notices are installed under
+`svencoop/metahook/licenses/betterspray/`.

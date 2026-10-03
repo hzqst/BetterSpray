@@ -39,9 +39,9 @@ void IPluginsV4::LoadEngine(cl_enginefunc_t* pEngfuncs)
 	if (!g_pFileSystem)
 		g_pFileSystem_HL25 = g_pInterface->FileSystem_HL25;
 
-	if (g_pInterface->MetaHookAPIVersion < 106)
+	if (g_pInterface->MetaHookAPIVersion < METAHOOK_API_VERSION)
 	{
-		Sys_Error("MetaHookAPIVersion too low! expect %d, got %d !", 106, g_pInterface->MetaHookAPIVersion);
+		Sys_Error("MetaHookAPIVersion too low! expect %d, got %d !", METAHOOK_API_VERSION, g_pInterface->MetaHookAPIVersion);
 		return;
 	}
 
@@ -66,7 +66,8 @@ void IPluginsV4::LoadEngine(cl_enginefunc_t* pEngfuncs)
 
 	memcpy(&gEngfuncs, pEngfuncs, sizeof(gEngfuncs));
 
-	Engine_FillAddress(g_MirrorEngineDLLInfo.ImageBase ? g_MirrorEngineDLLInfo : g_EngineDLLInfo, g_EngineDLLInfo);
+	if (!Engine_FillAddress(g_MirrorEngineDLLInfo.ImageBase ? g_MirrorEngineDLLInfo : g_EngineDLLInfo, g_EngineDLLInfo))
+		return;
 	Engine_InstallHooks();
 
 	VGUI2Extension_Init();

@@ -7,7 +7,7 @@
 - **Project type**: Native C++ plugin (Windows DLL)
 - **Engine**: GoldSrc / SvEngine / Half-Life 25
 - **Framework**: MetaHookSV Plugin API
-- **Main dependencies**: FreeImage, Steam API, libxml2, SQLite3
+- **Main dependencies**: MetaHook SDK, VGUI2Extension/UtilThreadTask interfaces, FreeImage, SteamSDK, libxml2, ScopeExit, Chocobo1Hash
 
 ## Project Structure
 
@@ -24,10 +24,16 @@ BetterSpray/
 │   ├── BetterSpraySettingsPage.cpp # Settings page
 │   ├── TaskListPanel.cpp     # Task list UI panel
 │   └── wad3.hpp              # WAD3 file format definitions
-├── scripts/                  # Third-party library build scripts
-├── thirdparty/               # Third-party dependencies
-├── MetaHookSv.props          # MSBuild configuration
-└── Directory.build.props     # MSBuild build properties
+├── include/Interface/        # Existing SprayDatabase public interface
+├── assets/svencoop/          # Game resources installed to the prefix root
+├── cmake/                    # Explicit sources, pinned dependencies and VC-LTL
+├── scripts/                  # CMake build entry points and gamedata tools
+├── tests/                    # Resolver, library and DLL loading regression tests
+├── docs/en/, docs/zh-CN/      # Bilingual topic pages
+├── thirdparty/cache/         # Ignored VC-LTL binary cache
+├── build/x86/<configuration>/    # Ignored build output
+├── install/x86/<configuration>/  # Ignored install output
+└── CMakeLists.txt            # Windows MSVC x86 build and install rules
 
 ```
 
@@ -71,7 +77,8 @@ BetterSpray/
 
 ### 3. HTTP Client (`UtilHTTPClient.cpp`)
 
-Uses libxml2's HTTP facilities to download spray images.
+Loads UtilHTTPClient_libcurl or UtilHTTPClient_SteamAPI through IUtilHTTPClient.
+libxml2 is used separately for Steam HTML/XPath parsing, not HTTP transport.
 
 ### 4. Threaded Task System (`UtilThreadTask.cpp`)
 
@@ -126,24 +133,56 @@ Send a task to the main thread via GameThreadTaskScheduler, and upload to OpenGL
 ## Build Instructions
 
 ### Dependencies
-- **MetaHookSV SDK**: `$(SolutionDir)Directory.build.props` automatically loads `$(SolutionDir)MetaHookSv.props`
-- **FreeImage**: Image processing library
-- **Steam API**: Screenshot upload and queries
-- **libxml2**: HTTP requests
-- **SQLite3**: Database storage
-- **zlib, liblzma, libiconv**: libxml2 dependencies
+
+CMake automatically fetches the fixed commits in `cmake/Dependencies.cmake`.
+Optional `*_SOURCE_PATH` parameters and same-named environment variables reuse
+external, read-only source trees. VC-LTL 5.3.1 uses a hash-verified binary cache.
+
+- **MetaHook SDK**: shared HLSDK, SourceSDK and VGUI sources; API 115 or newer
+- **VGUI2Extension / UtilThreadTask**: public headers from their independent repositories
+- **FreeImage 3.18.0**: shared image library with its bundled codecs
+- **SteamSDK**: standard `steam/` headers and x86 import library
+- **libxml2 2.14.2**: shared HTML/XPath parser with built-in encodings
+- **ScopeExit / Chocobo1Hash**: header-only helpers
+
+SQLite and Capstone are not build dependencies. External runtime DLLs
+UtilThreadTask, an HTTP client, VGUI2Extension for UI, and Steam API are installed separately.
 
 ### Build Scripts
-Located in `scripts/`, used to build third-party libraries:
-- `build-sqlite3-x86-*.bat`
-- `build-libxml2-x86-*.bat`
-- `build-zlib-x86-*.bat`
-- and so on
 
-### Configuration
-- Platform: Win32 (x86)
-- Configuration: Debug / Release
-- Output: BetterSpray.dll
+```bat
+scripts\build-BetterSpray-x86-Debug.bat -DBETTERSPRAY_BUILD_TESTS=ON
+scripts\build-BetterSpray-x86-Release.bat -DBETTERSPRAY_BUILD_TESTS=ON
+ctest --test-dir build/x86/Release -C Release --output-on-failure
+python -m unittest discover -s scripts/tests -v
+```
+
+The scripts configure, build and install using Visual Studio 2022 Win32.
+Output stays in `build/x86/<configuration>/` and `install/x86/<configuration>/`;
+game deployment is manual. Keep `cmake/Sources.cmake` as the explicit compile list.
+See `docs/en/build-instruction.md` for options, local paths and offline preparation.
+
+### gamedata
+
+`scripts/manifests/betterspray.json` requires the Windows engine functions
+`GL_LoadTexture2` and `Draw_DecalTexture` for `hl-10210`, `svencoop-8948` and
+`svencoop-10257`. The build synchronizes, prunes and validates the plugin catalog,
+then installs it under `svencoop/metahook/gamedata/betterspray/`.
+
+Resolve these functions only through the host gamedata API against the real engine
+module. A failed lookup prevents hook installation. Do not reintroduce signature
+scanning or mirror rebasing. Keep the manifest, lookups and bilingual gamedata docs
+consistent when consumption changes.
+
+### Configuration and verification
+
+- Windows MSVC x86, CMake 3.21+, C++20, Debug / Release, static CRT and VC-LTL
+- Preserve the plugin exports, SprayDatabase interface version and virtual method order
+- CTest covers gamedata success/failure, PNG/WebP, UTF-8 HTML/XPath and DLL factories
+- Tests retain assertions in Release; configuration/docs/generated file text are not test assertions
+- Distinguish build and simulated tests from a real game run and a remote CI run
+- Runtime archive: `BetterSpray-windows-x86.7z` containing the installed `svencoop/`
+- English/Chinese README pages link to `docs/en/` and `docs/zh-CN/`; screenshots live in `docs/images/`
 
 ## Engine Compatibility
 

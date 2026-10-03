@@ -2,50 +2,32 @@ name: LiveBuild
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [main]
   pull_request:
-    branches: [ "main" ]
-    
-env:
-  BUILD_CONFIGURATION: Release
+    branches: [main]
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build-win32:
     runs-on: windows-2022
+    timeout-minutes: 45
 
-    steps:    
-    
-    - uses: hzqst/checkout@v2.3.4
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
-    - name: Add MSBuild to PATH
-      uses: microsoft/setup-msbuild@v1.0.2
+      - name: Build and package Windows x86 Release
+        id: build
+        uses: ./.github/actions/build-windows-x86
 
-    - name: Init dependencies
-      working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: git submodule update --init --recursive
-      shell: cmd
-
-    - name: Build
-      working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} /t:BetterSpray
-      
-    - name: Zipping All
-      uses: vimtor/action-zip@v1
-      with:
-          files: Build/
-          dest: BetterSpray-windows-x86.zip
-
-    - name: Current Time
-      uses: srfrnk/current-time@master
-      id: current-time
-      with:
-        format: YYYY-MM-DD-HH-mm-ss
-
-    - name: Upload a Build Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: BetterSpray-${{steps.current-time.outputs.formattedTime}}.zip
-        path: BetterSpray-windows-x86.zip
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v7
+        with:
+          path: ${{ steps.build.outputs.archive-path }}
+          if-no-files-found: error
+          archive: false

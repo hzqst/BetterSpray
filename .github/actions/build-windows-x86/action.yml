@@ -1,0 +1,53 @@
+name: Build Windows x86 Release
+description: Build, test and package the BetterSpray runtime and gamedata.
+
+outputs:
+  archive-path:
+    description: Absolute path to the Windows x86 7z archive.
+    value: ${{ steps.package.outputs.archive-path }}
+
+runs:
+  using: composite
+  steps:
+    - name: Clone MetaHook SDK
+      shell: pwsh
+      run: |
+        $metahookPath = Join-Path (Split-Path $env:GITHUB_WORKSPACE -Parent) 'MetaHook'
+        & git clone --depth 1 --branch main https://github.com/MetaHookSv/MetaHook $metahookPath
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        & git -C $metahookPath rev-parse HEAD
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        "METAHOOK_SOURCE_PATH=$metahookPath" >> $env:GITHUB_ENV
+
+    - name: Build and install
+      shell: cmd
+      run: call scripts\build-BetterSpray-x86-Release.bat -DBETTERSPRAY_BUILD_TESTS=ON "-DMETAHOOK_SOURCE_PATH=%METAHOOK_SOURCE_PATH%"
+
+    - name: Test gamedata pruning
+      shell: cmd
+      run: python -m unittest discover -s scripts/tests -v
+
+    - name: Run regression tests
+      shell: cmd
+      run: ctest --test-dir build\x86\Release -C Release --output-on-failure
+
+    - name: Validate installed gamedata
+      shell: cmd
+      run: python scripts\validate-gamedata.py install\x86\Release\svencoop\metahook\gamedata\betterspray --manifest scripts\manifests\betterspray.json
+
+    - name: Package runtime and gamedata
+      id: package
+      shell: pwsh
+      working-directory: install/x86/Release
+      run: |
+        $archiveDirectory = Join-Path $env:GITHUB_WORKSPACE 'build/artifacts'
+        New-Item -ItemType Directory -Path $archiveDirectory -Force | Out-Null
+        $archivePath = Join-Path $archiveDirectory 'BetterSpray-windows-x86.7z'
+        if (Test-Path -LiteralPath $archivePath -PathType Leaf) {
+          Remove-Item -LiteralPath $archivePath
+        }
+        & 7z a -t7z $archivePath 'svencoop'
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        & 7z t $archivePath
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        "archive-path=$archivePath" >> $env:GITHUB_OUTPUT

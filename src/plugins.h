@@ -2,6 +2,8 @@
 
 #include <metahook.h>
 
+static_assert(METAHOOK_API_VERSION >= 115, "BetterSpray requires MetaHook API 115 and a merged gamedata catalog");
+
 class IFileSystem;
 extern IFileSystem* g_pFileSystem;
 extern IFileSystem_HL25* g_pFileSystem_HL25;
@@ -15,27 +17,21 @@ extern DWORD g_dwEngineBuildnum;
 
 #define MHPluginName "BetterSpray"
 #define Sys_Error(msg, ...) g_pMetaHookAPI->SysError("["  MHPluginName   "] " msg, __VA_ARGS__);
-#define Sig_NotFound(name) Sys_Error("Could not found: %s\nEngine buildnum: %d", #name, g_dwEngineBuildnum);
-#define Sig_VarNotFound(name) if(!name) Sig_NotFound(name)
-#define Sig_AddrNotFound(name) if(!addr) Sig_NotFound(name)
-#define Sig_FuncNotFound(name) if(!gPrivateFuncs.name) Sig_NotFound(name)
 
-#define Sig_Length(a) (sizeof(a)-1)
-#define Search_Pattern(sig, dllinfo) g_pMetaHookAPI->SearchPattern(dllinfo.TextBase, dllinfo.TextSize, sig, Sig_Length(sig))
-#define Search_Pattern_Data(sig, dllinfo) g_pMetaHookAPI->SearchPattern(dllinfo.DataBase, dllinfo.DataSize, sig, Sig_Length(sig))
-#define Search_Pattern_Rdata(sig, dllinfo) g_pMetaHookAPI->SearchPattern(dllinfo.RdataBase, dllinfo.RdataSize, sig, Sig_Length(sig))
-#define Search_Pattern_From_Size(fn, size, sig) g_pMetaHookAPI->SearchPattern((void *)(fn), size, sig, Sig_Length(sig))
-#define Search_Pattern_From(fn, sig, dllinfo) g_pMetaHookAPI->SearchPattern((void *)(fn), ((PUCHAR)dllinfo.TextBase + dllinfo.TextSize) - (PUCHAR)(fn), sig, Sig_Length(sig))
-
-#define Search_Pattern_NoWildCard(sig, dllinfo) g_pMetaHookAPI->SearchPatternNoWildCard(dllinfo.TextBase, dllinfo.TextSize, sig, Sig_Length(sig))
-#define Search_Pattern_NoWildCard_Data(sig, dllinfo) g_pMetaHookAPI->SearchPatternNoWildCard(dllinfo.DataBase, dllinfo.DataSize, sig, Sig_Length(sig))
-#define Search_Pattern_NoWildCard_Rdata(sig, dllinfo) g_pMetaHookAPI->SearchPatternNoWildCard(dllinfo.RdataBase, dllinfo.RdataSize, sig, Sig_Length(sig))
+//Required symbols are resolved exclusively through the host gamedata catalog.
+inline PVOID GamedataResolvePtr(PVOID moduleBase, const char* moduleName, const char* symbolName, mh_gamesymbol_kind_t kind)
+{
+	PVOID address = nullptr;
+	auto status = g_pMetaHookAPI->ResolveGameSymbol(moduleBase, symbolName, kind, &address);
+	if (status != MH_GAMESYMBOL_OK || !address)
+	{
+		const char* reason = status == MH_GAMESYMBOL_OK ? "null address" : g_pMetaHookAPI->GetGameSymbolStatusString(status);
+		Sys_Error("Could not resolve gamedata symbol: %s (module %s, %s)\nEngine buildnum: %d",
+			symbolName, moduleName, reason, g_dwEngineBuildnum);
+		return nullptr;
+	}
+	return address;
+}
 
 #define Install_InlineHook(fn) if(!g_phook_##fn) { g_phook_##fn = g_pMetaHookAPI->InlineHook((void *)gPrivateFuncs.fn, fn, (void **)&gPrivateFuncs.fn); }
 #define Uninstall_Hook(fn) if(g_phook_##fn){g_pMetaHookAPI->UnHook(g_phook_##fn);g_phook_##fn = NULL;}
-#define GetCallAddress(addr) g_pMetaHookAPI->GetNextCallAddr((PUCHAR)addr, 1)
-
-#define RVA_from_VA(name, dllinfo) (ULONG)((ULONG_PTR)name##_VA - (ULONG_PTR)dllinfo.ImageBase)
-#define VA_from_RVA(name, dllinfo) ((ULONG_PTR)dllinfo.ImageBase + (ULONG_PTR)name##_RVA)
-#define Convert_VA_to_RVA(name, dllinfo) if(name##_VA) name##_RVA = ((ULONG_PTR)name##_VA - (ULONG_PTR)dllinfo.ImageBase)
-#define Convert_RVA_to_VA(name, dllinfo) if(name##_RVA) name##_VA = (decltype(name##_VA))VA_from_RVA(name, dllinfo)

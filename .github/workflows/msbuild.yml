@@ -2,11 +2,7 @@ name: Build
 
 on:
   push:
-    tags:
-    - 'v*'
-    
-env:
-  BUILD_CONFIGURATION: Release
+    tags: ['v*']
 
 permissions:
   contents: write
@@ -14,33 +10,21 @@ permissions:
 jobs:
   build-win32:
     runs-on: windows-2022
+    timeout-minutes: 45
 
-    steps:    
-    
-    - uses: hzqst/checkout@v2.3.4
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
-    - name: Add MSBuild to PATH
-      uses: microsoft/setup-msbuild@v1.0.2
+      - name: Build and package Windows x86 Release
+        id: build
+        uses: ./.github/actions/build-windows-x86
 
-    - name: Init dependencies
-      working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: git submodule update --init --recursive
-      shell: cmd
-
-    - name: Build
-      working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} /t:BetterSpray
-      
-    - name: Zipping All
-      uses: vimtor/action-zip@v1
-      with:
-          files: Build/
-          dest: BetterSpray-windows-x86.zip
-
-    - name: Create Release
-      uses: softprops/action-gh-release@v1
-      if: startsWith(github.ref, 'refs/tags/')
-      with:
-          name: BetterSpray-${{ github.ref }}
-          files: |
-            BetterSpray-windows-x86.zip
+      - name: Create release
+        uses: softprops/action-gh-release@v3
+        with:
+          name: BetterSpray-${{ github.ref_name }}
+          files: ${{ steps.build.outputs.archive-path }}
+          fail_on_unmatched_files: true

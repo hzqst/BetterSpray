@@ -15,7 +15,7 @@
 
 #include <ScopeExit/ScopeExit.h>
 
-#include <steam_api.h>
+#include <steam/steam_api.h>
 
 //Fuck microsoft
 #undef min
