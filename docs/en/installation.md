@@ -25,7 +25,7 @@ include/Interface/
 ```
 
 Debug uses `FreeImaged.dll` and `FreeImaged.pdb`. The runtime archive contains
-`svencoop/`; the public interface header is available in the install tree for development.
+`svencoop/` with `licenses/` excluded; the public interface header is available in the install tree for development.
 
 ## Runtime dependencies
 

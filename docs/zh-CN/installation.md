@@ -24,7 +24,7 @@ include/Interface/
 ```
 
 Debug 使用 `FreeImaged.dll` 和 `FreeImaged.pdb`。
-运行时压缩包包含 `svencoop/`；开发用公共接口头文件位于 install 目录。
+运行时压缩包包含 `svencoop/`，打包时排除 `licenses/`；开发用公共接口头文件位于 install 目录。
 
 ## 运行时依赖
 
