@@ -2,7 +2,7 @@
 
 [English README](README.md)
 
-BetterSpray 是喷漆增强插件，支持将WAD喷漆替换成透明通道的高分辨率图片、Steam 截图云分享，以及自动生成供未安装插件的玩家查看的 WAD 回退版本。
+BetterSpray 是喷漆增强插件，支持将WAD喷漆替换成透明通道的高分辨率图片、Steam 截图云分享，以及自动生成WAD版本喷漆作为回退方案。
 
 ## 兼容性
 
