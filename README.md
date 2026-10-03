@@ -2,9 +2,9 @@
 
 [中文文档](README.zh-CN.md)
 
-BetterSpray is a spray enhancement plugin for MetaHook. It supports high-resolution
-images with alpha, dynamic reloading, Steam screenshot sharing and a WAD fallback
-for players without the plugin.
+BetterSpray is a spray enhancement plugin for MetaHook.
+
+It supports: using high-res images as player decals, sharing spray via Steam screenshots, fallback-WAD auto-generation.
 
 ## Compatibility
 
@@ -15,9 +15,6 @@ for players without the plugin.
 | GoldSrc_new (8684 ~) | x |
 | SvEngine (8832 ~) | √ |
 | GoldSrc_HL25 (>= 9884) | √ |
-
-These are the project's existing compatibility claims. The bundled engine catalog
-covers Sven Co-op 8948/10257 and Half-Life 10210; see [gamedata](docs/en/gamedata.md).
 
 ## Quick start
 
