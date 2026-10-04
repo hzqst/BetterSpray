@@ -16,6 +16,7 @@ endif()
 include(cmake/Dependencies.cmake)
 betterspray_prepare_dependencies()
 include("${VC_LTL_Root}/VC-LTL helper for cmake.cmake")
+include(cmake/SteamAPIBridge.cmake)
 include(cmake/ImageLibraries.cmake)
 betterspray_add_image_libraries()
 include(cmake/Sources.cmake)
@@ -50,7 +51,7 @@ target_compile_definitions(betterspray_settings INTERFACE WIN32 _WINDOWS _MBCS
 target_compile_options(betterspray_settings INTERFACE /permissive- /W3 /wd4819 /wd4996)
 
 add_library(BetterSpray SHARED ${BETTERSPRAY_SOURCES})
-target_link_libraries(BetterSpray PRIVATE betterspray_settings FreeImage LibXml2::LibXml2 SteamSDK::SteamAPI)
+target_link_libraries(BetterSpray PRIVATE betterspray_settings FreeImage LibXml2::LibXml2 SteamAPIBridge)
 target_compile_definitions(BetterSpray PRIVATE BETTERSPRAY_EXPORTS _USRDLL)
 target_compile_options(BetterSpray PRIVATE /MP /sdl /Zi $<$<CONFIG:Release>:/Gy;/Oi>)
 target_link_options(BetterSpray PRIVATE /DEBUG /SUBSYSTEM:WINDOWS

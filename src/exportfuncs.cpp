@@ -15,7 +15,7 @@
 
 #include <ScopeExit/ScopeExit.h>
 
-#include <steam/steam_api.h>
+#include <SteamAPIBridge.h>
 
 //Fuck microsoft
 #undef min
@@ -1702,10 +1702,17 @@ bool BS_UploadSprayBitmap(FIBITMAP* fiB, const BS_UploadSprayBitmapArgs* args)
 	fiIO.seek_proc = FI_Seek;
 	fiIO.tell_proc = FI_Tell;
 
-	auto steamId = SteamUser()->GetSteamID();
+	auto bridge = SteamBridge_CreateContext();
+	SCOPE_EXIT{ SteamBridge_DestroyContext(bridge); };
+	uint64_t steamId = 0;
+	if (SteamBridge_GetSteamID(bridge, &steamId) != SB_OK)
+	{
+		gEngfuncs.Con_Printf("[BetterSpray] Steam user interface unavailable.\n");
+		return false;
+	}
 
 	char userId[32]{};
-	snprintf(userId, sizeof(userId), "%llu", steamId.ConvertToUint64());
+	snprintf(userId, sizeof(userId), "%llu", steamId);
 
 	char newFileName[256]{};
 	char newFilePath[256]{};
@@ -1919,7 +1926,12 @@ bool BS_UploadSprayBitmap(FIBITMAP* fiB, const BS_UploadSprayBitmapArgs* args)
 		return false;
 	}
 
-	SteamScreenshots()->AddScreenshotToLibrary(pszFullPath, nullptr, 0, 0);
+	uint32_t screenshot = 0;
+	if (SteamBridge_AddScreenshot(bridge, pszFullPath, nullptr, 0, 0, &screenshot) != SB_OK)
+	{
+		gEngfuncs.Con_Printf("[BetterSpray] Could not add spray to Steam screenshot library.\n");
+		return false;
+	}
 
 	if (EngineIsInLevel())
 	{

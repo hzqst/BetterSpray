@@ -1,5 +1,9 @@
 # BetterSpray
 
+本插件动态链接 `SteamAPIBridge.dll`，安装在 `metahook/dlls`。部署插件时请一并保留该依赖。
+Bridge 使用游戏已有的 Steam 运行库，不替换 `steam_api.dll`。独立构建可通过
+`STEAMAPIBRIDGE_SOURCE_PATH` 指定源码，否则获取固定提交。
+
 [English README](README.md)
 
 BetterSpray 是喷漆增强插件，支持将WAD喷漆替换成透明通道的高分辨率图片、Steam 截图云分享，以及自动生成WAD版本喷漆作为回退方案。

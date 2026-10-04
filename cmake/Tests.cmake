@@ -20,6 +20,6 @@ foreach(scenario PNG WEBP HTML)
     add_test(NAME betterspray_library_${scenario} COMMAND BetterSprayImageLibraryTests ${scenario})
 endforeach()
 add_test(NAME betterspray_plugin_factory COMMAND BetterSprayPluginLoadSmoke "$<TARGET_FILE:BetterSpray>"
-    "$<TARGET_FILE:FreeImage>" "$<TARGET_FILE:LibXml2>" "${STEAMSDK_SOURCE_PATH}/bin/steam_api.dll")
+    "$<TARGET_FILE:FreeImage>" "$<TARGET_FILE:LibXml2>" "$<TARGET_FILE:SteamAPIBridge>")
 get_property(betterspray_tests DIRECTORY PROPERTY TESTS)
 set_tests_properties(${betterspray_tests} PROPERTIES TIMEOUT 30)

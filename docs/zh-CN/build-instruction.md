@@ -39,7 +39,8 @@ VC-LTL 5.3.1 使用 SHA-256 校验的二进制包，Debug 和 Release 共用缓�
 | `VGUI2EXTENSION_SOURCE_PATH` | 含 `include/Interface/` 的 VGUI2Extension 根目录 |
 | `UTILTHREADTASK_SOURCE_PATH` | 含 `include/Interface/IUtilThreadTask.h` 的 UtilThreadTask 根目录 |
 | `UTILHTTPCLIENT_SOURCE_PATH` | 含 `include/Interface/IUtilHTTPClient.h` 的 UtilHTTPClient_libcurl 根目录，仅使用接口头文件 |
-| `STEAMSDK_SOURCE_PATH` | 含 `steam/`、`lib/steam_api.lib`、`bin/steam_api.dll` 和许可声明的 SteamSDK 根目录 |
+| `STEAMSDK_SOURCE_PATH` | SteamSDK `steam/` headers and `STEAM-SDK-NOTICE.md` (read-only) |
+| `STEAMAPIBRIDGE_SOURCE_PATH` | SteamAPIBridge source; empty fetches the pinned commit and builds its shared DLL |
 | `FREEIMAGE_SOURCE_PATH` | 含 CMake 工程与 `Source/FreeImage.h` 的 FreeImage 3.18.0 fork |
 | `LIBXML2_SOURCE_PATH` | 官方 libxml2 2.14.2 CMake 源码目录 |
 | `SCOPEEXIT_SOURCE_PATH` | 含 `include/ScopeExit/ScopeExit.h` 的 ScopeExit 根目录 |

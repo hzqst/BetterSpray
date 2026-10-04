@@ -13,7 +13,7 @@
 
 #include <ScopeExit/ScopeExit.h>
 
-#include <steam/steam_api.h>
+#include <SteamAPIBridge.h>
 
 #include <format>
 
@@ -111,10 +111,18 @@ void CBetterSpraySettingsPage::OnResetData(void)
 
 	if (1)
 	{
-		auto steamId = SteamUser()->GetSteamID();
+		auto bridge = SteamBridge_CreateContext();
+		uint64_t steamId = 0;
+		auto steamStatus = SteamBridge_GetSteamID(bridge, &steamId);
+		SteamBridge_DestroyContext(bridge);
+		if (steamStatus != SB_OK)
+		{
+			m_pSparyImageJPG->SetImage((vgui::IImage*)nullptr);
+			return;
+		}
 
 		char userId[32]{};
-		snprintf(userId, sizeof(userId), "%llu", steamId.ConvertToUint64());
+		snprintf(userId, sizeof(userId), "%llu", steamId);
 
 		const auto& SprayBitmapLoader = [this](const char* userId, FIBITMAP* fiB) -> LOADSPRAYTEXTURE_STATUS {
 

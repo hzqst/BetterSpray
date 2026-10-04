@@ -29,7 +29,7 @@ function(betterspray_prepare_dependencies)
         include/Interface/VGUI/IInput2.h include/Interface/VGUI/IScheme2.h include/Interface/VGUI/ISurface2.h)
     set(UTILTHREADTASK_files include/Interface/IUtilThreadTask.h)
     set(UTILHTTPCLIENT_files include/Interface/IUtilHTTPClient.h)
-    set(STEAMSDK_files steam/steam_api.h lib/steam_api.lib bin/steam_api.dll STEAM-SDK-NOTICE.md)
+    set(STEAMSDK_files steam/steam_api.h STEAM-SDK-NOTICE.md)
     set(FREEIMAGE_files CMakeLists.txt Source/FreeImage.h license-fi.txt)
     set(LIBXML2_files CMakeLists.txt include/libxml/parser.h Copyright)
     set(SCOPEEXIT_files include/ScopeExit/ScopeExit.h LICENSE)
@@ -87,8 +87,4 @@ function(betterspray_prepare_dependencies)
     set(VC_LTL_Root "${VC_LTL_Root}" PARENT_SCOPE)
     message(STATUS "VC_LTL_Root: ${VC_LTL_Root}")
 
-    add_library(SteamSDK::SteamAPI SHARED IMPORTED)
-    set_target_properties(SteamSDK::SteamAPI PROPERTIES
-        IMPORTED_IMPLIB "${STEAMSDK_SOURCE_PATH}/lib/steam_api.lib"
-        IMPORTED_LOCATION "${STEAMSDK_SOURCE_PATH}/bin/steam_api.dll")
 endfunction()

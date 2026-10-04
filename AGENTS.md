@@ -141,7 +141,8 @@ external, read-only source trees. VC-LTL 5.3.1 uses a hash-verified binary cache
 - **MetaHook SDK**: shared HLSDK, SourceSDK and VGUI sources; API 115 or newer
 - **VGUI2Extension / UtilThreadTask**: public headers from their independent repositories
 - **FreeImage 3.18.0**: shared image library with its bundled codecs
-- **SteamSDK**: standard `steam/` headers and x86 import library
+- **SteamAPIBridge**: shared DLL via `STEAMAPIBRIDGE_SOURCE_PATH` or pinned FetchContent;
+  uses read-only SteamSDK headers and dynamically resolves the game's Steam runtime
 - **libxml2 2.14.2**: shared HTML/XPath parser with built-in encodings
 - **ScopeExit / Chocobo1Hash**: header-only helpers
 

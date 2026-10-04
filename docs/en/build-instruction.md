@@ -40,7 +40,8 @@ Every source path below is optional; set it to reuse an existing checkout:
 | `VGUI2EXTENSION_SOURCE_PATH` | VGUI2Extension root with `include/Interface/` |
 | `UTILTHREADTASK_SOURCE_PATH` | UtilThreadTask root with `include/Interface/IUtilThreadTask.h` |
 | `UTILHTTPCLIENT_SOURCE_PATH` | UtilHTTPClient_libcurl root with `include/Interface/IUtilHTTPClient.h`; headers only |
-| `STEAMSDK_SOURCE_PATH` | SteamSDK root with `steam/`, `lib/steam_api.lib`, `bin/steam_api.dll` and its notice |
+| `STEAMSDK_SOURCE_PATH` | SteamSDK `steam/` headers and `STEAM-SDK-NOTICE.md` (read-only) |
+| `STEAMAPIBRIDGE_SOURCE_PATH` | SteamAPIBridge source; empty fetches the pinned commit and builds its shared DLL |
 | `FREEIMAGE_SOURCE_PATH` | FreeImage 3.18.0 fork with its CMake project and `Source/FreeImage.h` |
 | `LIBXML2_SOURCE_PATH` | Official libxml2 2.14.2 CMake source tree |
 | `SCOPEEXIT_SOURCE_PATH` | ScopeExit root with `include/ScopeExit/ScopeExit.h` |
