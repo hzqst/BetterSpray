@@ -12,9 +12,9 @@ BetterSpray 是喷漆增强插件，支持将WAD喷漆替换成透明通道的�
 
 | Engine | |
 | --- | --- |
-| GoldSrc_blob (3248~4554) | x |
-| GoldSrc_legacy (< 6153) | x |
-| GoldSrc_new (8684 ~) | x |
+| GoldSrc_blob (3248~4554) | ? (尚未测试) |
+| GoldSrc_legacy (< 6153) | ? (尚未测试) |
+| GoldSrc_new (8684 ~) | ? (尚未测试) |
 | SvEngine (8832 ~) | √ |
 | GoldSrc_HL25 (>= 9884) | √ |
 

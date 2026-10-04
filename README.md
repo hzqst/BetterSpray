@@ -15,9 +15,9 @@ It supports: using high-res images as player decals, sharing spray via Steam scr
 
 | Engine | |
 | --- | --- |
-| GoldSrc_blob (3248~4554) | x |
-| GoldSrc_legacy (< 6153) | x |
-| GoldSrc_new (8684 ~) | x |
+| GoldSrc_blob (3248~4554) | ? (not tested) |
+| GoldSrc_legacy (< 6153) | ? (not tested) |
+| GoldSrc_new (8684 ~) | ? (not tested) |
 | SvEngine (8832 ~) | √ |
 | GoldSrc_HL25 (>= 9884) | √ |
 
