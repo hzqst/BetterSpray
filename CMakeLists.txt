@@ -63,7 +63,6 @@ install(FILES "$<TARGET_PDB_FILE:BetterSpray>" DESTINATION svencoop/metahook/plu
 install(FILES "$<TARGET_FILE:FreeImage>" "$<TARGET_PDB_FILE:FreeImage>" DESTINATION svencoop/metahook/dlls/FreeImage)
 install(FILES "$<TARGET_FILE:LibXml2>" "$<TARGET_PDB_FILE:LibXml2>" DESTINATION svencoop/metahook/dlls)
 install(DIRECTORY assets/ DESTINATION .)
-install(DIRECTORY include/ DESTINATION include)
 set(license_dir svencoop/metahook/licenses/betterspray)
 install(FILES "${FREEIMAGE_SOURCE_PATH}/license-fi.txt" "${FREEIMAGE_SOURCE_PATH}/license-gplv2.txt"
     "${FREEIMAGE_SOURCE_PATH}/license-gplv3.txt" DESTINATION ${license_dir}/FreeImage)
