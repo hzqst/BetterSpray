@@ -27,6 +27,7 @@ target_include_directories(betterspray_settings INTERFACE
     "${VGUI2EXTENSION_SOURCE_PATH}/include/Interface"
     "${VGUI2EXTENSION_SOURCE_PATH}/include/Interface/VGUI"
     "${UTILTHREADTASK_SOURCE_PATH}/include/Interface"
+    "${UTILHTTPCLIENT_SOURCE_PATH}/include/Interface"
     "${METAHOOK_SOURCE_PATH}/include"
     "${METAHOOK_SOURCE_PATH}/include/Interface"
     "${METAHOOK_SOURCE_PATH}/include/Interface/VGUI"
@@ -74,13 +75,13 @@ install(FILES "${STEAMSDK_SOURCE_PATH}/STEAM-SDK-NOTICE.md" DESTINATION ${licens
 install(FILES "${VC_LTL_Root}/Readme.md" DESTINATION ${license_dir}/VC-LTL)
 
 option(BETTERSPRAY_SYNC_GAMEDATA "Download and prune the plugin gamedata catalog before building" ON)
-set(BETTERSPRAY_GAMEDATA_DIR "${CMAKE_BINARY_DIR}/assets/svencoop/metahook/gamedata/betterspray" CACHE PATH "Plugin gamedata catalog directory")
+set(BETTERSPRAY_GAMEDATA_DIR "${PROJECT_BINARY_DIR}/assets/svencoop/metahook/gamedata/betterspray" CACHE PATH "Plugin gamedata catalog directory")
 if(BETTERSPRAY_SYNC_GAMEDATA)
     find_package(Python3 REQUIRED COMPONENTS Interpreter)
     add_custom_target(BetterSprayGameData
         COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/scripts/sync-gamedata.py"
             --manifest "${PROJECT_SOURCE_DIR}/scripts/manifests/betterspray.json"
-            --target-dir "${BETTERSPRAY_GAMEDATA_DIR}" --temp-root "${CMAKE_BINARY_DIR}/gamedata-sync"
+            --target-dir "${BETTERSPRAY_GAMEDATA_DIR}" --temp-root "${PROJECT_BINARY_DIR}/gamedata-sync"
         COMMENT "Synchronizing and validating BetterSpray gamedata" VERBATIM)
     add_custom_target(BetterSprayGameDataValidate
         COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/scripts/validate-gamedata.py"

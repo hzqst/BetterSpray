@@ -27,7 +27,7 @@ Build directories are `build/x86/<Debug|Release>` and installation directories a
 
 ## Dependencies and source paths
 
-CMake downloads fixed versions of the MetaHook SDK, VGUI2Extension and UtilThreadTask
+CMake downloads fixed versions of the MetaHook SDK, VGUI2Extension, UtilThreadTask and UtilHTTPClient
 interface sources, SteamSDK, FreeImage, libxml2, ScopeExit and Chocobo1Hash.
 Versions are recorded in [cmake/Dependencies.cmake](../../cmake/Dependencies.cmake).
 VC-LTL 5.3.1 uses a SHA-256 verified binary package shared between configurations.
@@ -39,6 +39,7 @@ Every source path below is optional; set it to reuse an existing checkout:
 | `METAHOOK_SOURCE_PATH` | MetaHook root with `include/metahook.h`, HLSDK, SourceSDK and VGUI sources |
 | `VGUI2EXTENSION_SOURCE_PATH` | VGUI2Extension root with `include/Interface/` |
 | `UTILTHREADTASK_SOURCE_PATH` | UtilThreadTask root with `include/Interface/IUtilThreadTask.h` |
+| `UTILHTTPCLIENT_SOURCE_PATH` | UtilHTTPClient_libcurl root with `include/Interface/IUtilHTTPClient.h`; headers only |
 | `STEAMSDK_SOURCE_PATH` | SteamSDK root with `steam/`, `lib/steam_api.lib`, `bin/steam_api.dll` and its notice |
 | `FREEIMAGE_SOURCE_PATH` | FreeImage 3.18.0 fork with its CMake project and `Source/FreeImage.h` |
 | `LIBXML2_SOURCE_PATH` | Official libxml2 2.14.2 CMake source tree |

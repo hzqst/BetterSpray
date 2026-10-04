@@ -1,6 +1,6 @@
 set(BETTERSPRAY_DEPENDENCY_CACHE_DIR "${PROJECT_SOURCE_DIR}/thirdparty/cache" CACHE PATH "Downloaded binary dependency cache")
 set(VC_LTL_Root "$ENV{VC_LTL_Root}" CACHE PATH "Existing VC-LTL binary package; empty downloads the verified package")
-foreach(dependency METAHOOK VGUI2EXTENSION UTILTHREADTASK STEAMSDK FREEIMAGE LIBXML2 SCOPEEXIT CHOCOBO1HASH)
+foreach(dependency METAHOOK VGUI2EXTENSION UTILTHREADTASK UTILHTTPCLIENT STEAMSDK FREEIMAGE LIBXML2 SCOPEEXIT CHOCOBO1HASH)
     set(${dependency}_SOURCE_PATH "$ENV{${dependency}_SOURCE_PATH}" CACHE PATH "${dependency} source tree; empty fetches the pinned version")
 endforeach()
 
@@ -28,6 +28,7 @@ function(betterspray_prepare_dependencies)
     set(VGUI2EXTENSION_files include/Interface/IVGUI2Extension.h include/Interface/IDpiManager.h
         include/Interface/VGUI/IInput2.h include/Interface/VGUI/IScheme2.h include/Interface/VGUI/ISurface2.h)
     set(UTILTHREADTASK_files include/Interface/IUtilThreadTask.h)
+    set(UTILHTTPCLIENT_files include/Interface/IUtilHTTPClient.h)
     set(STEAMSDK_files steam/steam_api.h lib/steam_api.lib bin/steam_api.dll STEAM-SDK-NOTICE.md)
     set(FREEIMAGE_files CMakeLists.txt Source/FreeImage.h license-fi.txt)
     set(LIBXML2_files CMakeLists.txt include/libxml/parser.h Copyright)
@@ -35,7 +36,7 @@ function(betterspray_prepare_dependencies)
     set(CHOCOBO1HASH_files src/md5.h LICENSE)
     set(vcltl_files "VC-LTL helper for cmake.cmake" config/config.cmake Readme.md
         TargetPlatform/6.0.6000.0/lib/Win32/libucrt.lib)
-    set(dependencies METAHOOK VGUI2EXTENSION UTILTHREADTASK STEAMSDK FREEIMAGE LIBXML2 SCOPEEXIT CHOCOBO1HASH)
+    set(dependencies METAHOOK VGUI2EXTENSION UTILTHREADTASK UTILHTTPCLIENT STEAMSDK FREEIMAGE LIBXML2 SCOPEEXIT CHOCOBO1HASH)
 
     # Reject invalid explicit paths before downloading anything. Never edit them.
     foreach(dependency IN LISTS dependencies)
@@ -55,6 +56,8 @@ function(betterspray_prepare_dependencies)
     set(VGUI2EXTENSION_commit 07933adf727f8a9a5443d4591d4c1be23b1b9edf)
     set(UTILTHREADTASK_url https://github.com/MetaHookSv/UtilThreadTask)
     set(UTILTHREADTASK_commit 8d36bef696f95b4932cd2d58d50dd8793567dda8)
+    set(UTILHTTPCLIENT_url https://github.com/MetaHookSv/UtilHTTPClient_libcurl)
+    set(UTILHTTPCLIENT_commit 0bc8f39eb178c9c125a58efd3e3e73bd75fc3e15)
     set(STEAMSDK_url https://github.com/MetaHookSv/SteamSDK)
     set(STEAMSDK_commit 3c1abaf6277f9f99fd16ef40557d6852820b848f)
     set(FREEIMAGE_url https://github.com/hzqst/FreeImage_clone)
@@ -84,7 +87,7 @@ function(betterspray_prepare_dependencies)
     set(VC_LTL_Root "${VC_LTL_Root}" PARENT_SCOPE)
     message(STATUS "VC_LTL_Root: ${VC_LTL_Root}")
 
-    add_library(SteamSDK::SteamAPI SHARED IMPORTED GLOBAL)
+    add_library(SteamSDK::SteamAPI SHARED IMPORTED)
     set_target_properties(SteamSDK::SteamAPI PROPERTIES
         IMPORTED_IMPLIB "${STEAMSDK_SOURCE_PATH}/lib/steam_api.lib"
         IMPORTED_LOCATION "${STEAMSDK_SOURCE_PATH}/bin/steam_api.dll")
