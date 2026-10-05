@@ -18,14 +18,13 @@ svencoop/
   metahook/dlls/FreeImage/FreeImage.dll
   metahook/dlls/FreeImage/FreeImage.pdb
   metahook/gamedata/betterspray/
-  metahook/licenses/betterspray/
   bettersprays/
 include/Interface/
   ISprayDatabase.h
 ```
 
 Debug uses `FreeImaged.dll` and `FreeImaged.pdb`. The runtime archive contains
-`svencoop/` with `licenses/` excluded; the public interface header is available in the install tree for development.
+`svencoop/`; the public interface header is available in the install tree for development.
 
 ## Runtime dependencies
 

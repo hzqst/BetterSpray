@@ -64,15 +64,6 @@ install(FILES "$<TARGET_PDB_FILE:BetterSpray>" DESTINATION svencoop/metahook/plu
 install(FILES "$<TARGET_FILE:FreeImage>" "$<TARGET_PDB_FILE:FreeImage>" DESTINATION svencoop/metahook/dlls/FreeImage)
 install(FILES "$<TARGET_FILE:LibXml2>" "$<TARGET_PDB_FILE:LibXml2>" DESTINATION svencoop/metahook/dlls)
 install(DIRECTORY assets/ DESTINATION .)
-set(license_dir svencoop/metahook/licenses/betterspray)
-install(FILES "${FREEIMAGE_SOURCE_PATH}/license-fi.txt" "${FREEIMAGE_SOURCE_PATH}/license-gplv2.txt"
-    "${FREEIMAGE_SOURCE_PATH}/license-gplv3.txt" DESTINATION ${license_dir}/FreeImage)
-install(FILES "${LIBXML2_SOURCE_PATH}/Copyright" DESTINATION ${license_dir}/libxml2)
-install(FILES "${SCOPEEXIT_SOURCE_PATH}/LICENSE" DESTINATION ${license_dir}/ScopeExit)
-install(FILES "${CHOCOBO1HASH_SOURCE_PATH}/LICENSE" DESTINATION ${license_dir}/Chocobo1Hash)
-install(FILES "${METAHOOK_SOURCE_PATH}/LICENSE" DESTINATION ${license_dir}/MetaHook)
-install(FILES "${STEAMSDK_SOURCE_PATH}/STEAM-SDK-NOTICE.md" DESTINATION ${license_dir}/SteamSDK)
-install(FILES "${VC_LTL_Root}/Readme.md" DESTINATION ${license_dir}/VC-LTL)
 
 option(BETTERSPRAY_SYNC_GAMEDATA "Download and prune the plugin gamedata catalog before building" ON)
 set(BETTERSPRAY_GAMEDATA_DIR "${PROJECT_BINARY_DIR}/assets/svencoop/metahook/gamedata/betterspray" CACHE PATH "Plugin gamedata catalog directory")
