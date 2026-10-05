@@ -10,7 +10,7 @@
 Both workflows use the shared
 [build-windows-x86 action](../../.github/actions/build-windows-x86/action.yml).
 It checks out a sibling MetaHook source tree from `main`, records its commit, and
-passes the explicit SDK path to CMake. This overrides the pinned SDK used by local
+passes the explicit SDK path to CMake. This overrides the auto-fetched SDK (latest `main`) used by local
 builds without `METAHOOK_SOURCE_PATH`. Other dependencies retain their fixed versions.
 
 The action runs the Release build script with regression tests enabled, Python

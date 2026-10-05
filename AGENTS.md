@@ -134,7 +134,7 @@ Send a task to the main thread via GameThreadTaskScheduler, and upload to OpenGL
 
 ### Dependencies
 
-CMake automatically fetches the fixed commits in `cmake/Dependencies.cmake`.
+CMake automatically fetches the dependencies in `cmake/Dependencies.cmake`: MetaHook from the latest `main`, the rest at fixed commits.
 Optional `*_SOURCE_PATH` parameters and same-named environment variables reuse
 external, read-only source trees. VC-LTL 5.3.1 uses a hash-verified binary cache.
 

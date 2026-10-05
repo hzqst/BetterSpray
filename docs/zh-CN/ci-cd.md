@@ -10,7 +10,7 @@
 两个 workflow 共用
 [build-windows-x86 action](../../.github/actions/build-windows-x86/action.yml)。
 它从 `main` 检出相邻 MetaHook 源码、记录实际提交，并将 SDK 路径传入 CMake。
-该显式路径覆盖本地未设置 `METAHOOK_SOURCE_PATH` 时使用的固定 SDK；
+该显式路径覆盖本地未设置 `METAHOOK_SOURCE_PATH` 时自动获取的最新 `main` SDK；
 其他依赖仍使用固定版本。
 
 action 启用回归测试运行 Release 构建脚本，执行 Python 裁剪测试、CTest，

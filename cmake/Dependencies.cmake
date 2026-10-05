@@ -51,7 +51,8 @@ function(betterspray_prepare_dependencies)
     endif()
 
     set(METAHOOK_url https://github.com/MetaHookSv/MetaHook)
-    set(METAHOOK_commit 1d23fe946e6f0f09a1a892aa2156c3b462774026)
+    # MetaHook is tracked as a branch: always fetch the latest main.
+    set(METAHOOK_commit origin/main)
     set(VGUI2EXTENSION_url https://github.com/MetaHookSv/VGUI2Extension)
     set(VGUI2EXTENSION_commit 07933adf727f8a9a5443d4591d4c1be23b1b9edf)
     set(UTILTHREADTASK_url https://github.com/MetaHookSv/UtilThreadTask)

@@ -26,7 +26,7 @@ scripts\build-BetterSpray-x86-Release.bat
 
 ## 依赖和源码路径
 
-CMake 自动下载固定版本的 MetaHook SDK、VGUI2Extension、UtilThreadTask 和 UtilHTTPClient 接口源码、
+CMake 自动下载最新 `main` 的 MetaHook SDK，以及固定版本的 VGUI2Extension、UtilThreadTask 和 UtilHTTPClient 接口源码、
 SteamSDK、FreeImage、libxml2、ScopeExit 和 Chocobo1Hash。
 版本记录在 [cmake/Dependencies.cmake](../../cmake/Dependencies.cmake)。
 VC-LTL 5.3.1 使用 SHA-256 校验的二进制包，Debug 和 Release 共用缓存。

@@ -27,7 +27,7 @@ Build directories are `build/x86/<Debug|Release>` and installation directories a
 
 ## Dependencies and source paths
 
-CMake downloads fixed versions of the MetaHook SDK, VGUI2Extension, UtilThreadTask and UtilHTTPClient
+CMake downloads the MetaHook SDK from the latest `main`, and fixed versions of VGUI2Extension, UtilThreadTask and UtilHTTPClient
 interface sources, SteamSDK, FreeImage, libxml2, ScopeExit and Chocobo1Hash.
 Versions are recorded in [cmake/Dependencies.cmake](../../cmake/Dependencies.cmake).
 VC-LTL 5.3.1 uses a SHA-256 verified binary package shared between configurations.
