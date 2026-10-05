@@ -20,6 +20,12 @@ BetterSpray 增强喷漆加载、转换和分享。
 集成设置和任务列表 UI 需要 VGUI2Extension。
 README 沿用项目已有的引擎兼容表，随包目录的实际覆盖范围见 [gamedata](gamedata.md)。
 
+### 旧版 GoldSrc
+
+在 `hl-3248` ~ `hl-8684` 上，引擎不提供每个玩家的 SteamID，
+因此只渲染你自己的高清喷漆，其他玩家继续使用引擎自带的 WAD 喷漆。
+这些版本上无法使用下方的 Steam 云分享；见 [gamedata](gamedata.md#旧版-goldsrc-的玩家身份)。
+
 ## Steam 云分享
 
 1. 通过插件选择并上传喷漆。

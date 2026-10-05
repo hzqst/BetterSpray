@@ -24,11 +24,21 @@ MetaHook 必须支持合并嵌套目录，并提供 API 115 或更新版本，
 | `engine` | `GL_LoadTexture2` | `function` | 上传喷漆纹理 |
 | `engine` | `Draw_DecalTexture` | `function` | 挂钩贴花纹理请求 |
 
-初始 Windows 目录覆盖 `svencoop-8948`、`svencoop-10257` 和 `hl-10210`，
+Windows 目录覆盖 `hl-3248`、`hl-3266`、`hl-3329`、`hl-3647`、`hl-4554`、
+`hl-6153`、`hl-8684`、`hl-10210`、`svencoop-8948`、`svencoop-10257`，
 每个版本均包含两个必需记录。目录通过引擎二进制 CRC64 识别模块，
 不能根据 mod 目录名称认定存在匹配的引擎记录。
 
-manifest 没有可选记录或扫描回退。扩大目录覆盖范围本身不能证明其他引擎的兼容性。
+manifest 没有可选记录或扫描回退。
+
+## 旧版 GoldSrc 的玩家身份
+
+目录覆盖只能保证两个引擎函数可解析。每个玩家的云端喷漆同步还需要玩家的 SteamID64，
+BetterSpray 从 Sven Co-op 的 `player_info_t` 扩展字段（`hashedcdkey` / `m_nSteamID`）读取。
+旧版 GoldSrc（`hl-3248` ~ `hl-8684`）只有基础 `player_info_t`，因此这些版本优雅降级：
+你自己的高清喷漆正常渲染，跳过云端查询，其他玩家继续使用引擎自带的 WAD 喷漆。
+所有依赖身份的路径都由 `EngineSupportsPlayerIdentity()`（`src/engine_identity.h`）把关。
+SvEngine 与 GoldSrc_HL25 保留完整云同步。
 
 ## 同步与验证
 

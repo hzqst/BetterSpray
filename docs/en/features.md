@@ -21,6 +21,12 @@ The integrated settings and task-list UI requires VGUI2Extension. The plugin's
 existing engine compatibility table is in the README; the packaged catalog's exact
 coverage is described in [gamedata](gamedata.md).
 
+### Legacy GoldSrc
+
+On `hl-3248` ~ `hl-8684` the engine exposes no per-player SteamID, so only your own
+high-res spray renders and other players keep the engine's WAD decal. Steam cloud
+sharing below is unavailable there; see [gamedata](gamedata.md#per-player-identity-on-legacy-goldsrc).
+
 ## Steam cloud sharing
 
 1. Select and upload the spray through the plugin.

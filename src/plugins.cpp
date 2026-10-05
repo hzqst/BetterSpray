@@ -2,6 +2,7 @@
 #include "exportfuncs.h"
 #include "privatehook.h"
 #include "plugins.h"
+#include "engine_identity.h"
 
 #include "VGUI2ExtensionImport.h"
 #include "UtilHTTPClient.h"
@@ -65,6 +66,11 @@ void IPluginsV4::LoadEngine(cl_enginefunc_t* pEngfuncs)
 	}
 
 	memcpy(&gEngfuncs, pEngfuncs, sizeof(gEngfuncs));
+
+	if (!EngineSupportsPlayerIdentity())
+	{
+		gEngfuncs.Con_Printf("[BetterSpray] Engine build %u has no per-player SteamID. Spray cloud sync is disabled; only your own high-res spray is shown, other players keep the engine WAD decal.\n", g_dwEngineBuildnum);
+	}
 
 	if (!Engine_FillAddress(g_MirrorEngineDLLInfo.ImageBase ? g_MirrorEngineDLLInfo : g_EngineDLLInfo, g_EngineDLLInfo))
 		return;

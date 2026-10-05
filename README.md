@@ -13,13 +13,18 @@ It supports: using high-res images as player decals, sharing spray via Steam scr
 
 ## Compatibility
 
-| Engine | |
+| Engine | Support |
 | --- | --- |
-| GoldSrc_blob (3248~4554) | ? (not tested) |
-| GoldSrc_legacy (< 6153) | ? (not tested) |
-| GoldSrc_new (8684 ~) | ? (not tested) |
-| SvEngine (8832 ~) | √ |
-| GoldSrc_HL25 (>= 9884) | √ |
+| GoldSrc_blob (3248~4554) | Partial: local high-res spray only |
+| GoldSrc_legacy (6153, 8684) | Partial: local high-res spray only |
+| SvEngine (8832 ~) | Full, including Steam cloud sync |
+| GoldSrc_HL25 (>= 9884) | Full, including Steam cloud sync |
+
+Legacy GoldSrc builds (`hl-3248` ~ `hl-8684`) do not expose a per-player SteamID:
+their `player_info_t` lacks the Sven Co-op extension BetterSpray reads. On those
+engines the plugin renders your own high-res spray and skips cloud lookup, so other
+players keep the engine's WAD decal. SvEngine and GoldSrc_HL25 keep the full feature
+set.
 
 ## Quick start
 

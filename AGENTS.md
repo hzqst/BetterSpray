@@ -166,7 +166,8 @@ See `docs/en/build-instruction.md` for options, local paths and offline preparat
 ### gamedata
 
 `scripts/manifests/betterspray.json` requires the Windows engine functions
-`GL_LoadTexture2` and `Draw_DecalTexture` for `hl-10210`, `svencoop-8948` and
+`GL_LoadTexture2` and `Draw_DecalTexture` for `hl-3248`, `hl-3266`, `hl-3329`,
+`hl-3647`, `hl-4554`, `hl-6153`, `hl-8684`, `hl-10210`, `svencoop-8948` and
 `svencoop-10257`. The build synchronizes, prunes and validates the plugin catalog,
 then installs it under `svencoop/metahook/gamedata/betterspray/`.
 
@@ -189,11 +190,17 @@ consistent when consumption changes.
 
 | Engine version | Support |
 |---------|---------|
-| GoldSrc_blob (3248~4554) | ❌ |
-| GoldSrc_legacy (< 6153) | ❌ |
-| GoldSrc_new (8684 ~) | ❌ |
-| SvEngine (8832 ~) | ✅ |
-| GoldSrc_HL25 (>= 9884) | ✅ |
+| GoldSrc_blob (3248~4554) | ⚠️ Partial (local high-res spray only, no cloud sync) |
+| GoldSrc_legacy (6153, 8684) | ⚠️ Partial (local high-res spray only, no cloud sync) |
+| SvEngine (8832 ~) | ✅ Full |
+| GoldSrc_HL25 (>= 9884) | ✅ Full |
+
+Legacy GoldSrc (`hl-3248` ~ `hl-8684`) has no per-player SteamID: its `player_info_t`
+lacks the Sven Co-op `hashedcdkey`/`m_nSteamID` extension. All identity-dependent
+paths are gated by `EngineSupportsPlayerIdentity()` (`src/engine_identity.h`); on
+those engines `Draw_DecalTexture` returns the engine's WAD decal unchanged and cloud
+lookup is skipped. The local uploader still sees its own high-res spray via the
+`gEngfuncs.GetLocalPlayer()` fallback.
 
 ## Important Constants and Macros
 

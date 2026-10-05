@@ -27,12 +27,23 @@ The declaration is [scripts/manifests/betterspray.json](../../scripts/manifests/
 | `engine` | `GL_LoadTexture2` | `function` | Upload spray textures |
 | `engine` | `Draw_DecalTexture` | `function` | Hook decal texture requests |
 
-Initial Windows catalogs: `svencoop-8948`, `svencoop-10257`, `hl-10210`.
+Windows catalogs: `hl-3248`, `hl-3266`, `hl-3329`, `hl-3647`, `hl-4554`,
+`hl-6153`, `hl-8684`, `hl-10210`, `svencoop-8948`, `svencoop-10257`.
 Each has both required records. Catalog identity follows engine binary CRC64;
 a mod-directory name does not establish that a matching engine record exists.
 
-The manifest has no optional records or scan fallback. Updating catalog coverage
-does not by itself verify compatibility with another engine.
+The manifest has no optional records or scan fallback.
+
+## Per-player identity on legacy GoldSrc
+
+Catalog coverage only guarantees the two engine functions resolve. Per-player
+spray cloud sync additionally needs each player's SteamID64, which BetterSpray
+reads from the Sven Co-op `player_info_t` extension (`hashedcdkey` / `m_nSteamID`).
+Legacy GoldSrc (`hl-3248` ~ `hl-8684`) ships only the base `player_info_t`, so those
+builds degrade gracefully: your own high-res spray renders, cloud lookup is skipped,
+and other players keep the engine's WAD decal. `EngineSupportsPlayerIdentity()`
+(`src/engine_identity.h`) gates every identity-dependent path. SvEngine and
+GoldSrc_HL25 keep full cloud sync.
 
 ## Synchronization and validation
 

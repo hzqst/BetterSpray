@@ -1,6 +1,7 @@
 #include <metahook.h>
 #include "plugins.h"
 #include "privatehook.h"
+#include "engine_identity.h"
 
 #include <cassert>
 #include <cstdarg>
@@ -101,6 +102,21 @@ texture_t* Draw_DecalTexture(int)
 int main(int argc, char** argv)
 {
     assert(2 == argc);
+
+    // Per-player identity is only valid where player_info_t carries the Sven
+    // Co-op extension; every other engine family must degrade gracefully.
+    {
+        const int engines[] = {ENGINE_UNKNOWN, ENGINE_GOLDSRC_BLOB, ENGINE_GOLDSRC,
+                               ENGINE_SVENGINE, ENGINE_GOLDSRC_HL25, ENGINE_GOLDSRC_COF};
+        for (int engine : engines)
+        {
+            g_iEngineType = engine;
+            const bool expected = (engine == ENGINE_SVENGINE || engine == ENGINE_GOLDSRC_HL25);
+            assert(expected == EngineSupportsPlayerIdentity());
+        }
+        g_iEngineType = ENGINE_SVENGINE;
+    }
+
     const std::string scenario = argv[1];
     if (scenario == "first_missing")
         firstMissing = true;

@@ -2,7 +2,18 @@
   "schemaVersion": 1,
   "name": "betterspray",
   "indexUrl": "https://hlnd2t.github.io/GoldSrc_VibeSignatures/gamesymbols/index.json",
-  "gameVersions": ["hl-10210", "svencoop-8948", "svencoop-10257"],
+  "gameVersions": [
+    "hl-3248",
+    "hl-3266",
+    "hl-3329",
+    "hl-3647",
+    "hl-4554",
+    "hl-6153",
+    "hl-8684",
+    "hl-10210",
+    "svencoop-8948",
+    "svencoop-10257"
+  ],
   "symbols": {
     "engine": {
       "GL_LoadTexture2": "function",

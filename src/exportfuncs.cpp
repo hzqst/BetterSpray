@@ -6,6 +6,7 @@
 #include "plugins.h"
 #include "privatehook.h"
 #include "exportfuncs.h"
+#include "engine_identity.h"
 
 #include "SprayDatabase.h"
 #include "UtilHTTPClient.h"
@@ -119,6 +120,19 @@ bool EngineIsInLevel()
 }
 
 /*
+	Purpose: Locate the local player's slot when per-player SteamID lookups are
+	unavailable (legacy GoldSrc). Returns -1 if the engine cannot report it.
+*/
+static int EngineFindLocalPlayerIndex()
+{
+	auto localPlayer = gEngfuncs.GetLocalPlayer();
+	if (localPlayer && localPlayer->index >= 0 && localPlayer->index < MAX_CLIENTS)
+		return localPlayer->index;
+
+	return -1;
+}
+
+/*
 	Purpose: Check if playerindex has custom decal
 */
 bool Draw_HasCustomDecal(int playerindex)
@@ -126,6 +140,9 @@ bool Draw_HasCustomDecal(int playerindex)
 	if (playerindex >= 0 && playerindex < MAX_CLIENTS)
 	{
 		auto playerInfo = (player_info_sc_t*)IEngineStudio.PlayerInfo(playerindex);
+
+		if (!playerInfo)
+			return false;
 
 		if (!playerInfo->customdata.pNext)
 			return false;
@@ -156,6 +173,10 @@ bool Draw_GetCustomDecalInfo(
 	OUT int* pBufferSize,
 	OUT void* pubMD5Hash)
 {
+	//Legacy GoldSrc has no m_nSteamID; never read past the base player_info_t.
+	if (!EngineSupportsPlayerIdentity())
+		return false;
+
 	auto playerInfo = (player_info_sc_t*)IEngineStudio.PlayerInfo(playerindex);
 
 	if (playerInfo && playerInfo->m_nSteamID != 0)
@@ -227,6 +248,10 @@ void Draw_UploadSprayTextureRGBA8(int playerindex, FIBITMAP* fiB)
 */
 int EngineFindPlayerIndexByUserId(const char* userId)
 {
+	//Per-player SteamID matching is only valid where the extension exists.
+	if (!EngineSupportsPlayerIdentity())
+		return -1;
+
 	for (int playerindex = 0; playerindex <= gEngfuncs.GetMaxClients(); ++playerindex)
 	{
 		auto playerInfo = (player_info_sc_t*)IEngineStudio.PlayerInfo(playerindex);
@@ -250,6 +275,10 @@ int EngineFindPlayerIndexByUserId(const char* userId)
 */
 int EngineFindPlayerIndexBySteamID64(uint64_t nSteamID64)
 {
+	//Per-player SteamID matching is only valid where the extension exists.
+	if (!EngineSupportsPlayerIdentity())
+		return -1;
+
 	for (int playerindex = 0; playerindex <= gEngfuncs.GetMaxClients(); ++playerindex)
 	{
 		auto playerInfo = (player_info_sc_t*)IEngineStudio.PlayerInfo(playerindex);
@@ -763,6 +792,11 @@ texture_t* Draw_DecalTexture(int index)
 {
 	customization_t* pCust = NULL;
 	texture_t* retval = gPrivateFuncs.Draw_DecalTexture(index);
+
+	//Legacy GoldSrc has no per-player identity, so cloud replacement is skipped
+	//and the engine's own WAD decal texture is returned unchanged.
+	if (!EngineSupportsPlayerIdentity() && index < 0 && retval)
+		return retval;
 
 	if (index < 0 && retval->name[0] != '?')//The decal texture we replaced starts with "?"
 	{
@@ -1936,6 +1970,13 @@ bool BS_UploadSprayBitmap(FIBITMAP* fiB, const BS_UploadSprayBitmapArgs* args)
 	if (EngineIsInLevel())
 	{
 		int playerindex = EngineFindPlayerIndexByUserId(userId);
+
+		if (playerindex == -1 && !EngineSupportsPlayerIdentity())
+		{
+			//Legacy GoldSrc: fall back to the local player slot so the uploader
+			//sees their own high-res spray immediately after uploading.
+			playerindex = EngineFindLocalPlayerIndex();
+		}
 
 		if (playerindex != -1)
 		{

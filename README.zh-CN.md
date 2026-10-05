@@ -10,13 +10,17 @@ BetterSpray 是喷漆增强插件，支持将WAD喷漆替换成透明通道的�
 
 ## 兼容性
 
-| Engine | |
+| Engine | 支持情况 |
 | --- | --- |
-| GoldSrc_blob (3248~4554) | ? (尚未测试) |
-| GoldSrc_legacy (< 6153) | ? (尚未测试) |
-| GoldSrc_new (8684 ~) | ? (尚未测试) |
-| SvEngine (8832 ~) | √ |
-| GoldSrc_HL25 (>= 9884) | √ |
+| GoldSrc_blob (3248~4554) | 部分支持：仅本机高清喷漆 |
+| GoldSrc_legacy (6153, 8684) | 部分支持：仅本机高清喷漆 |
+| SvEngine (8832 ~) | 完整支持，含 Steam 云同步 |
+| GoldSrc_HL25 (>= 9884) | 完整支持，含 Steam 云同步 |
+
+旧版 GoldSrc（`hl-3248` ~ `hl-8684`）不提供每个玩家的 SteamID：
+其 `player_info_t` 缺少 BetterSpray 读取的 Sven Co-op 扩展字段。
+在这些引擎上，插件只渲染你自己的高清喷漆并跳过云端查询，其他玩家继续使用引擎自带的 WAD 喷漆。
+SvEngine 与 GoldSrc_HL25 保留完整功能。
 
 ## 快速开始
 
