@@ -458,6 +458,14 @@ def validate_snapshot(doc, game_version):
         win = plats.get("windows")
         if not isinstance(win, dict):
             continue
+        aliases = win.get("alias", [])
+        if not isinstance(aliases, list) or any(
+            not isinstance(name, str) or not name or name in (".", "..")
+            or name.endswith((".", " "))
+            or any(ord(c) < 32 or c in r'/\:<>"|?*' for c in name)
+            for name in aliases
+        ):
+            errors.append(f"'{game_version}': module '{mod}': alias must be an array of filenames")
         crc64 = parse_crc64(win.get("crc64"))
         if crc64 is None:
             errors.append(f"'{game_version}': module '{mod}': invalid crc64")

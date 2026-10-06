@@ -1474,7 +1474,11 @@ def prune_snapshot(document: dict, manifest: ConsumerManifest, game_version: str
             windows = entry.get("windows")
             if not isinstance(windows, dict) or not isinstance(windows.get("crc64"), str):
                 continue
-            pruned_binaries[module] = {"windows": {"crc64": windows["crc64"]}}
+            pruned_windows = {"crc64": windows["crc64"]}
+            if "alias" in windows:
+                # Preserve optional module filenames for the runtime resolver.
+                pruned_windows["alias"] = windows["alias"]
+            pruned_binaries[module] = {"windows": pruned_windows}
         pruned_document["binaries"] = pruned_binaries
 
     if "records" in allowed_top:
