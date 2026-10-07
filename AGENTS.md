@@ -285,6 +285,6 @@ To modify or extend functionality, focus on these areas:
 
 ## Related Links
 
-- **MetaHookSV**: https://github.com/hzqst/MetaHookSv
+- **MetaHookSV**: https://github.com/MetaHookSv/MetaHookSv
 - **FreeImage**: http://freeimage.sourceforge.net/
 - **Steam API**: https://partner.steamgames.com/doc/api
