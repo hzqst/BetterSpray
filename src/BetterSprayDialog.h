@@ -16,18 +16,17 @@ class CBetterSpraySettingsPage;
 class CBetterSprayDialog : public vgui::Frame
 {
 public:
-	DECLARE_CLASS_SIMPLE(CBetterSprayDialog, vgui::Frame);
+    DECLARE_CLASS_SIMPLE(CBetterSprayDialog, vgui::Frame);
 
-	CBetterSprayDialog(vgui::Panel *parent, const char* name);
-	~CBetterSprayDialog();
+    CBetterSprayDialog(vgui::Panel* parent, const char* name);
+    ~CBetterSprayDialog();
 
 private:
+    void OnCommand(const char* command) override;
 
-	void OnCommand(const char* command) override;
+    typedef vgui::Frame BaseClass;
 
-	typedef vgui::Frame BaseClass;
-
-	CBetterSpraySettingsPage* m_pBetterSpraySettingsPage{};
-	CTaskListPage* m_pTaskListPage{};
-	vgui::PropertySheet* m_pTabPanel{};
+    CBetterSpraySettingsPage* m_pBetterSpraySettingsPage{};
+    CTaskListPage*            m_pTaskListPage{};
+    vgui::PropertySheet*      m_pTabPanel{};
 };

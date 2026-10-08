@@ -33,7 +33,7 @@ int wmain(int argc, wchar_t** argv)
     }
     auto factory = reinterpret_cast<CreateInterfaceFn>(GetProcAddress(plugin, "CreateInterface"));
     assert(nullptr != factory);
-    int status = IFACE_FAILED;
+    int  status    = IFACE_FAILED;
     auto lifecycle = static_cast<IPluginsV4*>(factory(METAHOOK_PLUGIN_API_VERSION_V4, &status));
     assert(IFACE_OK == status);
     assert(nullptr != lifecycle);
@@ -47,12 +47,12 @@ int wmain(int argc, wchar_t** argv)
     assert(IFACE_FAILED == status);
 
     //An older host must be rejected before any new API function is accessed.
-    metahook_api_t api = {};
-    api.SysError = ReportVersionError;
-    mh_interface_t host = {};
+    metahook_api_t api      = {};
+    api.SysError            = ReportVersionError;
+    mh_interface_t host     = {};
     host.MetaHookAPIVersion = METAHOOK_API_VERSION - 1;
-    mh_enginesave_t save = {};
-    cl_enginefunc_t engine = {};
+    mh_enginesave_t save    = {};
+    cl_enginefunc_t engine  = {};
     lifecycle->Init(&api, &host, &save);
     lifecycle->LoadEngine(&engine);
     assert(1 == versionErrors);

@@ -12,5 +12,5 @@
 */
 inline bool EngineSupportsPlayerIdentity()
 {
-	return g_iEngineType == ENGINE_SVENGINE || g_iEngineType == ENGINE_GOLDSRC_HL25;
+    return g_iEngineType == ENGINE_SVENGINE || g_iEngineType == ENGINE_GOLDSRC_HL25;
 }

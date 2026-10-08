@@ -12,3 +12,6 @@ __pycache__/
 /Release/
 /src/Debug/
 /src/Release/
+
+# Generated from the shared FormatValidation source during CMake configuration.
+/.clang-format

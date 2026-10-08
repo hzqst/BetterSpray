@@ -14,10 +14,10 @@ static void TestImage(FREE_IMAGE_FORMAT format)
         assert(TRUE == FreeImage_FIFSupportsReading(input));
     FIBITMAP* bitmap = FreeImage_Allocate(2, 2, 32);
     assert(nullptr != bitmap);
-    RGBQUAD color = {};
-    color.rgbRed = 24;
-    color.rgbGreen = 96;
-    color.rgbBlue = 192;
+    RGBQUAD color     = {};
+    color.rgbRed      = 24;
+    color.rgbGreen    = 96;
+    color.rgbBlue     = 192;
     color.rgbReserved = 80;
     for (unsigned y = 0; y < 2; ++y)
         for (unsigned x = 0; x < 2; ++x)
@@ -44,9 +44,9 @@ static void TestImage(FREE_IMAGE_FORMAT format)
 
 static void TestHTML()
 {
-    const char html[] = "<!doctype html><html><head><meta charset='utf-8'></head><body>"
-        "<div class='floatHelp'>\xe5\x96\xb7\xe6\xbc\x86</div>"
-        "<img id='ActualMedia' src='https://example.invalid/spray.jpg'></body></html>";
+    const char html[]   = "<!doctype html><html><head><meta charset='utf-8'></head><body>"
+                          "<div class='floatHelp'>\xe5\x96\xb7\xe6\xbc\x86</div>"
+                          "<img id='ActualMedia' src='https://example.invalid/spray.jpg'></body></html>";
     htmlDocPtr document = htmlReadMemory(html, static_cast<int>(strlen(html)), nullptr, "UTF-8", HTML_PARSE_NOERROR | HTML_PARSE_NOWARNING);
     assert(nullptr != document);
     xmlXPathContextPtr context = xmlXPathNewContext(document);

@@ -5,11 +5,10 @@
 class CTaskListPanel : public vgui::ListPanel
 {
 public:
-	DECLARE_CLASS_SIMPLE(CTaskListPanel, vgui::ListPanel);
+    DECLARE_CLASS_SIMPLE(CTaskListPanel, vgui::ListPanel);
 
-	CTaskListPanel(vgui::Panel* parent, const char* pName);
+    CTaskListPanel(vgui::Panel* parent, const char* pName);
 
 private:
-
-	typedef vgui::ListPanel BaseClass;
+    typedef vgui::ListPanel BaseClass;
 };
