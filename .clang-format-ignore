@@ -1,0 +1,5 @@
+# Repository-relative exclusions for shared FormatValidation.
+# Only src/, include/, and tests/ are selected; dependencies and artifacts are excluded.
+**/thirdparty/**
+**/build/**
+**/install/**
