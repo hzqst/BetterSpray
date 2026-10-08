@@ -10,32 +10,32 @@
 #include <string>
 #include <vector>
 
-metahook_api_t* g_pMetaHookAPI = nullptr;
-int g_iEngineType = ENGINE_SVENGINE;
-DWORD g_dwEngineBuildnum = 10257;
+metahook_api_t* g_pMetaHookAPI     = nullptr;
+int             g_iEngineType      = ENGINE_SVENGINE;
+DWORD           g_dwEngineBuildnum = 10257;
 
 namespace
 {
-constexpr uintptr_t EngineBase = 0x10000000;
-constexpr uintptr_t MirrorBase = 0x20000000;
+constexpr uintptr_t EngineBase    = 0x10000000;
+constexpr uintptr_t MirrorBase    = 0x20000000;
 constexpr uintptr_t TextureOffset = 0x400;
-constexpr uintptr_t DecalOffset = 0x800;
-constexpr uintptr_t Trampoline = 0x30000000;
+constexpr uintptr_t DecalOffset   = 0x800;
+constexpr uintptr_t Trampoline    = 0x30000000;
 struct Query
 {
 
-    PVOID module;
-    std::string name;
+    PVOID                module;
+    std::string          name;
     mh_gamesymbol_kind_t kind;
 };
-std::vector<Query> queries;
+std::vector<Query>       queries;
 std::vector<std::string> errors;
-mh_gamesymbol_status_t failure = MH_GAMESYMBOL_OK;
-bool nullAddress = false;
-bool errorReturns = false;
-bool firstMissing = false;
-int scans = 0;
-int hooks = 0;
+mh_gamesymbol_status_t   failure      = MH_GAMESYMBOL_OK;
+bool                     nullAddress  = false;
+bool                     errorReturns = false;
+bool                     firstMissing = false;
+int                      scans        = 0;
+int                      hooks        = 0;
 
 mh_gamesymbol_status_t Resolve(PVOID module, const char* name, mh_gamesymbol_kind_t kind, PVOID* output)
 {
@@ -64,7 +64,7 @@ const char* StatusString(mh_gamesymbol_status_t)
 
 void ReportError(const char* format, ...)
 {
-    char message[1024];
+    char    message[1024];
     va_list args;
     va_start(args, format);
     vsnprintf(message, sizeof(message), format, args);
@@ -92,7 +92,7 @@ BOOL Uninstall(hook_t*)
 {
     return TRUE;
 }
-}
+} // namespace
 
 texture_t* Draw_DecalTexture(int)
 {
@@ -110,7 +110,7 @@ int main(int argc, char** argv)
                                ENGINE_SVENGINE, ENGINE_GOLDSRC_HL25, ENGINE_GOLDSRC_COF};
         for (int engine : engines)
         {
-            g_iEngineType = engine;
+            g_iEngineType       = engine;
             const bool expected = (engine == ENGINE_SVENGINE || engine == ENGINE_GOLDSRC_HL25);
             assert(expected == EngineSupportsPlayerIdentity());
         }
@@ -132,19 +132,19 @@ int main(int argc, char** argv)
         assert(std::string("success") == scenario);
     errorReturns = scenario == "error_returns";
 
-    metahook_api_t api = {};
-    api.ResolveGameSymbol = Resolve;
+    metahook_api_t api            = {};
+    api.ResolveGameSymbol         = Resolve;
     api.GetGameSymbolStatusString = StatusString;
-    api.SysError = ReportError;
-    api.SearchPattern = Scan;
-    api.InlineHook = Install;
-    api.UnHook = Uninstall;
-    g_pMetaHookAPI = &api;
-    mh_dll_info_t engine = {};
-    engine.ImageBase = reinterpret_cast<PVOID>(EngineBase);
-    engine.ImageSize = 0x10000;
-    mh_dll_info_t mirror = engine;
-    mirror.ImageBase = reinterpret_cast<PVOID>(MirrorBase);
+    api.SysError                  = ReportError;
+    api.SearchPattern             = Scan;
+    api.InlineHook                = Install;
+    api.UnHook                    = Uninstall;
+    g_pMetaHookAPI                = &api;
+    mh_dll_info_t engine          = {};
+    engine.ImageBase              = reinterpret_cast<PVOID>(EngineBase);
+    engine.ImageSize              = 0x10000;
+    mh_dll_info_t mirror          = engine;
+    mirror.ImageBase              = reinterpret_cast<PVOID>(MirrorBase);
 
     try
     {

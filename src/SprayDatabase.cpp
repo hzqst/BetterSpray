@@ -22,1170 +22,1209 @@
 
 static unsigned int g_uiAllocatedTaskId = 0;
 
-FIBITMAP* BS_RscaleImageToClosestBackgroundSize(const void* data, size_t dataSize, const char* identifier);
+FIBITMAP*       BS_RscaleImageToClosestBackgroundSize(const void* data, size_t dataSize, const char* identifier);
 unsigned WINAPI FI_Read(void* buffer, unsigned size, unsigned count, fi_handle handle);
 unsigned WINAPI FI_Write(void* buffer, unsigned size, unsigned count, fi_handle handle);
-int WINAPI FI_Seek(fi_handle handle, long offset, int origin);
-long WINAPI FI_Tell(fi_handle handle);
+int WINAPI      FI_Seek(fi_handle handle, long offset, int origin);
+long WINAPI     FI_Tell(fi_handle handle);
 
 static int UTIL_GetContentLength(IUtilHTTPResponse* ResponseInstance)
 {
-	char szContentLength[32]{};
-	if (ResponseInstance->GetHeader("Content-Length", szContentLength, sizeof(szContentLength) - 1) && szContentLength[0])
-	{
-		return atoi(szContentLength);
-	}
+    char szContentLength[32]{};
+    if (ResponseInstance->GetHeader("Content-Length", szContentLength, sizeof(szContentLength) - 1) && szContentLength[0])
+    {
+        return atoi(szContentLength);
+    }
 
-	return -1;
+    return -1;
 }
 
 class ISprayQueryInternal : public ISprayQuery
 {
 public:
-	virtual void AddRef() = 0;
-	virtual void Release() = 0;
+    virtual void AddRef()  = 0;
+    virtual void Release() = 0;
 
-	virtual void OnResponding(IUtilHTTPRequest* RequestInstance, IUtilHTTPResponse* ResponseInstance) = 0;
-	virtual void OnFinish(IUtilHTTPRequest* RequestInstance, IUtilHTTPResponse* ResponseInstance) = 0;
-	virtual bool OnStreamComplete(IUtilHTTPRequest* RequestInstance, IUtilHTTPResponse* ResponseInstance) = 0;
-	virtual bool OnProcessPayload(IUtilHTTPRequest* RequestInstance, IUtilHTTPResponse* ResponseInstance, const void* data, size_t size) = 0;
-	virtual void OnReceiveChunk(IUtilHTTPRequest* RequestInstance, IUtilHTTPResponse* ResponseInstance, const void* data, size_t size) = 0;
-	virtual void OnFailure() = 0;
+    virtual void OnResponding(IUtilHTTPRequest* RequestInstance, IUtilHTTPResponse* ResponseInstance)                                    = 0;
+    virtual void OnFinish(IUtilHTTPRequest* RequestInstance, IUtilHTTPResponse* ResponseInstance)                                        = 0;
+    virtual bool OnStreamComplete(IUtilHTTPRequest* RequestInstance, IUtilHTTPResponse* ResponseInstance)                                = 0;
+    virtual bool OnProcessPayload(IUtilHTTPRequest* RequestInstance, IUtilHTTPResponse* ResponseInstance, const void* data, size_t size) = 0;
+    virtual void OnReceiveChunk(IUtilHTTPRequest* RequestInstance, IUtilHTTPResponse* ResponseInstance, const void* data, size_t size)   = 0;
+    virtual void OnFailure()                                                                                                             = 0;
 
-	virtual void RunFrame(float flCurrentAbsTime) = 0;
-	virtual void StartQuery() = 0;
+    virtual void RunFrame(float flCurrentAbsTime) = 0;
+    virtual void StartQuery()                     = 0;
 
-	virtual void OnProcessPayloadWorkItem(void* context) {};//This always run in thread pool !!!
-	virtual void OnProcessPayloadWorkItemComplete(void* context) {};
+    virtual void OnProcessPayloadWorkItem(void* context) {}; //This always run in thread pool !!!
+    virtual void OnProcessPayloadWorkItemComplete(void* context) {};
 };
 
 class ISprayDatabaseInternal : public ISprayDatabase
 {
 public:
-	virtual void BuildQueryImageLink(const std::string& userId, const std::string& wadHash, const std::string& fileId) = 0;
-	virtual void BuildQueryImageFile(const std::string& userId, const std::string& fileName, const std::string& actualMediaUrl) = 0;
-	virtual void OnImageFileAcquired(const std::string& userId, const std::string& filePath) = 0;
-	virtual void UpdatePlayerSprayQueryStatusInternal(const std::string& userId, SprayQueryState newQueryStatus) = 0;
-	virtual void DispatchQueryStateChangeCallback(ISprayQuery* pQuery, SprayQueryState newState) = 0;
-
+    virtual void BuildQueryImageLink(const std::string& userId, const std::string& wadHash, const std::string& fileId)          = 0;
+    virtual void BuildQueryImageFile(const std::string& userId, const std::string& fileName, const std::string& actualMediaUrl) = 0;
+    virtual void OnImageFileAcquired(const std::string& userId, const std::string& filePath)                                    = 0;
+    virtual void UpdatePlayerSprayQueryStatusInternal(const std::string& userId, SprayQueryState newQueryStatus)                = 0;
+    virtual void DispatchQueryStateChangeCallback(ISprayQuery* pQuery, SprayQueryState newState)                                = 0;
 };
 
 ISprayDatabaseInternal* SprayDatabaseInternal();
 
-template<typename T>
-class AutoPtr {
+template <typename T>
+class AutoPtr
+{
 private:
-	T* m_ptr;
+    T* m_ptr;
 
 public:
-	AutoPtr() : m_ptr(nullptr) {}
-	
-	explicit AutoPtr(T* ptr) : m_ptr(ptr) {
-		if (m_ptr) {
-			m_ptr->AddRef();
-		}
-	}
+    AutoPtr() : m_ptr(nullptr) {}
 
-	AutoPtr(const AutoPtr& other) : m_ptr(other.m_ptr) {
-		if (m_ptr) {
-			m_ptr->AddRef();
-		}
-	}
+    explicit AutoPtr(T* ptr) : m_ptr(ptr)
+    {
+        if (m_ptr)
+        {
+            m_ptr->AddRef();
+        }
+    }
 
-	AutoPtr(AutoPtr&& other) noexcept : m_ptr(other.m_ptr) {
-		other.m_ptr = nullptr;
-	}
+    AutoPtr(const AutoPtr& other) : m_ptr(other.m_ptr)
+    {
+        if (m_ptr)
+        {
+            m_ptr->AddRef();
+        }
+    }
 
-	~AutoPtr() {
-		if (m_ptr) {
-			m_ptr->Release();
-		}
-	}
+    AutoPtr(AutoPtr&& other) noexcept : m_ptr(other.m_ptr)
+    {
+        other.m_ptr = nullptr;
+    }
 
-	AutoPtr& operator=(const AutoPtr& other) {
-		if (this != &other) {
-			if (m_ptr) {
-				m_ptr->Release();
-			}
-			m_ptr = other.m_ptr;
-			if (m_ptr) {
-				m_ptr->AddRef();
-			}
-		}
-		return *this;
-	}
+    ~AutoPtr()
+    {
+        if (m_ptr)
+        {
+            m_ptr->Release();
+        }
+    }
 
-	AutoPtr& operator=(AutoPtr&& other) noexcept {
-		if (this != &other) {
-			if (m_ptr) {
-				m_ptr->Release();
-			}
-			m_ptr = other.m_ptr;
-			other.m_ptr = nullptr;
-		}
-		return *this;
-	}
+    AutoPtr& operator=(const AutoPtr& other)
+    {
+        if (this != &other)
+        {
+            if (m_ptr)
+            {
+                m_ptr->Release();
+            }
+            m_ptr = other.m_ptr;
+            if (m_ptr)
+            {
+                m_ptr->AddRef();
+            }
+        }
+        return *this;
+    }
 
-	T* operator->() const { return m_ptr; }
-	T& operator*() const { return *m_ptr; }
-	operator T*() const { return m_ptr; }
-	
-	T* Get() const { return m_ptr; }
-	
-	void Reset(T* ptr = nullptr) {
-		if (m_ptr) {
-			m_ptr->Release();
-		}
-		m_ptr = ptr;
-		if (m_ptr) {
-			m_ptr->AddRef();
-		}
-	}
+    AutoPtr& operator=(AutoPtr&& other) noexcept
+    {
+        if (this != &other)
+        {
+            if (m_ptr)
+            {
+                m_ptr->Release();
+            }
+            m_ptr       = other.m_ptr;
+            other.m_ptr = nullptr;
+        }
+        return *this;
+    }
 
-	T* Detach() {
-		T* ptr = m_ptr;
-		m_ptr = nullptr;
-		return ptr;
-	}
+    T* operator->() const { return m_ptr; }
+    T& operator*() const { return *m_ptr; }
+       operator T*() const { return m_ptr; }
+
+    T* Get() const { return m_ptr; }
+
+    void Reset(T* ptr = nullptr)
+    {
+        if (m_ptr)
+        {
+            m_ptr->Release();
+        }
+        m_ptr = ptr;
+        if (m_ptr)
+        {
+            m_ptr->AddRef();
+        }
+    }
+
+    T* Detach()
+    {
+        T* ptr = m_ptr;
+        m_ptr  = nullptr;
+        return ptr;
+    }
 };
 
 class CScreenshotFloatHelpInfo
 {
 public:
-	std::string fileId;          // 从data-publishedfileid获取
-	std::string imageUrl;        // 从background-image获取
-	std::string description;     // 从q.ellipsis获取的文本
+    std::string fileId;      // 从data-publishedfileid获取
+    std::string imageUrl;    // 从background-image获取
+    std::string description; // 从q.ellipsis获取的文本
 };
 
 class CThreadedWorkItemContext : public IThreadedTask
 {
 public:
-	CThreadedWorkItemContext(ISprayQueryInternal* p, const char* data, size_t size) :
-		pthis(p),
-		payload(data, size)
-	{
-	}
+    CThreadedWorkItemContext(ISprayQueryInternal* p, const char* data, size_t size) :
+        pthis(p),
+        payload(data, size)
+    {
+    }
 
-	void Destroy() override
-	{
-		delete this;
-	}
+    void Destroy() override
+    {
+        delete this;
+    }
 
-	bool ShouldRun(float time) override
-	{
-		return true;
-	}
+    bool ShouldRun(float time) override
+    {
+        return true;
+    }
 
-	void Run(float time) override
-	{
-		pthis->OnProcessPayloadWorkItemComplete(this);
-	}
+    void Run(float time) override
+    {
+        pthis->OnProcessPayloadWorkItemComplete(this);
+    }
 
 public:
-	AutoPtr<ISprayQueryInternal> pthis;
-	std::string payload;
-	std::string errorMessage;
+    AutoPtr<ISprayQueryInternal> pthis;
+    std::string                  payload;
+    std::string                  errorMessage;
 };
 
 class CSprayQueryTaskListWorkItemContext : public CThreadedWorkItemContext
 {
 public:
-	CSprayQueryTaskListWorkItemContext(ISprayQueryInternal* p, const char* data, size_t size) :
-		CThreadedWorkItemContext(p, data, size)
-	{
-	}
+    CSprayQueryTaskListWorkItemContext(ISprayQueryInternal* p, const char* data, size_t size) :
+        CThreadedWorkItemContext(p, data, size)
+    {
+    }
 
 public:
-	std::vector<std::shared_ptr<CScreenshotFloatHelpInfo>> floatHelpList;
+    std::vector<std::shared_ptr<CScreenshotFloatHelpInfo>> floatHelpList;
 };
 
 class CSprayQueryImageLinkWorkItemContext : public CThreadedWorkItemContext
 {
 public:
-	CSprayQueryImageLinkWorkItemContext(ISprayQueryInternal* p, const char* data, size_t size) :
-		CThreadedWorkItemContext(p, data, size)
-	{
-	}
+    CSprayQueryImageLinkWorkItemContext(ISprayQueryInternal* p, const char* data, size_t size) :
+        CThreadedWorkItemContext(p, data, size)
+    {
+    }
 
 public:
-	std::string actualMediaUrl;
+    std::string actualMediaUrl;
 };
 
 class CUtilHTTPCallbacks : public IUtilHTTPCallbacks
 {
 private:
-	//No AutoPtr, because each ISprayQuery has their own IUtilHTTPCallbacks
-	ISprayQueryInternal* m_pQueryTask{};
+    //No AutoPtr, because each ISprayQuery has their own IUtilHTTPCallbacks
+    ISprayQueryInternal* m_pQueryTask{};
 
 public:
-	CUtilHTTPCallbacks(ISprayQueryInternal* p) : m_pQueryTask(p) {}
+    CUtilHTTPCallbacks(ISprayQueryInternal* p) : m_pQueryTask(p) {}
 
-	void Destroy() override
-	{
-		delete this;
-	}
+    void Destroy() override
+    {
+        delete this;
+    }
 
-	void OnResponseComplete(IUtilHTTPRequest* RequestInstance, IUtilHTTPResponse* ResponseInstance) override
-	{
-		if (!RequestInstance->IsRequestSuccessful())
-		{
-			m_pQueryTask->OnFailure();
-			return;
-		}
+    void OnResponseComplete(IUtilHTTPRequest* RequestInstance, IUtilHTTPResponse* ResponseInstance) override
+    {
+        if (!RequestInstance->IsRequestSuccessful())
+        {
+            m_pQueryTask->OnFailure();
+            return;
+        }
 
-		if (ResponseInstance->IsResponseError())
-		{
-			m_pQueryTask->OnFailure();
-			return;
-		}
+        if (ResponseInstance->IsResponseError())
+        {
+            m_pQueryTask->OnFailure();
+            return;
+        }
 
-		if (!RequestInstance->IsStream())
-		{
-			auto pPayload = ResponseInstance->GetPayload();
+        if (!RequestInstance->IsStream())
+        {
+            auto pPayload = ResponseInstance->GetPayload();
 
-			if (!m_pQueryTask->OnProcessPayload(RequestInstance, ResponseInstance, (const void*)pPayload->GetBytes(), pPayload->GetLength()))
-			{
-				m_pQueryTask->OnFailure();
-				return;
-			}
-		}
-		else
-		{
-			if (!m_pQueryTask->OnStreamComplete(RequestInstance, ResponseInstance))
-			{
-				m_pQueryTask->OnFailure();
-				return;
-			}
-		}
-	}
+            if (!m_pQueryTask->OnProcessPayload(RequestInstance, ResponseInstance, (const void*)pPayload->GetBytes(), pPayload->GetLength()))
+            {
+                m_pQueryTask->OnFailure();
+                return;
+            }
+        }
+        else
+        {
+            if (!m_pQueryTask->OnStreamComplete(RequestInstance, ResponseInstance))
+            {
+                m_pQueryTask->OnFailure();
+                return;
+            }
+        }
+    }
 
-	void OnUpdateState(IUtilHTTPRequest* RequestInstance, IUtilHTTPResponse* ResponseInstance, UtilHTTPRequestState NewState) override
-	{
-		if (NewState == UtilHTTPRequestState::Responding)
-		{
-			m_pQueryTask->OnResponding(RequestInstance, ResponseInstance);
-		}
-		if (NewState == UtilHTTPRequestState::Finished)
-		{
-			m_pQueryTask->OnFinish(RequestInstance, ResponseInstance);
-		}
-	}
+    void OnUpdateState(IUtilHTTPRequest* RequestInstance, IUtilHTTPResponse* ResponseInstance, UtilHTTPRequestState NewState) override
+    {
+        if (NewState == UtilHTTPRequestState::Responding)
+        {
+            m_pQueryTask->OnResponding(RequestInstance, ResponseInstance);
+        }
+        if (NewState == UtilHTTPRequestState::Finished)
+        {
+            m_pQueryTask->OnFinish(RequestInstance, ResponseInstance);
+        }
+    }
 
-	void OnReceiveData(IUtilHTTPRequest* RequestInstance, IUtilHTTPResponse* ResponseInstance, const void* pData, size_t cbSize) override
-	{
-		//Only stream request has OnReceiveData
-		m_pQueryTask->OnReceiveChunk(RequestInstance, ResponseInstance, pData, cbSize);
-	}
+    void OnReceiveData(IUtilHTTPRequest* RequestInstance, IUtilHTTPResponse* ResponseInstance, const void* pData, size_t cbSize) override
+    {
+        //Only stream request has OnReceiveData
+        m_pQueryTask->OnReceiveChunk(RequestInstance, ResponseInstance, pData, cbSize);
+    }
 };
 
 class CSprayQueryBase : public ISprayQueryInternal
 {
 private:
-	volatile long m_RefCount{};
-	bool m_bResponding{};
-	bool m_bFinished{};
-	bool m_bFailed{};
-	float m_flNextRetryTime{};
-	unsigned int m_uiTaskId{};
+    volatile long m_RefCount{};
+    bool          m_bResponding{};
+    bool          m_bFinished{};
+    bool          m_bFailed{};
+    float         m_flNextRetryTime{};
+    unsigned int  m_uiTaskId{};
 
 protected:
-	std::string m_Url;
-	UtilHTTPRequestId_t m_RequestId{ UTILHTTP_REQUEST_INVALID_ID };
+    std::string         m_Url;
+    UtilHTTPRequestId_t m_RequestId{UTILHTTP_REQUEST_INVALID_ID};
 
 public:
-	CSprayQueryBase()
-	{
-		m_RefCount = 1;
-		m_uiTaskId = g_uiAllocatedTaskId;
-		g_uiAllocatedTaskId++;
-	}
+    CSprayQueryBase()
+    {
+        m_RefCount = 1;
+        m_uiTaskId = g_uiAllocatedTaskId;
+        g_uiAllocatedTaskId++;
+    }
 
-	~CSprayQueryBase()
-	{
+    ~CSprayQueryBase()
+    {
 #ifdef _DEBUG
-		gEngfuncs.Con_DPrintf("CSprayQuery: deleting query \"%s\"\n", m_Url.c_str());
+        gEngfuncs.Con_DPrintf("CSprayQuery: deleting query \"%s\"\n", m_Url.c_str());
 #endif
-		if (m_RequestId != UTILHTTP_REQUEST_INVALID_ID)
-		{
-			UtilHTTPClient()->DestroyRequestById(m_RequestId);
-			m_RequestId = UTILHTTP_REQUEST_INVALID_ID;
-		}
-	}
+        if (m_RequestId != UTILHTTP_REQUEST_INVALID_ID)
+        {
+            UtilHTTPClient()->DestroyRequestById(m_RequestId);
+            m_RequestId = UTILHTTP_REQUEST_INVALID_ID;
+        }
+    }
 
-	void AddRef() override {
-		InterlockedIncrement(&m_RefCount);
-	}
+    void AddRef() override
+    {
+        InterlockedIncrement(&m_RefCount);
+    }
 
-	void Release() override {
-		if (InterlockedDecrement(&m_RefCount) == 0) {
-			delete this;
-		}
-	}
+    void Release() override
+    {
+        if (InterlockedDecrement(&m_RefCount) == 0)
+        {
+            delete this;
+        }
+    }
 
-	const char* GetUrl() const override
-	{
-		return m_Url.c_str();
-	}
+    const char* GetUrl() const override
+    {
+        return m_Url.c_str();
+    }
 
-	bool IsFinished() const override
-	{
-		return m_bFinished;
-	}
+    bool IsFinished() const override
+    {
+        return m_bFinished;
+    }
 
-	bool IsFailed() const override
-	{
-		return m_bFailed;
-	}
+    bool IsFailed() const override
+    {
+        return m_bFailed;
+    }
 
-	bool NeedRetry() const override
-	{
-		return m_flNextRetryTime > 0;
-	}
+    bool NeedRetry() const override
+    {
+        return m_flNextRetryTime > 0;
+    }
 
-	SprayQueryState GetState() const override
-	{
-		if (m_bFailed)
-			return SprayQueryState_Failed;
+    SprayQueryState GetState() const override
+    {
+        if (m_bFailed)
+            return SprayQueryState_Failed;
 
-		if (m_bFinished)
-			return SprayQueryState_Finished;
+        if (m_bFinished)
+            return SprayQueryState_Finished;
 
-		if (m_bResponding)
-			return SprayQueryState_Receiving;
+        if (m_bResponding)
+            return SprayQueryState_Receiving;
 
-		return SprayQueryState_Querying;
-	}
+        return SprayQueryState_Querying;
+    }
 
-	unsigned int GetTaskId() const override
-	{
-		return m_uiTaskId;
-	}
+    unsigned int GetTaskId() const override
+    {
+        return m_uiTaskId;
+    }
 
-	void OnResponding(IUtilHTTPRequest* RequestInstance, IUtilHTTPResponse* ResponseInstance) override
-	{
-		m_bResponding = true;
+    void OnResponding(IUtilHTTPRequest* RequestInstance, IUtilHTTPResponse* ResponseInstance) override
+    {
+        m_bResponding = true;
 
-		SprayDatabaseInternal()->DispatchQueryStateChangeCallback(this, GetState());
-	}
+        SprayDatabaseInternal()->DispatchQueryStateChangeCallback(this, GetState());
+    }
 
-	void OnFailure() override
-	{
-		m_bFailed = true;
-		m_flNextRetryTime = (float)gEngfuncs.GetAbsoluteTime() + 5.0f;
+    void OnFailure() override
+    {
+        m_bFailed         = true;
+        m_flNextRetryTime = (float)gEngfuncs.GetAbsoluteTime() + 5.0f;
 
-		SprayDatabaseInternal()->DispatchQueryStateChangeCallback(this, GetState());
-	}
+        SprayDatabaseInternal()->DispatchQueryStateChangeCallback(this, GetState());
+    }
 
-	void OnFinish(IUtilHTTPRequest* RequestInstance, IUtilHTTPResponse* ResponseInstance) override
-	{
-		m_bFinished = true;
-		m_bResponding = false;
+    void OnFinish(IUtilHTTPRequest* RequestInstance, IUtilHTTPResponse* ResponseInstance) override
+    {
+        m_bFinished   = true;
+        m_bResponding = false;
 
-		SprayDatabaseInternal()->DispatchQueryStateChangeCallback(this, GetState());
-	}
+        SprayDatabaseInternal()->DispatchQueryStateChangeCallback(this, GetState());
+    }
 
-	bool OnProcessPayload(IUtilHTTPRequest* RequestInstance, IUtilHTTPResponse* ResponseInstance, const void* data, size_t size) override
-	{
-		auto nContentLength = UTIL_GetContentLength(ResponseInstance);
+    bool OnProcessPayload(IUtilHTTPRequest* RequestInstance, IUtilHTTPResponse* ResponseInstance, const void* data, size_t size) override
+    {
+        auto nContentLength = UTIL_GetContentLength(ResponseInstance);
 
-		if (nContentLength >= 0 && size < nContentLength)
-		{
-			gEngfuncs.Con_Printf("[BetterSpray] Content-Length mismatch for \"%s\": expect %d , got %d !\n", m_Url.c_str(), nContentLength, size);
-			return false;
-		}
+        if (nContentLength >= 0 && size < nContentLength)
+        {
+            gEngfuncs.Con_Printf("[BetterSpray] Content-Length mismatch for \"%s\": expect %d , got %d !\n", m_Url.c_str(), nContentLength, size);
+            return false;
+        }
 
-		return true;
-	}
+        return true;
+    }
 
-	bool OnStreamComplete(IUtilHTTPRequest* RequestInstance, IUtilHTTPResponse* ResponseInstance) override
-	{
-		return true;
-	}
+    bool OnStreamComplete(IUtilHTTPRequest* RequestInstance, IUtilHTTPResponse* ResponseInstance) override
+    {
+        return true;
+    }
 
-	void OnReceiveChunk(IUtilHTTPRequest* RequestInstance, IUtilHTTPResponse* ResponseInstance, const void* data, size_t size) override
-	{
-		//do nothing
-	}
+    void OnReceiveChunk(IUtilHTTPRequest* RequestInstance, IUtilHTTPResponse* ResponseInstance, const void* data, size_t size) override
+    {
+        //do nothing
+    }
 
-	void RunFrame(float flCurrentAbsTime) override
-	{
-		if (IsFailed() && flCurrentAbsTime > m_flNextRetryTime)
-		{
-			StartQuery();
-		}
-	}
+    void RunFrame(float flCurrentAbsTime) override
+    {
+        if (IsFailed() && flCurrentAbsTime > m_flNextRetryTime)
+        {
+            StartQuery();
+        }
+    }
 
-	virtual void StartQuery()
-	{
-		if (m_RequestId != UTILHTTP_REQUEST_INVALID_ID)
-		{
-			UtilHTTPClient()->DestroyRequestById(m_RequestId);
-			m_RequestId = UTILHTTP_REQUEST_INVALID_ID;
-		}
+    virtual void StartQuery()
+    {
+        if (m_RequestId != UTILHTTP_REQUEST_INVALID_ID)
+        {
+            UtilHTTPClient()->DestroyRequestById(m_RequestId);
+            m_RequestId = UTILHTTP_REQUEST_INVALID_ID;
+        }
 
-		m_bFailed = false;
-		m_bFinished = false;
-		SprayDatabaseInternal()->DispatchQueryStateChangeCallback(this, GetState());
-	}
+        m_bFailed   = false;
+        m_bFinished = false;
+        SprayDatabaseInternal()->DispatchQueryStateChangeCallback(this, GetState());
+    }
 };
 
 class CSprayQueryImageFileTask : public CSprayQueryBase
 {
 public:
-	std::string m_userId;
-	std::string m_fileName;
-	std::string m_actualMediaUrl;
+    std::string m_userId;
+    std::string m_fileName;
+    std::string m_actualMediaUrl;
 
 public:
-	CSprayQueryImageFileTask(const std::string& userId, const std::string& fileName, const std::string& actualMediaUrl) :
-		CSprayQueryBase(),
-		m_userId(userId),
-		m_fileName(fileName),
-		m_actualMediaUrl(actualMediaUrl)
-	{
+    CSprayQueryImageFileTask(const std::string& userId, const std::string& fileName, const std::string& actualMediaUrl) :
+        CSprayQueryBase(),
+        m_userId(userId),
+        m_fileName(fileName),
+        m_actualMediaUrl(actualMediaUrl)
+    {
+    }
 
-	}
+    void StartQuery() override
+    {
+        CSprayQueryBase::StartQuery();
 
-	void StartQuery() override
-	{
-		CSprayQueryBase::StartQuery();
+        m_Url = m_actualMediaUrl;
 
-		m_Url = m_actualMediaUrl;
+        auto pRequestInstance = UtilHTTPClient()->CreateAsyncRequest(m_Url.c_str(), UtilHTTPMethod::Get, new CUtilHTTPCallbacks(this));
+        //auto pRequestInstance = UtilHTTPClient()->CreateAsyncStreamRequest(m_Url.c_str(), UtilHTTPMethod::Get, new CUtilHTTPCallbacks(this));
 
-		auto pRequestInstance = UtilHTTPClient()->CreateAsyncRequest(m_Url.c_str(), UtilHTTPMethod::Get, new CUtilHTTPCallbacks(this));
-		//auto pRequestInstance = UtilHTTPClient()->CreateAsyncStreamRequest(m_Url.c_str(), UtilHTTPMethod::Get, new CUtilHTTPCallbacks(this));
+        if (!pRequestInstance)
+        {
+            CSprayQueryBase::OnFailure();
+            return;
+        }
 
-		if (!pRequestInstance)
-		{
-			CSprayQueryBase::OnFailure();
-			return;
-		}
+        UtilHTTPClient()->AddToRequestPool(pRequestInstance);
 
-		UtilHTTPClient()->AddToRequestPool(pRequestInstance);
+        m_RequestId = pRequestInstance->GetRequestId();
 
-		m_RequestId = pRequestInstance->GetRequestId();
+        pRequestInstance->Send();
+    }
 
-		pRequestInstance->Send();
-	}
+    bool OnProcessPayload(IUtilHTTPRequest* RequestInstance, IUtilHTTPResponse* ResponseInstance, const void* data, size_t size) override
+    {
+        if (!CSprayQueryBase::OnProcessPayload(RequestInstance, ResponseInstance, data, size))
+            return false;
 
-	bool OnProcessPayload(IUtilHTTPRequest* RequestInstance, IUtilHTTPResponse* ResponseInstance, const void* data, size_t size) override
-	{
-		if (!CSprayQueryBase::OnProcessPayload(RequestInstance, ResponseInstance, data, size))
-			return false;
+        auto fiB = BS_RscaleImageToClosestBackgroundSize(data, size, m_fileName.c_str());
 
-		auto fiB = BS_RscaleImageToClosestBackgroundSize(data, size, m_fileName.c_str());
+        if (!fiB)
+        {
+            gEngfuncs.Con_DPrintf("[BetterSpray] Acquired image file \"%s\" is invalid !\n", m_fileName.c_str());
+            return true;
+        }
 
-		if (!fiB)
-		{
-			gEngfuncs.Con_DPrintf("[BetterSpray] Acquired image file \"%s\" is invalid !\n", m_fileName.c_str());
-			return true;
-		}
+        SCOPE_EXIT { FreeImage_Unload(fiB); };
 
-		SCOPE_EXIT{ FreeImage_Unload(fiB); };
+        FILESYSTEM_ANY_CREATEDIR(CUSTOM_SPRAY_DIRECTORY, "GAMEDOWNLOAD");
 
-		FILESYSTEM_ANY_CREATEDIR(CUSTOM_SPRAY_DIRECTORY, "GAMEDOWNLOAD");
+        std::string filePath = std::format("{0}/{1}", CUSTOM_SPRAY_DIRECTORY, m_fileName);
 
-		std::string filePath = std::format("{0}/{1}", CUSTOM_SPRAY_DIRECTORY, m_fileName);
+        auto hFileHandle = FILESYSTEM_ANY_OPEN(filePath.c_str(), "wb", "GAMEDOWNLOAD");
 
-		auto hFileHandle = FILESYSTEM_ANY_OPEN(filePath.c_str(), "wb", "GAMEDOWNLOAD");
+        if (hFileHandle)
+        {
+            FreeImageIO fiIO;
+            fiIO.read_proc  = FI_Read;
+            fiIO.write_proc = FI_Write;
+            fiIO.seek_proc  = FI_Seek;
+            fiIO.tell_proc  = FI_Tell;
 
-		if (hFileHandle)
-		{
-			FreeImageIO fiIO;
-			fiIO.read_proc = FI_Read;
-			fiIO.write_proc = FI_Write;
-			fiIO.seek_proc = FI_Seek;
-			fiIO.tell_proc = FI_Tell;
+            BOOL bSaved = FreeImage_SaveToHandle(FIF_JPEG, fiB, &fiIO, (fi_handle)hFileHandle);
 
-			BOOL bSaved = FreeImage_SaveToHandle(FIF_JPEG, fiB, &fiIO, (fi_handle)hFileHandle);
+            FILESYSTEM_ANY_CLOSE(hFileHandle);
 
-			FILESYSTEM_ANY_CLOSE(hFileHandle);
+            if (bSaved)
+            {
+                gEngfuncs.Con_DPrintf("[BetterSpray] File \"%s\" acquired!\n", filePath.c_str());
 
-			if (bSaved)
-			{
-				gEngfuncs.Con_DPrintf("[BetterSpray] File \"%s\" acquired!\n", filePath.c_str());
+                SprayDatabaseInternal()->OnImageFileAcquired(m_userId, filePath);
+            }
+            else
+            {
+                gEngfuncs.Con_DPrintf("[BetterSpray] Could not save \"%s\" !\n", filePath.c_str());
 
-				SprayDatabaseInternal()->OnImageFileAcquired(m_userId, filePath);
-			}
-			else
-			{
-				gEngfuncs.Con_DPrintf("[BetterSpray] Could not save \"%s\" !\n", filePath.c_str());
+                SprayDatabaseInternal()->UpdatePlayerSprayQueryStatus(m_userId.c_str(), SprayQueryState_Failed);
+            }
+        }
+        else
+        {
+            gEngfuncs.Con_DPrintf("[BetterSpray] Could not open \"%s\" for write!\n", filePath.c_str());
 
-				SprayDatabaseInternal()->UpdatePlayerSprayQueryStatus(m_userId.c_str(), SprayQueryState_Failed);
-			}
-		}
-		else
-		{
-			gEngfuncs.Con_DPrintf("[BetterSpray] Could not open \"%s\" for write!\n", filePath.c_str());
+            SprayDatabaseInternal()->UpdatePlayerSprayQueryStatus(m_userId.c_str(), SprayQueryState_Failed);
+        }
 
-			SprayDatabaseInternal()->UpdatePlayerSprayQueryStatus(m_userId.c_str(), SprayQueryState_Failed);
-		}
+        return true;
+    }
 
-		return true;
-	}
+    const char* GetName() const override
+    {
+        return "QueryImageFile";
+    }
 
-	const char* GetName() const override
-	{
-		return "QueryImageFile";
-	}
-
-	const char* GetIdentifier() const override
-	{
-		return m_fileName.c_str();
-	}
+    const char* GetIdentifier() const override
+    {
+        return m_fileName.c_str();
+    }
 };
 
 class CSprayQueryImageLinkTask : public CSprayQueryBase
 {
 public:
-	std::string m_userId;
-	std::string m_wadHash;
-	std::string m_fileId;
-	bool m_bWorkItemCompleted{};
+    std::string m_userId;
+    std::string m_wadHash;
+    std::string m_fileId;
+    bool        m_bWorkItemCompleted{};
 
 public:
-	CSprayQueryImageLinkTask(const std::string& userId, const std::string& wadHash, const std::string& fileId) :
-		CSprayQueryBase(),
-		m_userId(userId),
-		m_wadHash(wadHash),
-		m_fileId(fileId)
-	{
+    CSprayQueryImageLinkTask(const std::string& userId, const std::string& wadHash, const std::string& fileId) :
+        CSprayQueryBase(),
+        m_userId(userId),
+        m_wadHash(wadHash),
+        m_fileId(fileId)
+    {
+    }
 
-	}
+    bool IsFinished() const override
+    {
+        if (!CSprayQueryBase::IsFinished())
+            return false;
 
-	bool IsFinished() const override
-	{
-		if (!CSprayQueryBase::IsFinished())
-			return false;
+        if (!m_bWorkItemCompleted)
+            return false;
 
-		if (!m_bWorkItemCompleted)
-			return false;
+        return true;
+    }
 
-		return true;
-	}
+    void StartQuery() override
+    {
+        CSprayQueryBase::StartQuery();
 
-	void StartQuery() override
-	{
-		CSprayQueryBase::StartQuery();
+        m_Url = std::format("https://steamcommunity.com/sharedfiles/filedetails/?id={0}&insideModal=1", m_fileId);
 
-		m_Url = std::format("https://steamcommunity.com/sharedfiles/filedetails/?id={0}&insideModal=1", m_fileId);
+        auto pRequestInstance = UtilHTTPClient()->CreateAsyncRequest(m_Url.c_str(), UtilHTTPMethod::Get, new CUtilHTTPCallbacks(this));
 
-		auto pRequestInstance = UtilHTTPClient()->CreateAsyncRequest(m_Url.c_str(), UtilHTTPMethod::Get, new CUtilHTTPCallbacks(this));
+        if (!pRequestInstance)
+        {
+            CSprayQueryBase::OnFailure();
+            return;
+        }
 
-		if (!pRequestInstance)
-		{
-			CSprayQueryBase::OnFailure();
-			return;
-		}
+        UtilHTTPClient()->AddToRequestPool(pRequestInstance);
 
-		UtilHTTPClient()->AddToRequestPool(pRequestInstance);
+        m_RequestId = pRequestInstance->GetRequestId();
 
-		m_RequestId = pRequestInstance->GetRequestId();
+        pRequestInstance->Send();
+    }
 
-		pRequestInstance->Send();
-	}
+    void OnProcessPayloadWorkItem(void* context) override
+    {
+        auto ctx = (CSprayQueryImageLinkWorkItemContext*)context;
 
-	void OnProcessPayloadWorkItem(void* context) override
-	{
-		auto ctx = (CSprayQueryImageLinkWorkItemContext*)context;
+        // 使用libxml解析HTML
+        htmlDocPtr doc = htmlReadMemory(ctx->payload.c_str(), ctx->payload.size(), nullptr, nullptr, HTML_PARSE_NOWARNING | HTML_PARSE_NOERROR);
+        if (!doc)
+        {
+            ctx->errorMessage = "htmlReadMemory: Failed to parse HTML document.";
+            return;
+        }
 
-		// 使用libxml解析HTML
-		htmlDocPtr doc = htmlReadMemory(ctx->payload.c_str(), ctx->payload.size(), nullptr, nullptr, HTML_PARSE_NOWARNING | HTML_PARSE_NOERROR);
-		if (!doc) {
-			ctx->errorMessage = "htmlReadMemory: Failed to parse HTML document.";
-			return;
-		}
+        SCOPE_EXIT() { xmlFreeDoc(doc); };
 
-		SCOPE_EXIT() { xmlFreeDoc(doc); };
+        // 使用XPath查找ActualMedia图片元素
+        xmlXPathContextPtr XPathContext = xmlXPathNewContext(doc);
+        if (!XPathContext)
+        {
+            ctx->errorMessage = "xmlXPathNewContext: Failed to create XPath context.";
+            return;
+        }
 
-		// 使用XPath查找ActualMedia图片元素
-		xmlXPathContextPtr XPathContext = xmlXPathNewContext(doc);
-		if (!XPathContext) {
-			ctx->errorMessage = "xmlXPathNewContext: Failed to create XPath context.";
-			return;
-		}
+        SCOPE_EXIT() { xmlXPathFreeContext(XPathContext); };
 
-		SCOPE_EXIT() { xmlXPathFreeContext(XPathContext); };
+        // 查找id为ActualMedia的img元素
+        xmlXPathObjectPtr result = xmlXPathEvalExpression(BAD_CAST "//img[@id='ActualMedia']", XPathContext);
+        if (!result)
+        {
+            ctx->errorMessage = "xmlXPathEvalExpression: Failed to evaluate XPath expression.";
+            return;
+        }
 
-		// 查找id为ActualMedia的img元素
-		xmlXPathObjectPtr result = xmlXPathEvalExpression(BAD_CAST "//img[@id='ActualMedia']", XPathContext);
-		if (!result) {
-			ctx->errorMessage = "xmlXPathEvalExpression: Failed to evaluate XPath expression.";
-			return;
-		}
+        SCOPE_EXIT() { xmlXPathFreeObject(result); };
 
-		SCOPE_EXIT() { xmlXPathFreeObject(result); };
+        if (xmlXPathNodeSetIsEmpty(result->nodesetval))
+        {
 
-		if (xmlXPathNodeSetIsEmpty(result->nodesetval)) {
+            ctx->errorMessage = "xmlXPathNodeSetIsEmpty: No nodes found.";
+            return;
+        }
 
-			ctx->errorMessage = "xmlXPathNodeSetIsEmpty: No nodes found.";
-			return;
-		}
+        // 获取第一个匹配节点
+        xmlNodePtr node = result->nodesetval->nodeTab[0];
 
-		// 获取第一个匹配节点
-		xmlNodePtr node = result->nodesetval->nodeTab[0];
+        // 获取src属性
+        xmlChar* src = xmlGetProp(node, BAD_CAST "src");
+        if (!src)
+        {
+            ctx->errorMessage = "xmlGetProp: Failed to get src attribute.";
+            return;
+        }
 
-		// 获取src属性
-		xmlChar* src = xmlGetProp(node, BAD_CAST "src");
-		if (!src) {
-			ctx->errorMessage = "xmlGetProp: Failed to get src attribute.";
-			return;
-		}
+        SCOPE_EXIT() { xmlFree(src); };
 
-		SCOPE_EXIT() { xmlFree(src); };
+        // 保存图片URL
+        //Example: https://images.steamusercontent.com/ugc/10260779110356958471/2C72D4FEADC79B9E412B0C7FE4681200725FE75E/?imw=2048&imh=857&ima=fit&impolicy=Letterbox&imcolor=%23000000&letterbox=true
+        //ctx->actualMediaUrl = (const char*)src;
 
-		// 保存图片URL
-		//Example: https://images.steamusercontent.com/ugc/10260779110356958471/2C72D4FEADC79B9E412B0C7FE4681200725FE75E/?imw=2048&imh=857&ima=fit&impolicy=Letterbox&imcolor=%23000000&letterbox=true
-		//ctx->actualMediaUrl = (const char*)src;
+        // 将imw=与imh=的值均修改为5000以获取最高分辨率图片
+        std::string modifiedUrl = (const char*)src;
 
-		// 将imw=与imh=的值均修改为5000以获取最高分辨率图片
-		std::string modifiedUrl = (const char*)src;
-		
-		// 查找并替换imw参数
-		size_t imwPos = modifiedUrl.find("imw=");
-		if (imwPos != std::string::npos) {
-			size_t imwEnd = modifiedUrl.find_first_of("&", imwPos);
-			if (imwEnd != std::string::npos) {
-				modifiedUrl.replace(imwPos, imwEnd - imwPos, "imw=5000");
-			} else {
-				// imw是最后一个参数
-				modifiedUrl.replace(imwPos, modifiedUrl.length() - imwPos, "imw=5000");
-			}
-		}
-		
-		// 查找并替换imh参数
-		size_t imhPos = modifiedUrl.find("imh=");
-		if (imhPos != std::string::npos) {
-			size_t imhEnd = modifiedUrl.find_first_of("&", imhPos);
-			if (imhEnd != std::string::npos) {
-				modifiedUrl.replace(imhPos, imhEnd - imhPos, "imh=5000");
-			} else {
-				// imh是最后一个参数
-				modifiedUrl.replace(imhPos, modifiedUrl.length() - imhPos, "imh=5000");
-			}
-		}
-		
-		// 修改 letterbox=true 至 letterbox=false 以避免黑边
-		size_t letterboxPos = modifiedUrl.find("letterbox=true");
-		if (letterboxPos != std::string::npos) {
-			modifiedUrl.replace(letterboxPos, sizeof("letterbox=true") - 1, "letterbox=false");
-		}
+        // 查找并替换imw参数
+        size_t imwPos = modifiedUrl.find("imw=");
+        if (imwPos != std::string::npos)
+        {
+            size_t imwEnd = modifiedUrl.find_first_of("&", imwPos);
+            if (imwEnd != std::string::npos)
+            {
+                modifiedUrl.replace(imwPos, imwEnd - imwPos, "imw=5000");
+            }
+            else
+            {
+                // imw是最后一个参数
+                modifiedUrl.replace(imwPos, modifiedUrl.length() - imwPos, "imw=5000");
+            }
+        }
 
-		ctx->actualMediaUrl = modifiedUrl;
-	}
+        // 查找并替换imh参数
+        size_t imhPos = modifiedUrl.find("imh=");
+        if (imhPos != std::string::npos)
+        {
+            size_t imhEnd = modifiedUrl.find_first_of("&", imhPos);
+            if (imhEnd != std::string::npos)
+            {
+                modifiedUrl.replace(imhPos, imhEnd - imhPos, "imh=5000");
+            }
+            else
+            {
+                // imh是最后一个参数
+                modifiedUrl.replace(imhPos, modifiedUrl.length() - imhPos, "imh=5000");
+            }
+        }
 
-	void OnProcessPayloadWorkItemComplete(void* context) override
-	{
-		auto ctx = (CSprayQueryImageLinkWorkItemContext*)context;
+        // 修改 letterbox=true 至 letterbox=false 以避免黑边
+        size_t letterboxPos = modifiedUrl.find("letterbox=true");
+        if (letterboxPos != std::string::npos)
+        {
+            modifiedUrl.replace(letterboxPos, sizeof("letterbox=true") - 1, "letterbox=false");
+        }
 
-		if (ctx->actualMediaUrl.length() > 0)
-		{
-			gEngfuncs.Con_DPrintf("[BetterSpray] Found image URL: %s\n", ctx->actualMediaUrl.c_str());
+        ctx->actualMediaUrl = modifiedUrl;
+    }
 
-			std::string localFileName = std::format("{0}_{1}.jpg", m_userId, m_wadHash);
+    void OnProcessPayloadWorkItemComplete(void* context) override
+    {
+        auto ctx = (CSprayQueryImageLinkWorkItemContext*)context;
 
-			SprayDatabaseInternal()->BuildQueryImageFile(m_userId, localFileName, ctx->actualMediaUrl);
-		}
+        if (ctx->actualMediaUrl.length() > 0)
+        {
+            gEngfuncs.Con_DPrintf("[BetterSpray] Found image URL: %s\n", ctx->actualMediaUrl.c_str());
 
-		if (ctx->errorMessage.length() > 0)
-		{
-			gEngfuncs.Con_DPrintf("[BetterSpray] Error: %s\n", ctx->errorMessage.c_str());
-		}
-		
-		m_bWorkItemCompleted = true;
-	}
+            std::string localFileName = std::format("{0}_{1}.jpg", m_userId, m_wadHash);
 
-	bool OnProcessPayload(IUtilHTTPRequest* RequestInstance, IUtilHTTPResponse* ResponseInstance, const void* data, size_t size) override
-	{
-		if (!CSprayQueryBase::OnProcessPayload(RequestInstance, ResponseInstance, data, size))
-			return false;
+            SprayDatabaseInternal()->BuildQueryImageFile(m_userId, localFileName, ctx->actualMediaUrl);
+        }
 
-		auto ctx = new CSprayQueryImageLinkWorkItemContext(this, (const char *)data, size);
+        if (ctx->errorMessage.length() > 0)
+        {
+            gEngfuncs.Con_DPrintf("[BetterSpray] Error: %s\n", ctx->errorMessage.c_str());
+        }
 
-		auto hWorkItemHandle = g_pMetaHookAPI->CreateWorkItem(g_pMetaHookAPI->GetGlobalThreadPool(), [](void* context) -> bool {
+        m_bWorkItemCompleted = true;
+    }
 
-			auto ctx = (CSprayQueryTaskListWorkItemContext*)context;
+    bool OnProcessPayload(IUtilHTTPRequest* RequestInstance, IUtilHTTPResponse* ResponseInstance, const void* data, size_t size) override
+    {
+        if (!CSprayQueryBase::OnProcessPayload(RequestInstance, ResponseInstance, data, size))
+            return false;
 
-			ctx->pthis->OnProcessPayloadWorkItem(ctx);
+        auto ctx = new CSprayQueryImageLinkWorkItemContext(this, (const char*)data, size);
 
-			GameThreadTaskScheduler()->QueueTask(ctx);
+        auto hWorkItemHandle = g_pMetaHookAPI->CreateWorkItem(g_pMetaHookAPI->GetGlobalThreadPool(), [](void* context) -> bool {
+            auto ctx = (CSprayQueryTaskListWorkItemContext*)context;
 
-			return true;
+            ctx->pthis->OnProcessPayloadWorkItem(ctx);
 
-		}, ctx);
+            GameThreadTaskScheduler()->QueueTask(ctx);
 
-		g_pMetaHookAPI->QueueWorkItem(g_pMetaHookAPI->GetGlobalThreadPool(), hWorkItemHandle);
+            return true; }, ctx);
 
-		return true;
-	}
+        g_pMetaHookAPI->QueueWorkItem(g_pMetaHookAPI->GetGlobalThreadPool(), hWorkItemHandle);
 
-	const char* GetName() const override
-	{
-		return "QueryImageLink";
-	}
+        return true;
+    }
 
-	const char* GetIdentifier() const override
-	{
-		return m_fileId.c_str();
-	}
+    const char* GetName() const override
+    {
+        return "QueryImageLink";
+    }
+
+    const char* GetIdentifier() const override
+    {
+        return m_fileId.c_str();
+    }
 };
 
 class CSprayQueryTaskList : public CSprayQueryBase
 {
 public:
-	std::string m_userId;
-	std::string m_wadHash;
-	bool m_bWorkItemCompleted{};
+    std::string m_userId;
+    std::string m_wadHash;
+    bool        m_bWorkItemCompleted{};
 
 public:
-	CSprayQueryTaskList(const char* userId, const char* wadHash) :
-		CSprayQueryBase(),
-		m_userId(userId),
-		m_wadHash(wadHash)
-	{
+    CSprayQueryTaskList(const char* userId, const char* wadHash) :
+        CSprayQueryBase(),
+        m_userId(userId),
+        m_wadHash(wadHash)
+    {
+    }
 
-	}
+    bool IsFinished() const override
+    {
+        if (!CSprayQueryBase::IsFinished())
+            return false;
 
-	bool IsFinished() const override
-	{
-		if (!CSprayQueryBase::IsFinished())
-			return false;
+        if (!m_bWorkItemCompleted)
+            return false;
 
-		if (!m_bWorkItemCompleted)
-			return false;
+        return true;
+    }
 
-		return true;
-	}
+    void StartQuery() override
+    {
+        CSprayQueryBase::StartQuery();
 
-	void StartQuery() override
-	{
-		CSprayQueryBase::StartQuery();
-		
-		m_Url = std::format("https://steamcommunity.com/profiles/{0}/screenshots/?appid={1}&sort=newestfirst&browsefilter=myfiles&view=grid", m_userId, gEngfuncs.pfnGetAppID());
+        m_Url = std::format("https://steamcommunity.com/profiles/{0}/screenshots/?appid={1}&sort=newestfirst&browsefilter=myfiles&view=grid", m_userId, gEngfuncs.pfnGetAppID());
 
-		auto pRequestInstance = UtilHTTPClient()->CreateAsyncRequest(m_Url.c_str(), UtilHTTPMethod::Get, new CUtilHTTPCallbacks(this));
+        auto pRequestInstance = UtilHTTPClient()->CreateAsyncRequest(m_Url.c_str(), UtilHTTPMethod::Get, new CUtilHTTPCallbacks(this));
 
-		pRequestInstance->SetFollowLocation(true);
+        pRequestInstance->SetFollowLocation(true);
 
-		if (!pRequestInstance)
-		{
-			CSprayQueryBase::OnFailure();
-			return;
-		}
+        if (!pRequestInstance)
+        {
+            CSprayQueryBase::OnFailure();
+            return;
+        }
 
-		UtilHTTPClient()->AddToRequestPool(pRequestInstance);
+        UtilHTTPClient()->AddToRequestPool(pRequestInstance);
 
-		m_RequestId = pRequestInstance->GetRequestId();
+        m_RequestId = pRequestInstance->GetRequestId();
 
-		pRequestInstance->Send();
-	}
+        pRequestInstance->Send();
+    }
 
-	void OnProcessPayloadWorkItem(void* context) override
-	{
-		auto ctx = (CSprayQueryTaskListWorkItemContext*)context;
+    void OnProcessPayloadWorkItem(void* context) override
+    {
+        auto ctx = (CSprayQueryTaskListWorkItemContext*)context;
 
-		// 解析HTML文档
-		htmlDocPtr doc = htmlReadMemory(ctx->payload.c_str(), ctx->payload.length(), nullptr, "UTF-8", HTML_PARSE_NOERROR | HTML_PARSE_NOWARNING);
-		if (!doc) {
-			ctx->errorMessage = "htmlReadMemory: Failed to parse HTML document.";
-			return;
-		}
-		SCOPE_EXIT() { xmlFreeDoc(doc); };
+        // 解析HTML文档
+        htmlDocPtr doc = htmlReadMemory(ctx->payload.c_str(), ctx->payload.length(), nullptr, "UTF-8", HTML_PARSE_NOERROR | HTML_PARSE_NOWARNING);
+        if (!doc)
+        {
+            ctx->errorMessage = "htmlReadMemory: Failed to parse HTML document.";
+            return;
+        }
+        SCOPE_EXIT() { xmlFreeDoc(doc); };
 
-		// 创建XPath上下文
-		xmlXPathContextPtr xpathCtx = xmlXPathNewContext(doc);
-		if (!xpathCtx) {
-			ctx->errorMessage = "xmlXPathNewContext: Failed to create XPath context.";
-			return;
-		}
-		SCOPE_EXIT() { xmlXPathFreeContext(xpathCtx); };
+        // 创建XPath上下文
+        xmlXPathContextPtr xpathCtx = xmlXPathNewContext(doc);
+        if (!xpathCtx)
+        {
+            ctx->errorMessage = "xmlXPathNewContext: Failed to create XPath context.";
+            return;
+        }
+        SCOPE_EXIT() { xmlXPathFreeContext(xpathCtx); };
 
-		// 注册命名空间（如果需要的话）
-		// xmlXPathRegisterNs(xpathCtx, BAD_CAST "ns", BAD_CAST "namespace-uri");
+        // 注册命名空间（如果需要的话）
+        // xmlXPathRegisterNs(xpathCtx, BAD_CAST "ns", BAD_CAST "namespace-uri");
 
-		// 查找所有class为floatHelp的div元素
-		const xmlChar* xpathExpr = BAD_CAST "//div[@class='floatHelp']";
-		xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression(xpathExpr, xpathCtx);
-		SCOPE_EXIT() {
-			if (xpathObj) xmlXPathFreeObject(xpathObj);
-		};
+        // 查找所有class为floatHelp的div元素
+        const xmlChar*    xpathExpr = BAD_CAST "//div[@class='floatHelp']";
+        xmlXPathObjectPtr xpathObj  = xmlXPathEvalExpression(xpathExpr, xpathCtx);
+        SCOPE_EXIT()
+        {
+            if (xpathObj) xmlXPathFreeObject(xpathObj);
+        };
 
-		if (xpathObj && xpathObj->nodesetval) {
-			xmlNodeSetPtr nodes = xpathObj->nodesetval;
-			int size = (nodes) ? nodes->nodeNr : 0;
+        if (xpathObj && xpathObj->nodesetval)
+        {
+            xmlNodeSetPtr nodes = xpathObj->nodesetval;
+            int           size  = (nodes) ? nodes->nodeNr : 0;
 
-			// 遍历所有找到的div元素
-			for (int i = 0; i < size; ++i) {
-				auto info = std::make_shared<CScreenshotFloatHelpInfo>();
-				xmlNodePtr divNode = nodes->nodeTab[i];
+            // 遍历所有找到的div元素
+            for (int i = 0; i < size; ++i)
+            {
+                auto       info    = std::make_shared<CScreenshotFloatHelpInfo>();
+                xmlNodePtr divNode = nodes->nodeTab[i];
 
-				// 查找a标签
-				xmlNodePtr aNode = xmlFirstElementChild(divNode);
-				if (aNode) {
-					// 获取fileId
-					xmlChar* fileId = xmlGetProp(aNode, BAD_CAST "data-publishedfileid");
-					if (fileId) {
-						info->fileId = (const char*)fileId;
-						xmlFree(fileId);
-					}
+                // 查找a标签
+                xmlNodePtr aNode = xmlFirstElementChild(divNode);
+                if (aNode)
+                {
+                    // 获取fileId
+                    xmlChar* fileId = xmlGetProp(aNode, BAD_CAST "data-publishedfileid");
+                    if (fileId)
+                    {
+                        info->fileId = (const char*)fileId;
+                        xmlFree(fileId);
+                    }
 
-					// 查找图片div
-					xmlNodePtr imgDiv = xmlFirstElementChild(aNode);
-					if (imgDiv) {
-						// 获取style属性
-						xmlChar* style = xmlGetProp(imgDiv, BAD_CAST "style");
-						if (style) {
-							std::string styleStr((const char*)style);
-							size_t start = styleStr.find("url('") + 5;
-							size_t end = styleStr.find("')", start);
-							if (start != std::string::npos && end != std::string::npos) {
-								info->imageUrl = styleStr.substr(start, end - start);
-							}
-							xmlFree(style);
-						}
+                    // 查找图片div
+                    xmlNodePtr imgDiv = xmlFirstElementChild(aNode);
+                    if (imgDiv)
+                    {
+                        // 获取style属性
+                        xmlChar* style = xmlGetProp(imgDiv, BAD_CAST "style");
+                        if (style)
+                        {
+                            std::string styleStr((const char*)style);
+                            size_t      start = styleStr.find("url('") + 5;
+                            size_t      end   = styleStr.find("')", start);
+                            if (start != std::string::npos && end != std::string::npos)
+                            {
+                                info->imageUrl = styleStr.substr(start, end - start);
+                            }
+                            xmlFree(style);
+                        }
 
-						// 查找description文本
-						// 使用XPath查找q标签
-						xmlXPathContextPtr descCtx = xmlXPathNewContext(doc);
-						SCOPE_EXIT() { xmlXPathFreeContext(descCtx); };
+                        // 查找description文本
+                        // 使用XPath查找q标签
+                        xmlXPathContextPtr descCtx = xmlXPathNewContext(doc);
+                        SCOPE_EXIT() { xmlXPathFreeContext(descCtx); };
 
-						descCtx->node = imgDiv;
-						xmlXPathObjectPtr qObj = xmlXPathEvalExpression(BAD_CAST ".//q", descCtx);
-						SCOPE_EXIT() {
-							if (qObj) xmlXPathFreeObject(qObj);
-						};
+                        descCtx->node          = imgDiv;
+                        xmlXPathObjectPtr qObj = xmlXPathEvalExpression(BAD_CAST ".//q", descCtx);
+                        SCOPE_EXIT()
+                        {
+                            if (qObj) xmlXPathFreeObject(qObj);
+                        };
 
-						if (qObj && qObj->nodesetval && qObj->nodesetval->nodeNr > 0) {
-							xmlNodePtr qNode = qObj->nodesetval->nodeTab[0];
-							xmlChar* content = xmlNodeGetContent(qNode);
-							if (content) {
-								info->description = (const char*)content;
-								xmlFree(content);
-							}
-						}
-					}
-				}
+                        if (qObj && qObj->nodesetval && qObj->nodesetval->nodeNr > 0)
+                        {
+                            xmlNodePtr qNode   = qObj->nodesetval->nodeTab[0];
+                            xmlChar*   content = xmlNodeGetContent(qNode);
+                            if (content)
+                            {
+                                info->description = (const char*)content;
+                                xmlFree(content);
+                            }
+                        }
+                    }
+                }
 
-				// 如果至少有fileId，则添加到列表中
-				if (!info->fileId.empty() &&
-					(info->description.starts_with("!"))) {
+                // 如果至少有fileId，则添加到列表中
+                if (!info->fileId.empty() &&
+                    (info->description.starts_with("!")))
+                {
 
-					ctx->floatHelpList.push_back(info);
-				}
-			}
-		}
-	}
+                    ctx->floatHelpList.push_back(info);
+                }
+            }
+        }
+    }
 
-	void OnProcessPayloadWorkItemComplete(void *context) override
-	{
-		auto ctx = (CSprayQueryTaskListWorkItemContext*)context;
+    void OnProcessPayloadWorkItemComplete(void* context) override
+    {
+        auto ctx = (CSprayQueryTaskListWorkItemContext*)context;
 
-		// 从floatHelpList中随机抽取一个元素并为其调用BuildQueryImageLink
-		if (ctx->floatHelpList.size() > 0)
-		{
+        // 从floatHelpList中随机抽取一个元素并为其调用BuildQueryImageLink
+        if (ctx->floatHelpList.size() > 0)
+        {
 #if 0
 			// 生成随机索引
 			size_t randomIndex = rand() % ctx->floatHelpList.size();
 #else
-			size_t randomIndex = 0;
+            size_t randomIndex = 0;
 #endif
-			// 获取随机选择的元素
-			auto selectedItem = ctx->floatHelpList[randomIndex];
+            // 获取随机选择的元素
+            auto selectedItem = ctx->floatHelpList[randomIndex];
 
-			// 调用BuildQueryImageLink
-			gEngfuncs.Con_DPrintf("[BetterSpray] Spary selected: fileId=%s\n", selectedItem->fileId.c_str());
+            // 调用BuildQueryImageLink
+            gEngfuncs.Con_DPrintf("[BetterSpray] Spary selected: fileId=%s\n", selectedItem->fileId.c_str());
 
-			SprayDatabaseInternal()->BuildQueryImageLink(m_userId, m_wadHash, selectedItem->fileId);
-		}
-		else
-		{
-			gEngfuncs.Con_DPrintf("[BetterSpray] No sprays found for \"%s\".\n", m_userId.c_str());
+            SprayDatabaseInternal()->BuildQueryImageLink(m_userId, m_wadHash, selectedItem->fileId);
+        }
+        else
+        {
+            gEngfuncs.Con_DPrintf("[BetterSpray] No sprays found for \"%s\".\n", m_userId.c_str());
 
-			SprayDatabaseInternal()->UpdatePlayerSprayQueryStatusInternal(m_userId.c_str(), SprayQueryState_Failed);
-		}
+            SprayDatabaseInternal()->UpdatePlayerSprayQueryStatusInternal(m_userId.c_str(), SprayQueryState_Failed);
+        }
 
-		if (ctx->errorMessage.length() > 0)
-		{
-			gEngfuncs.Con_DPrintf("[BetterSpray] Error: %s\n", ctx->errorMessage.c_str());
-		}
+        if (ctx->errorMessage.length() > 0)
+        {
+            gEngfuncs.Con_DPrintf("[BetterSpray] Error: %s\n", ctx->errorMessage.c_str());
+        }
 
-		m_bWorkItemCompleted = true;
-	}
+        m_bWorkItemCompleted = true;
+    }
 
-	bool OnProcessPayload(IUtilHTTPRequest* RequestInstance, IUtilHTTPResponse* ResponseInstance, const void* data, size_t size) override
-	{
-		if (!CSprayQueryBase::OnProcessPayload(RequestInstance, ResponseInstance, data, size))
-			return false;
+    bool OnProcessPayload(IUtilHTTPRequest* RequestInstance, IUtilHTTPResponse* ResponseInstance, const void* data, size_t size) override
+    {
+        if (!CSprayQueryBase::OnProcessPayload(RequestInstance, ResponseInstance, data, size))
+            return false;
 
-		auto ctx = new CSprayQueryTaskListWorkItemContext(this, (const char *)data, size);
+        auto ctx = new CSprayQueryTaskListWorkItemContext(this, (const char*)data, size);
 
-		auto hWorkItemHandle = g_pMetaHookAPI->CreateWorkItem(g_pMetaHookAPI->GetGlobalThreadPool(), [](void* context) -> bool {
+        auto hWorkItemHandle = g_pMetaHookAPI->CreateWorkItem(g_pMetaHookAPI->GetGlobalThreadPool(), [](void* context) -> bool {
+            auto ctx = (CSprayQueryTaskListWorkItemContext*)context;
 
-			auto ctx = (CSprayQueryTaskListWorkItemContext*)context;
+            ctx->pthis->OnProcessPayloadWorkItem(ctx);
 
-			ctx->pthis->OnProcessPayloadWorkItem(ctx);
+            GameThreadTaskScheduler()->QueueTask(ctx);
 
-			GameThreadTaskScheduler()->QueueTask(ctx);
+            return true; }, ctx);
 
-			return true;
+        g_pMetaHookAPI->QueueWorkItem(g_pMetaHookAPI->GetGlobalThreadPool(), hWorkItemHandle);
 
-		}, ctx);
+        return true;
+    }
 
-		g_pMetaHookAPI->QueueWorkItem(g_pMetaHookAPI->GetGlobalThreadPool(), hWorkItemHandle);
+    const char* GetName() const override
+    {
+        return "QueryTaskList";
+    }
 
-		return true;
-	}
-
-	const char* GetName() const override
-	{
-		return "QueryTaskList";
-	}
-
-	const char* GetIdentifier() const override
-	{
-		return m_userId.c_str();
-	}
+    const char* GetIdentifier() const override
+    {
+        return m_userId.c_str();
+    }
 };
 
 class CSprayDatabase : public ISprayDatabaseInternal
 {
 private:
-	std::vector<AutoPtr<ISprayQueryInternal>> m_QueryList;
-	std::vector<ISprayQueryStateChangeHandler*> m_StateChangeCallbacks;
-	std::unordered_map<std::string, SprayQueryState> m_UserQueryStatus{};
+    std::vector<AutoPtr<ISprayQueryInternal>>        m_QueryList;
+    std::vector<ISprayQueryStateChangeHandler*>      m_StateChangeCallbacks;
+    std::unordered_map<std::string, SprayQueryState> m_UserQueryStatus{};
 
 public:
+    void Init() override
+    {
+        xmlInitParser();
+    }
 
-	void Init() override
-	{
-		xmlInitParser();
-	}
+    void Shutdown() override
+    {
+        m_QueryList.clear();
+        m_StateChangeCallbacks.clear();
+        xmlCleanupParser();
+    }
 
-	void Shutdown() override
-	{
-		m_QueryList.clear();
-		m_StateChangeCallbacks.clear();
-		xmlCleanupParser();
-	}
+    void OnConnectToServer() override
+    {
+        m_UserQueryStatus.clear();
+        m_QueryList.clear();
+    }
 
-	void OnConnectToServer() override
-	{
-		m_UserQueryStatus.clear();
-		m_QueryList.clear();
-	}
+    void RunFrame() override
+    {
+        auto flCurrentAbsTime = (float)gEngfuncs.GetAbsoluteTime();
 
-	void RunFrame() override
-	{
-		auto flCurrentAbsTime = (float)gEngfuncs.GetAbsoluteTime();
+        for (auto itor = m_QueryList.begin(); itor != m_QueryList.end();)
+        {
+            const auto& p = (*itor);
 
-		for (auto itor = m_QueryList.begin(); itor != m_QueryList.end();)
-		{
-			const auto& p = (*itor);
+            p->RunFrame(flCurrentAbsTime);
 
-			p->RunFrame(flCurrentAbsTime);
+            if (p->IsFinished() && !p->NeedRetry())
+            {
+                itor = m_QueryList.erase(itor);
+                continue;
+            }
 
-			if (p->IsFinished() && !p->NeedRetry())
-			{
-				itor = m_QueryList.erase(itor);
-				continue;
-			}
+            itor++;
+        }
+    }
 
-			itor++;
-		}
-	}
-
-	/*
+    /*
 		Purpose: Build query based on userId (steamId64), to get screenshot list.
 	*/
 
-	bool BuildQueryTaskList(int playerindex, const char* userId, const char * wadHash)
-	{
-		for (const auto& p : m_QueryList)
-		{
-			if (!strcmp(p->GetName(), "QueryTaskList") &&
-				!strcmp(p->GetIdentifier(), userId))
-			{
-				return false;
-			}
-		}
+    bool BuildQueryTaskList(int playerindex, const char* userId, const char* wadHash)
+    {
+        for (const auto& p : m_QueryList)
+        {
+            if (!strcmp(p->GetName(), "QueryTaskList") &&
+                !strcmp(p->GetIdentifier(), userId))
+            {
+                return false;
+            }
+        }
 
-		auto QueryList = new CSprayQueryTaskList(userId, wadHash);
-		m_QueryList.emplace_back(QueryList);
-		QueryList->StartQuery();
-		QueryList->Release();  
+        auto QueryList = new CSprayQueryTaskList(userId, wadHash);
+        m_QueryList.emplace_back(QueryList);
+        QueryList->StartQuery();
+        QueryList->Release();
 
-		return true;
-	}
+        return true;
+    }
 
-	/*
+    /*
 		Purpose: Build query based on fileId, to get actual image link.
 	*/
 
-	void BuildQueryImageLink(const std::string& userId, const std::string& wadHash, const std::string& fileId) override
-	{
-		for (const auto& p : m_QueryList)
-		{
-			if (!strcmp(p->GetName(), "QueryImageLink") &&
-				!strcmp(p->GetIdentifier(), fileId.c_str()))
-			{
-				return;
-			}
-		}
+    void BuildQueryImageLink(const std::string& userId, const std::string& wadHash, const std::string& fileId) override
+    {
+        for (const auto& p : m_QueryList)
+        {
+            if (!strcmp(p->GetName(), "QueryImageLink") &&
+                !strcmp(p->GetIdentifier(), fileId.c_str()))
+            {
+                return;
+            }
+        }
 
-		auto QueryInstance = new CSprayQueryImageLinkTask(userId, wadHash, fileId);
-		QueryInstance->StartQuery();
-		m_QueryList.emplace_back(QueryInstance);
-		QueryInstance->Release();
-	}
+        auto QueryInstance = new CSprayQueryImageLinkTask(userId, wadHash, fileId);
+        QueryInstance->StartQuery();
+        m_QueryList.emplace_back(QueryInstance);
+        QueryInstance->Release();
+    }
 
-	/*
+    /*
 		Purpose: Build query based on actualMediaUrl, to get actual image file.
 	*/
 
-	void BuildQueryImageFile(const std::string& userId, const std::string& fileName, const std::string& actualMediaUrl) override
-	{
-		for (const auto& p : m_QueryList)
-		{
-			if (!strcmp(p->GetName(), "QueryImageFile") &&
-				!strcmp(p->GetIdentifier(), fileName.c_str()))
-			{
-				return;
-			}
-		}
+    void BuildQueryImageFile(const std::string& userId, const std::string& fileName, const std::string& actualMediaUrl) override
+    {
+        for (const auto& p : m_QueryList)
+        {
+            if (!strcmp(p->GetName(), "QueryImageFile") &&
+                !strcmp(p->GetIdentifier(), fileName.c_str()))
+            {
+                return;
+            }
+        }
 
-		auto QueryInstance = new CSprayQueryImageFileTask(userId, fileName, actualMediaUrl);
-		QueryInstance->StartQuery();
-		m_QueryList.emplace_back(QueryInstance);
-		QueryInstance->Release();
-	}
+        auto QueryInstance = new CSprayQueryImageFileTask(userId, fileName, actualMediaUrl);
+        QueryInstance->StartQuery();
+        m_QueryList.emplace_back(QueryInstance);
+        QueryInstance->Release();
+    }
 
-	void OnImageFileAcquired(const std::string& userId, const std::string& filePath) override
-	{
-		if (EngineIsInLevel())
-		{
-			int playerindex = EngineFindPlayerIndexByUserId(userId.c_str());
+    void OnImageFileAcquired(const std::string& userId, const std::string& filePath) override
+    {
+        if (EngineIsInLevel())
+        {
+            int playerindex = EngineFindPlayerIndexByUserId(userId.c_str());
 
-			auto result = Draw_LoadSprayTexture(userId.c_str(), filePath.c_str(), "GAMEDOWNLOAD", [playerindex](const char* userId, FIBITMAP* fiB) -> LOADSPRAYTEXTURE_STATUS {
-				return Draw_LoadSprayTexture_AsyncLoadInGame(playerindex, fiB);
-			});
+            auto result = Draw_LoadSprayTexture(userId.c_str(), filePath.c_str(), "GAMEDOWNLOAD", [playerindex](const char* userId, FIBITMAP* fiB) -> LOADSPRAYTEXTURE_STATUS {
+                return Draw_LoadSprayTexture_AsyncLoadInGame(playerindex, fiB);
+            });
 
-			if (result == LOAD_SPARY_OK)
-			{
-				UpdatePlayerSprayQueryStatusInternal(userId, SprayQueryState_Finished);
-			}
-			else
-			{
-				UpdatePlayerSprayQueryStatusInternal(userId, SprayQueryState_Failed);
-			}
-		}
-	}
+            if (result == LOAD_SPARY_OK)
+            {
+                UpdatePlayerSprayQueryStatusInternal(userId, SprayQueryState_Finished);
+            }
+            else
+            {
+                UpdatePlayerSprayQueryStatusInternal(userId, SprayQueryState_Failed);
+            }
+        }
+    }
 
-	void QueryPlayerSpray(int playerindex, const char* userId, const char * wadHash) override
-	{
-		std::string userIdString = userId;
+    void QueryPlayerSpray(int playerindex, const char* userId, const char* wadHash) override
+    {
+        std::string userIdString = userId;
 
-		auto it = m_UserQueryStatus.find(userIdString);
+        auto it = m_UserQueryStatus.find(userIdString);
 
-		if (it == m_UserQueryStatus.end())
-		{
-			gEngfuncs.Con_DPrintf("[BetterSpray] Querying spary for userId \"%s\"...\n", userId);
+        if (it == m_UserQueryStatus.end())
+        {
+            gEngfuncs.Con_DPrintf("[BetterSpray] Querying spary for userId \"%s\"...\n", userId);
 
-			UpdatePlayerSprayQueryStatusInternal(userIdString, SprayQueryState_Querying);
+            UpdatePlayerSprayQueryStatusInternal(userIdString, SprayQueryState_Querying);
 
-			BuildQueryTaskList(playerindex, userId, wadHash);
-		}
-		else
-		{
-			gEngfuncs.Con_DPrintf("[BetterSpray] UserId \"%s\" already queried!\n", userId);
-		}
-	}
+            BuildQueryTaskList(playerindex, userId, wadHash);
+        }
+        else
+        {
+            gEngfuncs.Con_DPrintf("[BetterSpray] UserId \"%s\" already queried!\n", userId);
+        }
+    }
 
-	SprayQueryState GetPlayerSprayQueryStatus(const char* userId) const override
-	{
-		std::string userIdString = userId;
+    SprayQueryState GetPlayerSprayQueryStatus(const char* userId) const override
+    {
+        std::string userIdString = userId;
 
-		auto it = m_UserQueryStatus.find(userIdString);
+        auto it = m_UserQueryStatus.find(userIdString);
 
-		if (it != m_UserQueryStatus.end())
-		{
-			return it->second;
-		}
+        if (it != m_UserQueryStatus.end())
+        {
+            return it->second;
+        }
 
-		return SprayQueryState_Unknown;
-	}
+        return SprayQueryState_Unknown;
+    }
 
-	void UpdatePlayerSprayQueryStatusInternal(const std::string& userId, SprayQueryState newQueryStatus) override
-	{
-		std::string userIdString = userId;
+    void UpdatePlayerSprayQueryStatusInternal(const std::string& userId, SprayQueryState newQueryStatus) override
+    {
+        std::string userIdString = userId;
 
-		auto it = m_UserQueryStatus.find(userId);
+        auto it = m_UserQueryStatus.find(userId);
 
-		if (it != m_UserQueryStatus.end())
-		{
-			it->second = newQueryStatus;
-		}
-		else
-		{
-			m_UserQueryStatus[userIdString] = newQueryStatus;
-		}
-	}
+        if (it != m_UserQueryStatus.end())
+        {
+            it->second = newQueryStatus;
+        }
+        else
+        {
+            m_UserQueryStatus[userIdString] = newQueryStatus;
+        }
+    }
 
-	void UpdatePlayerSprayQueryStatus(const char *userId, SprayQueryState newQueryStatus) override
-	{
-		UpdatePlayerSprayQueryStatusInternal(userId, newQueryStatus);
-	}
+    void UpdatePlayerSprayQueryStatus(const char* userId, SprayQueryState newQueryStatus) override
+    {
+        UpdatePlayerSprayQueryStatusInternal(userId, newQueryStatus);
+    }
 
-	void EnumQueries(IEnumSprayQueryHandler* handler) override
-	{
-		for (const auto& p : m_QueryList)
-		{
-			handler->OnEnumQuery(p);
-		}
-	}
+    void EnumQueries(IEnumSprayQueryHandler* handler) override
+    {
+        for (const auto& p : m_QueryList)
+        {
+            handler->OnEnumQuery(p);
+        }
+    }
 
-	void RegisterQueryStateChangeCallback(ISprayQueryStateChangeHandler* handler) override
-	{
-		auto itor = std::find_if(m_StateChangeCallbacks.begin(), m_StateChangeCallbacks.end(), [handler](ISprayQueryStateChangeHandler* it) {
-			return it == handler;
-		});
+    void RegisterQueryStateChangeCallback(ISprayQueryStateChangeHandler* handler) override
+    {
+        auto itor = std::find_if(m_StateChangeCallbacks.begin(), m_StateChangeCallbacks.end(), [handler](ISprayQueryStateChangeHandler* it) {
+            return it == handler;
+        });
 
-		if (itor == m_StateChangeCallbacks.end())
-		{
-			m_StateChangeCallbacks.emplace_back(handler);
-		}
-	}
+        if (itor == m_StateChangeCallbacks.end())
+        {
+            m_StateChangeCallbacks.emplace_back(handler);
+        }
+    }
 
-	void UnregisterQueryStateChangeCallback(ISprayQueryStateChangeHandler* handler) override
-	{
-		auto itor = std::find_if(m_StateChangeCallbacks.begin(), m_StateChangeCallbacks.end(), [handler](ISprayQueryStateChangeHandler* it) {
-			return it == handler;
-			});
+    void UnregisterQueryStateChangeCallback(ISprayQueryStateChangeHandler* handler) override
+    {
+        auto itor = std::find_if(m_StateChangeCallbacks.begin(), m_StateChangeCallbacks.end(), [handler](ISprayQueryStateChangeHandler* it) {
+            return it == handler;
+        });
 
-		if (itor != m_StateChangeCallbacks.end())
-		{
-			m_StateChangeCallbacks.erase(itor);
-		}
-	}
+        if (itor != m_StateChangeCallbacks.end())
+        {
+            m_StateChangeCallbacks.erase(itor);
+        }
+    }
 
-	void DispatchQueryStateChangeCallback(ISprayQuery* pQuery, SprayQueryState newState) override
-	{
-		for (auto callback : m_StateChangeCallbacks)
-		{
-			callback->OnQueryStateChanged(pQuery, newState);
-		}
-	}
+    void DispatchQueryStateChangeCallback(ISprayQuery* pQuery, SprayQueryState newState) override
+    {
+        for (auto callback : m_StateChangeCallbacks)
+        {
+            callback->OnQueryStateChanged(pQuery, newState);
+        }
+    }
 };
 
 static CSprayDatabase s_SprayDatabase;
 
 ISprayDatabase* SprayDatabase()
 {
-	return &s_SprayDatabase;
+    return &s_SprayDatabase;
 }
 
 ISprayDatabaseInternal* SprayDatabaseInternal()
 {
-	return &s_SprayDatabase;
+    return &s_SprayDatabase;
 }
 
 EXPOSE_SINGLE_INTERFACE_GLOBALVAR(CSprayDatabase, ISprayDatabase, SPARY_DATABASE_INTERFACE_VERSION, s_SprayDatabase)
