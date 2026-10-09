@@ -10,7 +10,7 @@ else()
         cmake_policy(SET CMP0135 NEW)
     endif()
     FetchContent_Declare(metahooksv_launch_module
-        URL https://github.com/MetaHookSv/MetaHookSv/archive/e98e9b32864bd24599a575f6e436076949026c62.tar.gz
+        URL https://github.com/MetaHookSv/MetaHookSv/archive/launch-game-cmake-v3.tar.gz
         TLS_VERIFY ON
         # Populate only the modules; never configure the aggregate native project.
         SOURCE_SUBDIR cmake)
